@@ -43,6 +43,7 @@ class Property2Mol:
         self.include_eos = include_eos
 
         self.molecules_set = set()
+        self.invalid_generations = {"not_captured":0,  "not_valid":0}
 
         self.model = self.load_model()
         self.tokenizer = self.load_tokenizer()
@@ -126,6 +127,7 @@ class Property2Mol:
         outputs = []
         raw_outputs = []
         self.molecules_set = set()
+        self.invalid_generations = {"not_captured":0,  "not_valid":0}        
         for input_id in input_ids:
             output = self.model.generate(
                 input_ids=input_id,
@@ -171,6 +173,7 @@ class Property2Mol:
 
     def write_to_file(self, test_name):
         self.log_file.write(f'properties under test: {test_name}\n')
+        self.log_file.write(f'number of total generations: {len(self.inputs)}\n')
         self.log_file.write(f'number of unique molecules generated: {len(self.molecules_set)}\n')
         self.log_file.write(f"No valid SMILES generated in {self.invalid_generations} out of"\
                             f" {len(self.targets)} cases\n----------\n\n")
@@ -210,8 +213,9 @@ class Property2Mol:
         plt.title(title)
         plt.grid(True)
         plt.text(0.05 * max_, 0.90 * max(max(generated_clean), max_), f"Spearman correlation: {correlation:.3f}")
-        plt.text(0.05 * max_, 0.85 * max(max(generated_clean), max_), f"Unique Mols: {len(self.molecules_set)}")
-        plt.text(0.05 * max_, 0.80 * max(max(generated_clean), max_), f"Invalid generations count: {self.invalid_generations}")
+        plt.text(0.05 * max_, 0.85 * max(max(generated_clean), max_), f"N of Unique Mols: {len(self.molecules_set)}")
+        plt.text(0.05 * max_, 0.80 * max(max(generated_clean), max_), f"N invalid gens: {self.invalid_generations}")
+        plt.text(0.05 * max_, 0.75 * max(max(generated_clean), max_), f"N of total Gens: {len(self.inputs)}")
         plt.scatter(target_clean, generated_clean, c='b')
         plt.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
         plt.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
@@ -298,8 +302,6 @@ if __name__ == "__main__":
     greedy_generation_config = {
         "max_length": 300,
         "temperature": 1.0,
-        "top_k": None,
-        "top_p": 1.0,
         "repetition_penalty": 1.0,
         "do_sample": False,  
         "num_return_sequences": 1,
@@ -322,15 +324,16 @@ if __name__ == "__main__":
     # model_checkpoint_path = "/home/hrant/chem/tigran/ChemLactica/checkpoints/facebook/galactica-125m/ac7915df73b24ee3a4e172d6/checkpoint-253952"
     model_125m_253k = "../checkpoints/125m_253k/"
     model_125m_241k = "../checkpoints/125m_241k/"
-    # galactica_tokenizer_path = "./tokenizer/galactica-125m/"
+    model_1b_131k = "../checkpoints/1.3b_131k/"
+    galactica_tokenizer_path = "./tokenizer/galactica-125m/"
     chemlactica_tokenizer_path = "./tokenizer/ChemLacticaTokenizer"
     # torch_dtype = float32
     torch_dtype = bfloat16
     device = "cuda:0"
 
     property_2_Mol = Property2Mol(
-        test_suit=test_suit,
-        property_range=property_range,
+        test_suit=mock_test_suit,
+        property_range=mock_property_range,
         generation_config=greedy_generation_config,
         regexp=regexp,
         model_checkpoint_path=model_125m_253k,
@@ -340,3 +343,7 @@ if __name__ == "__main__":
         )
     property_2_Mol.run_property_2_Mol_test()
     property_2_Mol.log_file.close()
+
+##TODO: check for valid smiles
+##      check for smiles in DB and train set
+##      rank non greedy generations
