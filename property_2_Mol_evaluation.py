@@ -125,6 +125,7 @@ class Property2Mol:
         input_ids = [self.tokenizer(input, return_tensors="pt").to(self.device).input_ids for input in self.inputs]
         outputs = []
         raw_outputs = []
+        self.molecules_set = set()
         for input_id in input_ids:
             output = self.model.generate(
                 input_ids=input_id,
@@ -136,7 +137,9 @@ class Property2Mol:
             out = []
             for text in texts:
                 try:    
-                    captured_text = re.match(self.regexp, text).group() 
+                    captured_text = re.match(self.regexp, text).group()
+                    if captured_text not in self.molecules_set:
+                        self.molecules_set.add(captured_text)
                 except:
                     captured_text = ''
                 out.append(captured_text)
@@ -168,6 +171,7 @@ class Property2Mol:
 
     def write_to_file(self, test_name):
         self.log_file.write(f'properties under test: {test_name}\n')
+        self.log_file.write(f'number of unique molecules generated: {len(self.molecules_set)}\n')
         self.log_file.write(f"No valid SMILES generated in {self.invalid_generations} out of"\
                             f" {len(self.targets)} cases\n----------\n\n")
 
@@ -205,8 +209,9 @@ class Property2Mol:
             title = 'non ' + title       
         plt.title(title)
         plt.grid(True)
-        plt.text(0.05 * max_, 0.9 * max(max(generated_clean), max_), f"Spearman correlation: {correlation:.3f}")
-        plt.text(0.05 * max_, 0.85 * max(max(generated_clean), max_), f"Invalid generations count: {self.invalid_generations}")
+        plt.text(0.05 * max_, 0.90 * max(max(generated_clean), max_), f"Spearman correlation: {correlation:.3f}")
+        plt.text(0.05 * max_, 0.85 * max(max(generated_clean), max_), f"Unique Mols: {len(self.molecules_set)}")
+        plt.text(0.05 * max_, 0.80 * max(max(generated_clean), max_), f"Invalid generations count: {self.invalid_generations}")
         plt.scatter(target_clean, generated_clean, c='b')
         plt.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
         plt.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
