@@ -27,6 +27,7 @@ class Property2Mol:
             torch_dtype,
             device,
             include_eos=True,
+            top_N=10
             ) -> None:
         
         self.test_suit=test_suit
@@ -41,6 +42,7 @@ class Property2Mol:
         self.smiles_prefix = "[START_SMILES]"
         self.eos_string = "</s>"
         self.include_eos = include_eos
+        self.top_N = top_N
 
         self.molecules_set = set()
         self.invalid_generations = {"not_captured":0,  "not_valid":0}
@@ -133,6 +135,16 @@ class Property2Mol:
                 input_ids=input_id,
                 **self.generation_config,
             )
+
+            if self.generation_config["do_sample"] == True:
+                scores = self.model.compute_transition_scores(
+                    sequences=output.sequences,
+                    scores=output.scores,
+                )             
+                perplexities = np.exp(scores.sum(axis=1).cpu().numpy()/-(output.sequences.shape[1]-input_id.shape[1])) 
+                sorted_outputs = sorted(zip(perplexities, output.sequences))[:self.top_N]
+                output = [output for _, output in sorted_outputs]
+
             context_length = len(input_id[0])
             texts = [self.tokenizer.decode(out[context_length:]) for out in output]
             raw_outputs.append(texts)
@@ -315,9 +327,12 @@ if __name__ == "__main__":
         "top_p": 1.0,
         "repetition_penalty": 1.0,
         "do_sample": True,  
-        "num_return_sequences": 10,
-        "num_beams": 1
+        "num_return_sequences": 20,
+        "num_beams": 1,
+        "return_dict_in_generate":True,
+        "output_scores":True
         }
+    top_N = 10
     
     regexp = "^.*?(?=\\[END_SMILES])"
 
@@ -332,14 +347,15 @@ if __name__ == "__main__":
     device = "cuda:0"
 
     property_2_Mol = Property2Mol(
-        test_suit=mock_test_suit,
-        property_range=mock_property_range,
-        generation_config=greedy_generation_config,
+        test_suit=test_suit,
+        property_range=property_range,
+        generation_config=nongreedy_generation_config,
         regexp=regexp,
         model_checkpoint_path=model_125m_253k,
         tokenizer_path=chemlactica_tokenizer_path,
         torch_dtype=torch_dtype,
         device=device,
+        top_N=top_N,
         )
     property_2_Mol.run_property_2_Mol_test()
     property_2_Mol.log_file.close()
