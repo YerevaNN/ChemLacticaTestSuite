@@ -131,23 +131,31 @@ class Property2Mol:
         self.molecules_set = set()
         self.invalid_generations = {"not_captured":0,  "not_valid":0}        
         for input_id in input_ids:
+            context_length = input_id.shape[1]
             output = self.model.generate(
                 input_ids=input_id,
-                **self.generation_config,
+                **self.generation_config   
             )
 
             if self.generation_config["do_sample"] == True:
                 scores = self.model.compute_transition_scores(
                     sequences=output.sequences,
                     scores=output.scores,
-                )             
-                perplexities = np.exp(scores.sum(axis=1).cpu().numpy()/-(output.sequences.shape[1]-input_id.shape[1])) 
-                sorted_outputs = sorted(zip(perplexities, output.sequences))[:self.top_N]
-                output = [output for _, output in sorted_outputs]
-
-            context_length = len(input_id[0])
-            texts = [self.tokenizer.decode(out[context_length:]) for out in output]
-            raw_outputs.append(texts)
+                    normalize_logits=True
+                )
+                end_smile_indices = np.where(output.sequences.cpu().numpy()==20) # 20 for END_SMILES token
+                perplexities = [np.exp(-s[: end_index].mean().item()) for s, end_index in zip(scores[end_smile_indices[0]], end_smile_indices[1])]
+                sorted_outputs = sorted(zip(perplexities, output.sequences[end_smile_indices[0]]))[:self.top_N]
+                score_and_text = [] #TODO refactor this part
+                texts = []
+                for perplexity, output in sorted_outputs:
+                    decoded = self.tokenizer.decode(output[context_length:])
+                    texts.append(decoded)
+                    score_and_text.append(str(round(perplexity, 2)) + " " + decoded)
+                raw_outputs.append(score_and_text)
+            else:
+                texts = [self.tokenizer.decode(out[context_length:]) for out in output]
+                raw_outputs.append(texts)
             out = []
             for text in texts:
                 try:    
@@ -174,7 +182,7 @@ class Property2Mol:
             error = []
             for prop in c_property:
                 if prop != None:
-                    error.append(abs(prop - target[0]))
+                    error.append(round(abs(prop - target[0]), 2))
                 else:
                     error.append(0)
                     invalid_generations += 1
@@ -198,10 +206,11 @@ class Property2Mol:
             self.log_file.write(f'target value: {target}\n')
             for r in raw_output:
                 self.log_file.write(f'raw_output: {r}\n')
+            self.log_file.write('-----------\n')
             for o, cp, e in zip(output, c_prop, err):
                 self.log_file.write(f'captured_output: {o}\n')
                 self.log_file.write(f'generated_property: {cp} diff: {e}\n')
-            self.log_file.write('-----------\n')
+            self.log_file.write('***********\n')
 
     def clean_outputs(self):
         target_clean, generated_clean, nones = [], [], []
@@ -295,8 +304,8 @@ if __name__ == "__main__":
             "step":  0.01
         },
         "weight": {
-            "range": (100, 500),
-            "step":  0.5
+            "range": (100.1, 500),
+            "step":  1
         },
         "clogp": {
             "range": (1, 5),
@@ -306,8 +315,8 @@ if __name__ == "__main__":
 
     mock_property_range = {
         "sas": {
-            "range": (1, 10),
-            "step":  1
+            "range": (6, 10),
+            "step":  .1
         }
     }
 
@@ -332,7 +341,7 @@ if __name__ == "__main__":
         "return_dict_in_generate":True,
         "output_scores":True
         }
-    top_N = 10
+    top_N = 5
     
     regexp = "^.*?(?=\\[END_SMILES])"
 
