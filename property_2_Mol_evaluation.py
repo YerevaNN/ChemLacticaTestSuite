@@ -128,6 +128,7 @@ class Property2Mol:
         input_ids = [self.tokenizer(input, return_tensors="pt").to(self.device).input_ids for input in self.inputs]
         outputs = []
         raw_outputs = []
+        perplexities_list = []
         self.molecules_set = set()
         self.invalid_generations = {"not_captured":0,  "not_valid":0}        
         for input_id in input_ids:
@@ -136,26 +137,28 @@ class Property2Mol:
                 input_ids=input_id,
                 **self.generation_config   
             )
-
-            if self.generation_config["do_sample"] == True:
-                scores = self.model.compute_transition_scores(
+        
+            scores = self.model.compute_transition_scores(
                     sequences=output.sequences,
                     scores=output.scores,
                     normalize_logits=True
                 )
-                end_smile_indices = np.where(output.sequences.cpu().numpy()==20) # 20 for END_SMILES token
-                perplexities = [np.exp(-s[: end_index].mean().item()) for s, end_index in zip(scores[end_smile_indices[0]], end_smile_indices[1])]
-                sorted_outputs = sorted(zip(perplexities, output.sequences[end_smile_indices[0]]))[:self.top_N]
-                score_and_text = [] #TODO refactor this part
+            # end_smiles_indices = np.where(output.sequences.cpu().numpy()==20) # 20 for END_SMILES token
+            end_smiles = torch.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
+            end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
+            perplexities = [round(np.exp(-scores[index[0], :index[1]].mean().item()), 2) for index in end_smiles_indices]
+            if self.generation_config["do_sample"] == True:
+                sorted_outputs = sorted(zip(perplexities, output.sequences[end_smiles_indices[:, 0]]), key=lambda x: x[0])[:self.top_N]
+                perplexities = []
                 texts = []
                 for perplexity, output in sorted_outputs:
-                    decoded = self.tokenizer.decode(output[context_length:])
-                    texts.append(decoded)
-                    score_and_text.append(str(round(perplexity, 2)) + " " + decoded)
-                raw_outputs.append(score_and_text)
+                    texts.append(self.tokenizer.decode(output[context_length:]))
+                    perplexities.append(perplexity)
+                # raw_outputs.append(score_and_text)
             else:
-                texts = [self.tokenizer.decode(out[context_length:]) for out in output]
-                raw_outputs.append(texts)
+                texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
+            raw_outputs.append(texts)
+            perplexities_list.append(perplexities)
             out = []
             for text in texts:
                 try:    
@@ -167,7 +170,7 @@ class Property2Mol:
                 out.append(captured_text)
             outputs.append(out)
         
-        return outputs, raw_outputs
+        return outputs, raw_outputs, perplexities_list
     
     def calculate_properties(self, property_fns):
         # TODO: drop the hard coded index and adjust for multiple targets
@@ -198,18 +201,17 @@ class Property2Mol:
         self.log_file.write(f"No valid SMILES generated in {self.invalid_generations} out of"\
                             f" {len(self.targets)} cases\n----------\n\n")
 
-        for input, target, output, raw_output, c_prop, err in zip(self.inputs, self.targets,
-                                                                  self.outputs, self.raw_outputs,
-                                                                  self.calculated_properties,
-                                                                  self.errors):
+        for items in zip(self.inputs, self.targets, self.outputs, self.raw_outputs,
+                        self.calculated_properties, self.errors, self.perplexities):
+            input, target, output, raw_output, c_prop, err, perplexity = items
             self.log_file.write(f'input: {input}\n')
-            self.log_file.write(f'target value: {target}\n')
+            self.log_file.write(f'target value: {target[0]}\n')
             for r in raw_output:
                 self.log_file.write(f'raw_output: {r}\n')
             self.log_file.write('-----------\n')
-            for o, cp, e in zip(output, c_prop, err):
+            for o, cp, e, per in zip(output, c_prop, err, perplexity):
                 self.log_file.write(f'captured_output: {o}\n')
-                self.log_file.write(f'generated_property: {cp} diff: {e}\n')
+                self.log_file.write(f'generated_property: {cp} diff: {e}, perplexity: {per}\n')
             self.log_file.write('***********\n')
 
     def clean_outputs(self):
@@ -253,7 +255,7 @@ class Property2Mol:
             self.targets = self.get_targets(target_properties)
             self.inputs = self.get_inputs(input_properties)
             property_fns = self.get_property_fns(target_properties)
-            self.outputs, self.raw_outputs = self.generate_outputs()
+            self.outputs, self.raw_outputs, self.perplexities = self.generate_outputs()
             self.calculated_properties = self.calculate_properties(property_fns)
             self.errors, self.invalid_generations = self.get_stats()
             target_clean, generated_clean, nones, correlation, loss = self.clean_outputs()
@@ -267,6 +269,11 @@ if __name__ == "__main__":
     seed_value = 42
     np.random.seed(seed_value)
     torch.manual_seed(seed_value)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed_value)
+        torch.cuda.manual_seed_all(seed_value)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
     
     test_suit = {
         "sas": {
@@ -326,7 +333,9 @@ if __name__ == "__main__":
         "repetition_penalty": 1.0,
         "do_sample": False,  
         "num_return_sequences": 1,
-        "num_beams": 1
+        "num_beams": 1,
+        "return_dict_in_generate":True,
+        "output_scores":True
         }
     
     nongreedy_generation_config = {
@@ -356,9 +365,9 @@ if __name__ == "__main__":
     device = "cuda:0"
 
     property_2_Mol = Property2Mol(
-        test_suit=test_suit,
-        property_range=property_range,
-        generation_config=nongreedy_generation_config,
+        test_suit=mock_test_suit,
+        property_range=mock_property_range,
+        generation_config=greedy_generation_config,
         regexp=regexp,
         model_checkpoint_path=model_125m_253k,
         tokenizer_path=chemlactica_tokenizer_path,
