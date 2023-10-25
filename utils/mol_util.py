@@ -6,13 +6,27 @@ import sys
 sys.path.append(os.path.join(RDConfig.RDContribDir, 'SA_Score'))
 import sascorer
 
+def get_canonical(mols):
+    if not isinstance(mols, list):
+        mols = [mols]
+    canonicals = []
+    for smiles in mols:
+        if smiles != '':
+            try:
+                mol = Chem.MolFromSmiles(smiles)
+                canonical_smiles = Chem.MolToSmiles(mol, isomericSmiles=False, canonical=True)
+                canonicals.append(canonical_smiles)
+            except:
+                pass        
+    return canonicals
+
 def get_sas(mols):
     # print(mols)
     if not isinstance(mols, list):
         mols = [mols]
     scores = []
     for mol in mols:
-        if mol is not '':
+        if mol != '':
             try:
                 mol_source = Chem.MolFromSmiles(mol)
                 sas_score = round(sascorer.calculateScore(mol_source), 3)
@@ -28,7 +42,7 @@ def get_qed(mols):
         mols = [mols]
     scores = []
     for mol in mols:
-        if mol is not '':
+        if mol != '':
             try:
                 mol_source = Chem.MolFromSmiles(mol)
                 qed_score = round(QED.qed(mol_source), 3)
@@ -44,7 +58,7 @@ def get_clogp(mols):
         mols = [mols]
     scores = []
     for mol in mols:
-        if mol is not '':
+        if mol != '':
             try:
                 mol_source = Chem.MolFromSmiles(mol)
                 logp_score = round(Descriptors.MolLogP(mol_source), 3)
@@ -60,7 +74,7 @@ def get_weight(mols):
         mols = [mols]
     scores = []
     for mol in mols:
-        if mol is not '':
+        if mol != '':
             try:
                 mol_source = Chem.MolFromSmiles(mol)
                 weights = round(Descriptors.ExactMolWt(mol_source), 3)

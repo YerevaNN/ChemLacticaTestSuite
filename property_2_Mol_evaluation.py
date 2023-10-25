@@ -1,5 +1,6 @@
 import numpy as np
 import re
+from itertools import chain
 import time
 import json
 import torch
@@ -146,7 +147,7 @@ class Property2Mol:
             # end_smiles_indices = np.where(output.sequences.cpu().numpy()==20) # 20 for END_SMILES token
             end_smiles = torch.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
             end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
-            perplexities = [round(np.exp(-scores[index[0], :index[1]].mean().item()), 2) for index in end_smiles_indices]
+            perplexities = [round(np.exp(-scores[index[0], :index[1]].mean().item()), 4) for index in end_smiles_indices]
             if self.generation_config["do_sample"] == True:
                 sorted_outputs = sorted(zip(perplexities, output.sequences[end_smiles_indices[:, 0]]), key=lambda x: x[0])[:self.top_N]
                 perplexities = []
@@ -191,13 +192,14 @@ class Property2Mol:
                     invalid_generations += 1
             errors.append(error)
         # errors.append(error)
+        n_uniques = len(set(mol_util.get_canonical(list(chain(*self.outputs)))))
 
-        return errors, invalid_generations
+        return errors, invalid_generations, n_uniques
 
     def write_to_file(self, test_name):
         self.log_file.write(f'properties under test: {test_name}\n')
         self.log_file.write(f'number of total generations: {len(self.inputs)}\n')
-        self.log_file.write(f'number of unique molecules generated: {len(self.molecules_set)}\n')
+        self.log_file.write(f'number of unique molecules generated: {self.n_unique}\n')
         self.log_file.write(f"No valid SMILES generated in {self.invalid_generations} out of"\
                             f" {len(self.targets)} cases\n----------\n\n")
 
@@ -236,7 +238,7 @@ class Property2Mol:
         plt.title(title)
         plt.grid(True)
         plt.text(0.05 * max_, 0.90 * max(max(generated_clean), max_), f"Spearman correlation: {correlation:.3f}")
-        plt.text(0.05 * max_, 0.85 * max(max(generated_clean), max_), f"N of Unique Mols: {len(self.molecules_set)}")
+        plt.text(0.05 * max_, 0.85 * max(max(generated_clean), max_), f"N of Unique Mols: {self.n_unique}")
         plt.text(0.05 * max_, 0.80 * max(max(generated_clean), max_), f"N invalid gens: {self.invalid_generations}")
         plt.text(0.05 * max_, 0.75 * max(max(generated_clean), max_), f"N of total Gens: {len(self.inputs)}")
         plt.scatter(target_clean, generated_clean, c='b')
@@ -245,6 +247,25 @@ class Property2Mol:
         plt.xlabel(f'target {test_name}')
         plt.ylabel(f'generated {test_name}')
         plt.savefig(self.results_path + test_name + '.png', dpi=300, format="png")
+        plt.clf()
+
+    def generate_perplexity_vs_rmse(self, test_name):
+        perplexity_clean, error_clean, invalid = [], [], []
+        for p, e in zip(list(chain(*self.perplexities)), list(chain(*self.errors))):
+            if e > 0:
+                perplexity_clean.append(p)
+                error_clean.append(e)
+            else:
+                invalid.append(p)
+        max_ = max(error_clean)
+        plt.title(test_name + ' perplexity vs absolute error')
+        plt.grid(True)
+        plt.xlabel(f'generated molecule perplexity')
+        plt.ylabel(f'{test_name} score diff')
+        plt.text(0.1 , 0.9 * max_, f"number of invalid strings: {len(invalid)}")
+        plt.scatter(perplexity_clean, error_clean)
+        plt.vlines(invalid, ymin=0, ymax=max_, color='r', alpha=0.3)
+        plt.savefig(self.results_path + test_name + '_per_vs_rmse.png', dpi=300, format="png")
         plt.clf()
 
     def run_property_2_Mol_test(self):    
@@ -257,10 +278,11 @@ class Property2Mol:
             property_fns = self.get_property_fns(target_properties)
             self.outputs, self.raw_outputs, self.perplexities = self.generate_outputs()
             self.calculated_properties = self.calculate_properties(property_fns)
-            self.errors, self.invalid_generations = self.get_stats()
+            self.errors, self.invalid_generations, self.n_unique = self.get_stats()
             target_clean, generated_clean, nones, correlation, loss = self.clean_outputs()
             self.write_to_file(test_name)
             self.generate_plot(test_name, target_clean, generated_clean, nones, correlation, loss)
+            self.generate_perplexity_vs_rmse(test_name)
             print(f"finished evaluating test for {test_name}")
             print(f"{len(self.inputs)} samples evaluated in {time.time()-time_start} seconds")
 
@@ -365,11 +387,11 @@ if __name__ == "__main__":
     device = "cuda:0"
 
     property_2_Mol = Property2Mol(
-        test_suit=mock_test_suit,
-        property_range=mock_property_range,
+        test_suit=test_suit,
+        property_range=property_range,
         generation_config=greedy_generation_config,
         regexp=regexp,
-        model_checkpoint_path=model_125m_253k,
+        model_checkpoint_path=model_125m_241k,
         tokenizer_path=chemlactica_tokenizer_path,
         torch_dtype=torch_dtype,
         device=device,
@@ -377,7 +399,3 @@ if __name__ == "__main__":
         )
     property_2_Mol.run_property_2_Mol_test()
     property_2_Mol.log_file.close()
-
-##TODO: check for valid smiles
-##      check for smiles in DB and train set
-##      rank non greedy generations
