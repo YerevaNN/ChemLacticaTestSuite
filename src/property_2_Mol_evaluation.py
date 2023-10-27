@@ -1,20 +1,32 @@
-import numpy as np
+
 import re
-from itertools import chain
+import os
 import time
 import json
+from itertools import chain
+from datetime import datetime
+
+import numpy as np
+from scipy.stats import spearmanr
+from sklearn import metrics
+import matplotlib.pyplot as plt
 import torch
 from torch import bfloat16, float32
 from transformers import AutoTokenizer, AutoModelForCausalLM
-# from assert_tokenizer import assert_tokenizer
-from sklearn import metrics
-import os
+
 from utils import mol_util
 from custom_modeling_opt import CustomOPTForCausalLM
-import scipy
-from scipy.stats import spearmanr
-from datetime import datetime
-import matplotlib.pyplot as plt
+from property_2_Mol_config import evaluation_config
+# from assert_tokenizer import assert_tokenizer
+
+seed_value = 42
+np.random.seed(seed_value)
+torch.manual_seed(seed_value)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed_value)
+    torch.cuda.manual_seed_all(seed_value)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 class Property2Mol:
     def __init__(
@@ -55,7 +67,7 @@ class Property2Mol:
 
     def start_log_file(self):
         model_name = self.model_checkpoint_path.split("/")[-2]
-        self.results_path = os.path.join(f"results/property_2_Mol/{datetime.now().strftime('%Y-%m-%d-%H:%M')}"\
+        self.results_path = os.path.join(f"../results/property_2_Mol/{datetime.now().strftime('%Y-%m-%d-%H:%M')}"\
                                     f"-{model_name}/")
         print(f'results_path = {self.results_path}\n')
         if not os.path.exists(self.results_path):
@@ -75,7 +87,7 @@ class Property2Mol:
         model = CustomOPTForCausalLM.from_pretrained(
             self.model_checkpoint_path,
             use_flash_attn=True,
-            torch_dtype=self.torch_dtype
+            torch_dtype=getattr(torch, self.torch_dtype)
             )
         model.eval()
         model.to(self.device)
@@ -286,116 +298,17 @@ class Property2Mol:
 
 
 if __name__ == "__main__":
-    seed_value = 42
-    np.random.seed(seed_value)
-    torch.manual_seed(seed_value)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed_value)
-        torch.cuda.manual_seed_all(seed_value)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
     
-    test_suit = {
-        "sas": {
-            "input_properties": ["sas"],
-            "target_properties": ["sas"]
-        },
-        "qed": {
-            "input_properties": ["qed"],
-            "target_properties": ["qed"]
-        },
-        "weight": {
-            "input_properties": ["weight"],
-            "target_properties": ["weight"]
-        },
-        "clogp": {
-            "input_properties": ["clogp"],
-            "target_properties": ["clogp"]
-        }
-    }
-
-    mock_test_suit = {
-        "weight": {
-            "input_properties": ["weight"],
-            "target_properties": ["weight"]
-        }
-    }
-
-    property_range = {
-        "sas": {
-            "range": (1, 10),
-            "step":  0.1
-        },
-        "qed": {
-            "range": (0, 1),
-            "step":  0.01
-        },
-        "weight": {
-            "range": (100.1, 500),
-            "step":  1
-        },
-        "clogp": {
-            "range": (1, 5),
-            "step":  0.1
-        }
-    }  
-
-    mock_property_range = {
-        "weight": {
-            "range": (100.1, 300),
-            "step":  1
-        }
-    }
-
-    greedy_generation_config = {
-        "eos_token_id": 20,
-        "max_length": 300,
-        "temperature": 1.0,
-        "repetition_penalty": 1.0,
-        "do_sample": False,  
-        "num_return_sequences": 1,
-        "num_beams": 1,
-        "return_dict_in_generate":True,
-        "output_scores":True
-        }
-    
-    nongreedy_generation_config = {
-        "eos_token_id": 20,
-        "max_length": 400,
-        "temperature": 1.0,
-        "top_k": None,
-        "top_p": 1.0,
-        "repetition_penalty": 1.0,
-        "do_sample": True,  
-        "num_return_sequences": 20,
-        "num_beams": 1,
-        "return_dict_in_generate":True,
-        "output_scores":True
-        }
-    top_N = 5
-    
-    regexp = "^.*?(?=\\[END_SMILES])"
-
-    # model_checkpoint_path = "/home/hrant/chem/tigran/ChemLactica/checkpoints/facebook/galactica-125m/ac7915df73b24ee3a4e172d6/checkpoint-253952"
-    model_125m_253k = "../checkpoints/125m_253k/"
-    model_125m_241k = "../checkpoints/125m_241k/"
-    model_1b_131k = "../checkpoints/1.3b_131k/"
-    galactica_tokenizer_path = "./tokenizer/galactica-125m/"
-    chemlactica_tokenizer_path = "./tokenizer/ChemLacticaTokenizer"
-    # torch_dtype = float32
-    torch_dtype = bfloat16
-    device = "cuda:0"
-
     property_2_Mol = Property2Mol(
-        test_suit=test_suit,
-        property_range=property_range,
-        generation_config=nongreedy_generation_config,
-        regexp=regexp,
-        model_checkpoint_path=model_125m_253k,
-        tokenizer_path=chemlactica_tokenizer_path,
-        torch_dtype=torch_dtype,
-        device=device,
-        top_N=top_N,
+        test_suit=evaluation_config["test_suit"],
+        property_range=evaluation_config["property_range"],
+        generation_config=evaluation_config["generation_config"],
+        regexp=evaluation_config["regexp"],
+        model_checkpoint_path=evaluation_config["model_checkpoint_path"],
+        tokenizer_path=evaluation_config["tokenizer_path"],
+        torch_dtype=evaluation_config["torch_dtype"],
+        device=evaluation_config["device"],
+        top_N=evaluation_config["top_N"],
         )
     property_2_Mol.run_property_2_Mol_test()
     property_2_Mol.log_file.close()
