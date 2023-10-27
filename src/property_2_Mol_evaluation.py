@@ -40,7 +40,8 @@ class Property2Mol:
             torch_dtype,
             device,
             include_eos=True,
-            top_N=10
+            top_N=10,
+            generate_log_file=True,
             ) -> None:
         
         self.test_suit=test_suit
@@ -299,16 +300,6 @@ class Property2Mol:
 
 if __name__ == "__main__":
     
-    property_2_Mol = Property2Mol(
-        test_suit=evaluation_config["test_suit"],
-        property_range=evaluation_config["property_range"],
-        generation_config=evaluation_config["generation_config"],
-        regexp=evaluation_config["regexp"],
-        model_checkpoint_path=evaluation_config["model_checkpoint_path"],
-        tokenizer_path=evaluation_config["tokenizer_path"],
-        torch_dtype=evaluation_config["torch_dtype"],
-        device=evaluation_config["device"],
-        top_N=evaluation_config["top_N"],
-        )
+    property_2_Mol = Property2Mol(**evaluation_config)
     property_2_Mol.run_property_2_Mol_test()
     property_2_Mol.log_file.close()
