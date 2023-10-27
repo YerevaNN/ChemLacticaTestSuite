@@ -144,10 +144,9 @@ class Property2Mol:
                     scores=output.scores,
                     normalize_logits=True
                 )
-            # end_smiles_indices = np.where(output.sequences.cpu().numpy()==20) # 20 for END_SMILES token
             end_smiles = torch.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
             end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
-            perplexities = [round(np.exp(-scores[index[0], :index[1]].mean().item()), 4) for index in end_smiles_indices]
+            perplexities = [round(np.exp(-scores[index[0], :index[1] + 1].mean().item()), 4) for index in end_smiles_indices]
             if self.generation_config["do_sample"] == True:
                 sorted_outputs = sorted(zip(perplexities, output.sequences[end_smiles_indices[:, 0]]), key=lambda x: x[0])[:self.top_N]
                 perplexities = []
@@ -155,7 +154,6 @@ class Property2Mol:
                 for perplexity, output in sorted_outputs:
                     texts.append(self.tokenizer.decode(output[context_length:]))
                     perplexities.append(perplexity)
-                # raw_outputs.append(score_and_text)
             else:
                 texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
             raw_outputs.append(texts)
@@ -317,9 +315,9 @@ if __name__ == "__main__":
     }
 
     mock_test_suit = {
-        "sas": {
-            "input_properties": ["sas"],
-            "target_properties": ["sas"]
+        "weight": {
+            "input_properties": ["weight"],
+            "target_properties": ["weight"]
         }
     }
 
@@ -343,13 +341,14 @@ if __name__ == "__main__":
     }  
 
     mock_property_range = {
-        "sas": {
-            "range": (6, 10),
-            "step":  .1
+        "weight": {
+            "range": (100.1, 300),
+            "step":  1
         }
     }
 
     greedy_generation_config = {
+        "eos_token_id": 20,
         "max_length": 300,
         "temperature": 1.0,
         "repetition_penalty": 1.0,
@@ -361,7 +360,8 @@ if __name__ == "__main__":
         }
     
     nongreedy_generation_config = {
-        "max_length": 300,
+        "eos_token_id": 20,
+        "max_length": 400,
         "temperature": 1.0,
         "top_k": None,
         "top_p": 1.0,
@@ -389,9 +389,9 @@ if __name__ == "__main__":
     property_2_Mol = Property2Mol(
         test_suit=test_suit,
         property_range=property_range,
-        generation_config=greedy_generation_config,
+        generation_config=nongreedy_generation_config,
         regexp=regexp,
-        model_checkpoint_path=model_125m_241k,
+        model_checkpoint_path=model_125m_253k,
         tokenizer_path=chemlactica_tokenizer_path,
         torch_dtype=torch_dtype,
         device=device,
