@@ -1,4 +1,4 @@
-test_suit = {
+test_suite = {
     "sas": {
         "input_properties": ["sas"],
         "target_properties": ["sas"]
@@ -17,7 +17,7 @@ test_suit = {
     }
 }
 
-mock_test_suit = {
+mock_test_suite = {
     "weight": {
         "input_properties": ["weight"],
         "target_properties": ["weight"]
@@ -90,7 +90,7 @@ torch_dtype = "bfloat16"
 device = "cuda:0"
 
 evaluation_config = {
-    "test_suit":             test_suit,
+    "test_suit":             test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_generation_config,
     "model_checkpoint_path": model_125m_253k,

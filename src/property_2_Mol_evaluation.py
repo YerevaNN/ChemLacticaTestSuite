@@ -31,7 +31,7 @@ if torch.cuda.is_available():
 class Property2Mol:
     def __init__(
             self,
-            test_suit,
+            test_suite,
             property_range,
             generation_config,
             regexp,
@@ -44,7 +44,7 @@ class Property2Mol:
             generate_log_file=True,
             ) -> None:
         
-        self.test_suit=test_suit
+        self.test_suite=test_suite
         self.property_range=property_range
         self.generation_config=generation_config
         self.regexp=regexp
@@ -78,7 +78,7 @@ class Property2Mol:
         log_file.write(f'results of property to molecule test performed at '\
                             f'{datetime.now().strftime("%Y-%m-%d, %H:%M")}\n')
         log_file.write(f'model checkpoint path: {self.model_checkpoint_path}\n')
-        log_file.write(f'property combinations being evaluated: \n{json.dumps(self.test_suit, indent=4)}\n')
+        log_file.write(f'property combinations being evaluated: \n{json.dumps(self.test_suite, indent=4)}\n')
         log_file.write(f'generation config: \n{json.dumps(self.generation_config, indent=4)}\n\n')
 
         return log_file
@@ -280,7 +280,7 @@ class Property2Mol:
         plt.clf()
 
     def run_property_2_Mol_test(self):    
-        for test_name, sample in list(self.test_suit.items()):
+        for test_name, sample in list(self.test_suite.items()):
             time_start = time.time()
             input_properties = sample["input_properties"]
             target_properties = sample["target_properties"]
