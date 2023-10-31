@@ -51,7 +51,7 @@ mock_property_range = {
 }
 
 greedy_generation_config = {
-    "eos_token_id": 20,
+    # "eos_token_id": 20,
     "max_length": 300,
     "temperature": 1.0,
     "repetition_penalty": 1.0,
@@ -83,18 +83,20 @@ regexp = "^.*?(?=\\[END_SMILES])"
 model_125m_253k = "/home/menuab/code/checkpoints/125m_253k/"
 model_125m_241k = "/home/menuab/code/checkpoints/125m_241k/"
 model_1b_131k = "/home/menuab/code/checkpoints/1.3b_131k/"
+model_125m_76k_new = "/home/menuab/code/checkpoints/87dc7180e49141deae4ded57/checkpoint-73728/"
 galactica_tokenizer_path = "src/tokenizer/galactica-125m/"
-chemlactica_tokenizer_path = "src/tokenizer/ChemLacticaTokenizer"
+chemlactica_tokenizer_50028_path = "src/tokenizer/ChemLacticaTokenizer_50028"
+chemlactica_tokenizer_50066_path = "src/tokenizer/ChemLacticaTokenizer_50066"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
 device = "cuda:0"
 
 evaluation_config = {
-    "test_suit":             test_suite,
+    "test_suite":            test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_generation_config,
-    "model_checkpoint_path": model_125m_253k,
-    "tokenizer_path":        chemlactica_tokenizer_path,
+    "model_checkpoint_path": model_125m_76k_new,
+    "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
     "regexp":                regexp,

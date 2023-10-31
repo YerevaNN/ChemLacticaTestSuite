@@ -68,7 +68,7 @@ class Property2Mol:
 
     def start_log_file(self):
         model_name = self.model_checkpoint_path.split("/")[-2]
-        self.results_path = os.path.join(f"../results/property_2_Mol/{datetime.now().strftime('%Y-%m-%d-%H:%M')}"\
+        self.results_path = os.path.join(f"/home/menuab/code/ChemLacticaTestSuite/results/property_2_Mol/{datetime.now().strftime('%Y-%m-%d-%H:%M')}"\
                                     f"-{model_name}/")
         print(f'results_path = {self.results_path}\n')
         if not os.path.exists(self.results_path):
@@ -113,7 +113,10 @@ class Property2Mol:
         
         inputs = []
         for value in inputs_[0]:
-            input = f'[{property.upper()} {value}]{self.smiles_prefix}'
+            if len(self.tokenizer) == 50028:
+                input = f'[{property.upper()} {value}]{self.smiles_prefix}'
+            else:
+                input = f'[{property.upper()}]{value}[/{property.upper()}]{self.smiles_prefix}'
             if self.include_eos:
                 input = self.eos_string + input
             inputs.append(input)
