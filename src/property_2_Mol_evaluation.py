@@ -217,12 +217,11 @@ class Property2Mol:
                     error.append(0)
                     invalid_generations += 1
             errors.append(error)
-        # errors.append(error)
+        errors.append(error)
         uniques = set(mol_util.get_canonical(list(chain(*self.outputs))))
-        # in_pubchem = check_in_pubchem(uniques)
+        in_pubchem = check_in_pubchem(uniques)
         n_uniques = len(uniques)
-        # n_in_pubchem = sum(in_pubchem.values())
-        n_in_pubchem = 0
+        n_in_pubchem = sum(in_pubchem.values())
         return errors, invalid_generations, n_uniques, n_in_pubchem
 
     def write_to_file(self, test_name):

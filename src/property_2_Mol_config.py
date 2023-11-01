@@ -102,7 +102,7 @@ chemlactica_tokenizer_50028_path = "src/tokenizer/ChemLacticaTokenizer_50028"
 chemlactica_tokenizer_50066_path = "src/tokenizer/ChemLacticaTokenizer_50066"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-device = "cuda:1"
+device = "cuda:0"
 
 evaluation_config = {
     "test_suite":            test_suite,
