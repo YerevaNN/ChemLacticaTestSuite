@@ -18,9 +18,9 @@ test_suite = {
 }
 
 mock_test_suite = {
-    "weight": {
-        "input_properties": ["weight"],
-        "target_properties": ["weight"]
+    "clogp": {
+        "input_properties": ["clogp"],
+        "target_properties": ["clogp"]
     }
 }
 
@@ -34,18 +34,30 @@ property_range = {
         "step":  0.01
     },
     "weight": {
-        "range": (100.1, 500),
+        "range": (100.1, 1000),
         "step":  1
     },
     "clogp": {
-        "range": (1, 5),
+        "range": (1, 10),
         "step":  0.1
     }
 }  
 
 mock_property_range = {
+    "clogp": {
+        "range": (1, 10),
+        "step":  1
+    },
+    "sas": {
+        "range": (1, 10),
+        "step":  1
+    },
+    "qed": {
+        "range": (0, 1),
+        "step":  0.1
+    },
     "weight": {
-        "range": (100.1, 300),
+        "range": (100.1, 1000),
         "step":  1
     }
 }
@@ -84,6 +96,7 @@ model_125m_253k = "/home/menuab/code/checkpoints/125m_253k/"
 model_125m_241k = "/home/menuab/code/checkpoints/125m_241k/"
 model_1b_131k = "/home/menuab/code/checkpoints/1.3b_131k/"
 model_125m_76k_new = "/home/menuab/code/checkpoints/87dc7180e49141deae4ded57/checkpoint-73728/"
+model_125m_73k_assay = "/home/menuab/code/checkpoints/c6af41c79f1244f698cc1153/125m_73k_withassay"
 galactica_tokenizer_path = "src/tokenizer/galactica-125m/"
 chemlactica_tokenizer_50028_path = "src/tokenizer/ChemLacticaTokenizer_50028"
 chemlactica_tokenizer_50066_path = "src/tokenizer/ChemLacticaTokenizer_50066"
@@ -94,7 +107,7 @@ device = "cuda:1"
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
-    "generation_config":     nongreedy_generation_config,
+    "generation_config":     greedy_generation_config,
     "model_checkpoint_path": model_125m_253k,
     "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,

@@ -3,6 +3,7 @@ import re
 import os
 import time
 import json
+import pickle
 from itertools import chain
 from datetime import datetime
 
@@ -66,7 +67,15 @@ class Property2Mol:
         self.tokenizer = self.load_tokenizer()
         self.log_file = self.start_log_file()
         # assert_model_tokenizer()
-
+        self.pubchem_stats = self.get_pubchem_stats()
+        
+    @staticmethod
+    def get_pubchem_stats():
+        pubchem_stats_file = open("src/pubchem_stats.pkl", 'rb')
+        pubchem_stats = pickle.load(pubchem_stats_file)
+        pubchem_stats_file.close()
+        return pubchem_stats
+    
     def start_log_file(self):
         model_name = self.model_checkpoint_path.split("/")[-2]
         self.results_path = os.path.join(f"/home/menuab/code/ChemLacticaTestSuite/results/property_2_Mol/{datetime.now().strftime('%Y-%m-%d-%H:%M')}"\
@@ -210,9 +219,10 @@ class Property2Mol:
             errors.append(error)
         # errors.append(error)
         uniques = set(mol_util.get_canonical(list(chain(*self.outputs))))
-        in_pubchem = check_in_pubchem(uniques)
+        # in_pubchem = check_in_pubchem(uniques)
         n_uniques = len(uniques)
-        n_in_pubchem = sum(in_pubchem.values())
+        # n_in_pubchem = sum(in_pubchem.values())
+        n_in_pubchem = 0
         return errors, invalid_generations, n_uniques, n_in_pubchem
 
     def write_to_file(self, test_name):
@@ -255,23 +265,31 @@ class Property2Mol:
         max_, min_, max_g = np.max(self.targets), np.min(self.targets), np.max(generated_clean)
         title = f'greedy generation of {test_name} with {self.model_checkpoint_path.split("/")[-2]}\n rmse {rmse:.3f} mape {mape:.3f}'
         if self.generation_config["do_sample"] == True:
-            title = 'non ' + title    
-        plt.figure(figsize=(8,6))   
+            title = 'non ' + title
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        fig.set_figheight(6)
+        fig.set_figwidth(8)
+        fig.set_linewidth(4)
+        stats = self.pubchem_stats[test_name.upper()]
+        property_range = self.property_range[test_name]["range"]
+        stats_width = (property_range[1] - property_range[0]) / 100
+        ax2.bar([interval.mid for interval in stats.index], stats, width=stats_width, alpha=0.3) 
         plt.title(title)
         plt.grid(True)
-        plt.text(1.1 * max_, 0.90 * max(max_g, max_), f"Spearman correlation: {correlation:.3f}")
-        plt.text(1.1 * max_, 0.85 * max(max_g, max_), f"N invalid gens: {self.invalid_generations}")
-        plt.text(1.1 * max_, 0.80 * max(max_g, max_), f"N of total Gens: {len(self.inputs)}")
-        plt.text(1.1 * max_, 0.75 * max(max_g, max_), f"N of Unique Mols: {self.n_unique}")
-        plt.text(1.1 * max_, 0.70 * max(max_g, max_), f"N of in PubChem Mols: {self.n_in_pubchem}")
-        plt.scatter(target_clean, generated_clean, c='b')
-        plt.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
-        plt.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
-        plt.xlabel(f'target {test_name}')
-        plt.ylabel(f'generated {test_name}')
+        ax1.text(1.2 * max_, 0.90 * max(max_g, max_), f"Spearman correlation: {correlation:.3f}")
+        ax1.text(1.2 * max_, 0.85 * max(max_g, max_), f"N invalid gens: {self.invalid_generations}")
+        ax1.text(1.2 * max_, 0.80 * max(max_g, max_), f"N of total Gens: {len(self.inputs)}")
+        ax1.text(1.2 * max_, 0.75 * max(max_g, max_), f"N of Unique Mols: {self.n_unique}")
+        ax1.text(1.2 * max_, 0.70 * max(max_g, max_), f"N of in PubChem Mols: {self.n_in_pubchem}")
+        ax1.scatter(target_clean, generated_clean, c='b')
+        ax1.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
+        ax1.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
+        ax1.set_xlabel(f'target {test_name}')
+        ax1.set_ylabel(f'generated {test_name}')
         plt.tight_layout()
-        plt.savefig(self.results_path + test_name + '.png', dpi=300, format="png")
-        plt.clf()
+        fig.savefig(self.results_path + test_name + '.png', dpi=300, format="png")
+        fig.clf()
         plt.close()
 
     def generate_perplexity_vs_rmse(self, test_name):
