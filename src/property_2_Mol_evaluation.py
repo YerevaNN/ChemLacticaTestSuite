@@ -243,25 +243,28 @@ class Property2Mol:
                 else:
                     nones.append(t)
         correlation, pvalue = spearmanr(target_clean, generated_clean)
-        loss = np.sqrt(metrics.mean_squared_error(target_clean, generated_clean))
-        return target_clean, generated_clean, nones, correlation, loss
+        rmse = metrics.mean_squared_error(target_clean, generated_clean, squared=False)
+        mape = metrics.mean_absolute_percentage_error(target_clean, generated_clean)
+        return target_clean, generated_clean, nones, correlation, rmse, mape
 
-    def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, loss):
-        max_, min_ = np.max(self.targets), np.min(self.targets)
-        title = f'greedy generation of {test_name} with {self.model_checkpoint_path.split("/")[-2]}\n rmse {loss:.3f}'
+    def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape):
+        max_, min_, max_g = np.max(self.targets), np.min(self.targets), np.max(generated_clean)
+        title = f'greedy generation of {test_name} with {self.model_checkpoint_path.split("/")[-2]}\n rmse {rmse:.3f} mape {mape:.3f}'
         if self.generation_config["do_sample"] == True:
-            title = 'non ' + title       
+            title = 'non ' + title    
+        plt.figure(figsize=(8,6))   
         plt.title(title)
         plt.grid(True)
-        plt.text(0.05 * max_, 0.90 * max(max(generated_clean), max_), f"Spearman correlation: {correlation:.3f}")
-        plt.text(0.05 * max_, 0.85 * max(max(generated_clean), max_), f"N of Unique Mols: {self.n_unique}")
-        plt.text(0.05 * max_, 0.80 * max(max(generated_clean), max_), f"N invalid gens: {self.invalid_generations}")
-        plt.text(0.05 * max_, 0.75 * max(max(generated_clean), max_), f"N of total Gens: {len(self.inputs)}")
+        plt.text(1.1 * max_, 0.90 * max(max_g, max_), f"Spearman correlation: {correlation:.3f}")
+        plt.text(1.1 * max_, 0.85 * max(max_g, max_), f"N of Unique Mols: {self.n_unique}")
+        plt.text(1.1 * max_, 0.80 * max(max_g, max_), f"N invalid gens: {self.invalid_generations}")
+        plt.text(1.1 * max_, 0.75 * max(max_g, max_), f"N of total Gens: {len(self.inputs)}")
         plt.scatter(target_clean, generated_clean, c='b')
         plt.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
         plt.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
         plt.xlabel(f'target {test_name}')
         plt.ylabel(f'generated {test_name}')
+        plt.tight_layout()
         plt.savefig(self.results_path + test_name + '.png', dpi=300, format="png")
         plt.clf()
 
@@ -295,9 +298,9 @@ class Property2Mol:
             self.outputs, self.raw_outputs, self.perplexities = self.generate_outputs()
             self.calculated_properties = self.calculate_properties(property_fns)
             self.errors, self.invalid_generations, self.n_unique = self.get_stats()
-            target_clean, generated_clean, nones, correlation, loss = self.clean_outputs()
+            target_clean, generated_clean, nones, correlation, rmse, mape = self.clean_outputs()
             self.write_to_file(test_name)
-            self.generate_plot(test_name, target_clean, generated_clean, nones, correlation, loss)
+            self.generate_plot(test_name, target_clean, generated_clean, nones, correlation, rmse, mape)
             self.generate_perplexity_vs_rmse(test_name)
             print(f"finished evaluating test for {test_name}")
             print(f"{len(self.inputs)} samples evaluated in {time.time()-time_start} seconds")
