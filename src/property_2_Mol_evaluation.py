@@ -267,25 +267,30 @@ class Property2Mol:
         plt.tight_layout()
         plt.savefig(self.results_path + test_name + '.png', dpi=300, format="png")
         plt.clf()
+        plt.close()
 
     def generate_perplexity_vs_rmse(self, test_name):
-        perplexity_clean, error_clean, invalid = [], [], []
-        for p, e in zip(list(chain(*self.perplexities)), list(chain(*self.errors))):
-            if e > 0:
-                perplexity_clean.append(p)
-                error_clean.append(e)
-            else:
-                invalid.append(p)
-        max_ = max(error_clean)
-        plt.title(test_name + ' perplexity vs absolute error')
-        plt.grid(True)
-        plt.xlabel(f'generated molecule perplexity')
-        plt.ylabel(f'{test_name} score diff')
-        plt.text(0.1 , 0.9 * max_, f"number of invalid strings: {len(invalid)}")
-        plt.scatter(perplexity_clean, error_clean)
-        plt.vlines(invalid, ymin=0, ymax=max_, color='r', alpha=0.3)
-        plt.savefig(self.results_path + test_name + '_per_vs_rmse.png', dpi=300, format="png")
-        plt.clf()
+        indices = np.linspace(0, len(self.perplexities) - 1, 5, dtype=int)
+        for i in indices:
+            perplexity_clean, error_clean, invalid = [], [], []
+            for p, e in zip(self.perplexities[i], self.errors[i]):
+                if e > 0:
+                    perplexity_clean.append(p)
+                    error_clean.append(e)
+                else:
+                    invalid.append(p)
+            max_ = max(error_clean)
+            plt.figure()
+            plt.title(test_name + f'perplexity vs absolute error at target={self.targets[i][0]}')
+            plt.grid(True)
+            plt.xlabel(f'generated molecule perplexity')
+            plt.ylabel(f'{test_name} score diff')
+            plt.text(0.1 , 0.9 * max_, f"number of invalid strings: {len(invalid)}")
+            plt.scatter(perplexity_clean, error_clean)
+            plt.vlines(invalid, ymin=0, ymax=max_, color='r', alpha=0.3)
+            plt.savefig(self.results_path + "per_vs_rmse/" + f'{test_name}_{i}.png', dpi=300, format="png")
+            plt.clf()
+            plt.close()
 
     def run_property_2_Mol_test(self):    
         for test_name, sample in list(self.test_suite.items()):
@@ -301,7 +306,11 @@ class Property2Mol:
             target_clean, generated_clean, nones, correlation, rmse, mape = self.clean_outputs()
             self.write_to_file(test_name)
             self.generate_plot(test_name, target_clean, generated_clean, nones, correlation, rmse, mape)
-            self.generate_perplexity_vs_rmse(test_name)
+            if self.generation_config["do_sample"] == True:
+                path = self.results_path + "per_vs_rmse/"
+                if not os.path.exists(path):
+                    os.makedirs(path)
+                self.generate_perplexity_vs_rmse(test_name)
             print(f"finished evaluating test for {test_name}")
             print(f"{len(self.inputs)} samples evaluated in {time.time()-time_start} seconds")
 

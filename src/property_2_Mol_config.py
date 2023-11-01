@@ -76,7 +76,7 @@ nongreedy_generation_config = {
     "output_scores":True
     }
 
-top_N = 10
+top_N = 5
 regexp = "^.*?(?=\\[END_SMILES])"
 
 # model_checkpoint_path = "/home/hrant/chem/tigran/ChemLactica/checkpoints/facebook/galactica-125m/ac7915df73b24ee3a4e172d6/checkpoint-253952"
@@ -94,7 +94,7 @@ device = "cuda:1"
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
-    "generation_config":     greedy_generation_config,
+    "generation_config":     nongreedy_generation_config,
     "model_checkpoint_path": model_125m_253k,
     "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,
