@@ -17,6 +17,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from utils import mol_util
 from custom_modeling_opt import CustomOPTForCausalLM
 from property_2_Mol_config import evaluation_config
+from pubchem_checker.check_in_pubchem import check_in_pubchem
 # from assert_tokenizer import assert_tokenizer
 
 seed_value = 42
@@ -208,14 +209,17 @@ class Property2Mol:
                     invalid_generations += 1
             errors.append(error)
         # errors.append(error)
-        n_uniques = len(set(mol_util.get_canonical(list(chain(*self.outputs)))))
-
-        return errors, invalid_generations, n_uniques
+        uniques = set(mol_util.get_canonical(list(chain(*self.outputs))))
+        in_pubchem = check_in_pubchem(uniques)
+        n_uniques = len(uniques)
+        n_in_pubchem = sum(in_pubchem.values())
+        return errors, invalid_generations, n_uniques, n_in_pubchem
 
     def write_to_file(self, test_name):
         self.log_file.write(f'properties under test: {test_name}\n')
         self.log_file.write(f'number of total generations: {len(self.inputs)}\n')
         self.log_file.write(f'number of unique molecules generated: {self.n_unique}\n')
+        self.log_file.write(f'number of in pubchem molecules generated: {self.n_in_pubchem}\n')
         self.log_file.write(f"No valid SMILES generated in {self.invalid_generations} out of"\
                             f" {len(self.targets)} cases\n----------\n\n")
 
@@ -256,9 +260,10 @@ class Property2Mol:
         plt.title(title)
         plt.grid(True)
         plt.text(1.1 * max_, 0.90 * max(max_g, max_), f"Spearman correlation: {correlation:.3f}")
-        plt.text(1.1 * max_, 0.85 * max(max_g, max_), f"N of Unique Mols: {self.n_unique}")
-        plt.text(1.1 * max_, 0.80 * max(max_g, max_), f"N invalid gens: {self.invalid_generations}")
-        plt.text(1.1 * max_, 0.75 * max(max_g, max_), f"N of total Gens: {len(self.inputs)}")
+        plt.text(1.1 * max_, 0.85 * max(max_g, max_), f"N invalid gens: {self.invalid_generations}")
+        plt.text(1.1 * max_, 0.80 * max(max_g, max_), f"N of total Gens: {len(self.inputs)}")
+        plt.text(1.1 * max_, 0.75 * max(max_g, max_), f"N of Unique Mols: {self.n_unique}")
+        plt.text(1.1 * max_, 0.70 * max(max_g, max_), f"N of in PubChem Mols: {self.n_in_pubchem}")
         plt.scatter(target_clean, generated_clean, c='b')
         plt.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
         plt.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
@@ -302,7 +307,7 @@ class Property2Mol:
             property_fns = self.get_property_fns(target_properties)
             self.outputs, self.raw_outputs, self.perplexities = self.generate_outputs()
             self.calculated_properties = self.calculate_properties(property_fns)
-            self.errors, self.invalid_generations, self.n_unique = self.get_stats()
+            self.errors, self.invalid_generations, self.n_unique, self.n_in_pubchem = self.get_stats()
             target_clean, generated_clean, nones, correlation, rmse, mape = self.clean_outputs()
             self.write_to_file(test_name)
             self.generate_plot(test_name, target_clean, generated_clean, nones, correlation, rmse, mape)

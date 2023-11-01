@@ -76,7 +76,7 @@ nongreedy_generation_config = {
     "output_scores":True
     }
 
-top_N = 5
+top_N = 10
 regexp = "^.*?(?=\\[END_SMILES])"
 
 # model_checkpoint_path = "/home/hrant/chem/tigran/ChemLactica/checkpoints/facebook/galactica-125m/ac7915df73b24ee3a4e172d6/checkpoint-253952"
