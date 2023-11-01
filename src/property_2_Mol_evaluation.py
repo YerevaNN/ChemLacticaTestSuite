@@ -162,7 +162,9 @@ class Property2Mol:
                 )
             end_smiles = torch.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
             end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
-            perplexities = [round(np.exp(-scores[index[0], :index[1] + 1].mean().item()), 4) for index in end_smiles_indices]
+            perplexities = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
+                             for index in end_smiles_indices]
+            # perplexities = np.exp(-np.ma.masked_invalid(scores.cpu().numpy()).mean(axis=1).data)
             if self.generation_config["do_sample"] == True:
                 sorted_outputs = sorted(zip(perplexities, output.sequences[end_smiles_indices[:, 0]]), key=lambda x: x[0])[:self.top_N]
                 perplexities = []

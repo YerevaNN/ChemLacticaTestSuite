@@ -51,7 +51,7 @@ mock_property_range = {
 }
 
 greedy_generation_config = {
-    # "eos_token_id": 20,
+    "eos_token_id": 20,
     "max_length": 300,
     "temperature": 1.0,
     "repetition_penalty": 1.0,
@@ -70,13 +70,13 @@ nongreedy_generation_config = {
     "top_p": 1.0,
     "repetition_penalty": 1.0,
     "do_sample": True,  
-    "num_return_sequences": 20,
+    "num_return_sequences": 40,
     "num_beams": 1,
     "return_dict_in_generate":True,
     "output_scores":True
     }
 
-top_N = 5
+top_N = 10
 regexp = "^.*?(?=\\[END_SMILES])"
 
 # model_checkpoint_path = "/home/hrant/chem/tigran/ChemLactica/checkpoints/facebook/galactica-125m/ac7915df73b24ee3a4e172d6/checkpoint-253952"
@@ -89,14 +89,14 @@ chemlactica_tokenizer_50028_path = "src/tokenizer/ChemLacticaTokenizer_50028"
 chemlactica_tokenizer_50066_path = "src/tokenizer/ChemLacticaTokenizer_50066"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-device = "cuda:0"
+device = "cuda:1"
 
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
-    "generation_config":     greedy_generation_config,
-    "model_checkpoint_path": model_125m_76k_new,
-    "tokenizer_path":        chemlactica_tokenizer_50066_path,
+    "generation_config":     nongreedy_generation_config,
+    "model_checkpoint_path": model_125m_253k,
+    "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
     "regexp":                regexp,
