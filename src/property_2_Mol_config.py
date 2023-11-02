@@ -30,7 +30,7 @@ property_range = {
         "step":  0.1
     },
     "qed": {
-        "range": (0, 1),
+        "range": (0.01, 1),
         "step":  0.01
     },
     "weight": {
@@ -53,7 +53,7 @@ mock_property_range = {
         "step":  1
     },
     "qed": {
-        "range": (0, 1),
+        "range": (0.01, 1),
         "step":  0.1
     },
     "weight": {
@@ -70,6 +70,18 @@ greedy_generation_config = {
     "do_sample": False,  
     "num_return_sequences": 1,
     "num_beams": 1,
+    "return_dict_in_generate":True,
+    "output_scores":True
+    }
+
+greedy_beam_generation_config = {
+    "eos_token_id": 20,
+    "max_length": 300,
+    "temperature": 1.0,
+    "repetition_penalty": 1.0,
+    "do_sample": False,  
+    "num_return_sequences": 1,
+    "num_beams": 5,
     "return_dict_in_generate":True,
     "output_scores":True
     }
@@ -116,4 +128,5 @@ evaluation_config = {
     "top_N":                 top_N,
     "generate_log_file":     True,
     "include_eos":           True,
+    "check_for_novelty":     False,
 }

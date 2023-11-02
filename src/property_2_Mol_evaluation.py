@@ -44,6 +44,7 @@ class Property2Mol:
             include_eos=True,
             top_N=10,
             generate_log_file=True,
+            check_for_novelty=True,
             ) -> None:
         
         self.test_suite=test_suite
@@ -68,6 +69,7 @@ class Property2Mol:
         self.log_file = self.start_log_file()
         # assert_model_tokenizer()
         self.pubchem_stats = self.get_pubchem_stats()
+        self.check_for_novelty = check_for_novelty
         
     @staticmethod
     def get_pubchem_stats():
@@ -164,12 +166,19 @@ class Property2Mol:
                 input_ids=input_id,
                 **self.generation_config   
             )
-        
-            scores = self.model.compute_transition_scores(
-                    sequences=output.sequences,
-                    scores=output.scores,
-                    normalize_logits=True
-                )
+            if self.generation_config["num_beams"] > 1:
+                scores = self.model.compute_transition_scores(
+                        sequences=output.sequences,
+                        scores=output.scores,
+                        beam_indices=output.beam_indices,
+                        normalize_logits=True
+                    )
+            else:
+                scores = self.model.compute_transition_scores(
+                        sequences=output.sequences,
+                        scores=output.scores,
+                        normalize_logits=True
+                    )
             end_smiles = torch.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
             end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
             perplexities = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
@@ -219,9 +228,12 @@ class Property2Mol:
             errors.append(error)
         errors.append(error)
         uniques = set(mol_util.get_canonical(list(chain(*self.outputs))))
-        in_pubchem = check_in_pubchem(uniques)
         n_uniques = len(uniques)
-        n_in_pubchem = sum(in_pubchem.values())
+        if self.check_for_novelty:
+            in_pubchem = check_in_pubchem(uniques)
+            n_in_pubchem = sum(in_pubchem.values())
+        else:
+            n_in_pubchem = 'NC'
         return errors, invalid_generations, n_uniques, n_in_pubchem
 
     def write_to_file(self, test_name):
@@ -262,14 +274,15 @@ class Property2Mol:
 
     def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape):
         max_, min_, max_g = np.max(self.targets), np.min(self.targets), np.max(generated_clean)
-        title = f'greedy generation of {test_name} with {self.model_checkpoint_path.split("/")[-2]}\n rmse {rmse:.3f} mape {mape:.3f}'
+        title = f'greedy (n_beams={self.generation_config["num_beams"]}) generation of {test_name} '\
+                f'with {self.model_checkpoint_path.split("/")[-2]}\n rmse {rmse:.3f} mape {mape:.3f}'
         if self.generation_config["do_sample"] == True:
             title = 'non ' + title
         fig, ax1 = plt.subplots()
-        ax2 = ax1.twinx()
         fig.set_figheight(6)
         fig.set_figwidth(8)
         fig.set_linewidth(4)
+        ax2 = ax1.twinx()
         stats = self.pubchem_stats[test_name.upper()]
         property_range = self.property_range[test_name]["range"]
         stats_width = (property_range[1] - property_range[0]) / 100
