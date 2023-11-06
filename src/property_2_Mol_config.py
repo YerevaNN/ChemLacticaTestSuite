@@ -45,20 +45,20 @@ property_range = {
 
 mock_property_range = {
     "clogp": {
-        "range": (1, 10),
+        "range": (1.2, 10),
         "step":  1
     },
     "sas": {
-        "range": (1, 10),
+        "range": (1.2, 10),
         "step":  1
     },
     "qed": {
         "range": (0.01, 1),
-        "step":  0.1
+        "step":  .1
     },
     "weight": {
         "range": (100.1, 1000),
-        "step":  1
+        "step":  200
     }
 }
 
@@ -94,13 +94,27 @@ nongreedy_generation_config = {
     "top_p": 1.0,
     "repetition_penalty": 1.0,
     "do_sample": True,  
-    "num_return_sequences": 40,
+    "num_return_sequences": 50,
     "num_beams": 1,
     "return_dict_in_generate":True,
     "output_scores":True
     }
 
-top_N = 10
+contrastive_generation_config = {
+    "eos_token_id": 20,
+    "penalty_alpha" : 0.6,
+    "top_k" : 4,
+    "max_length" : 300,
+    "num_beams": 1,
+    "return_dict_in_generate":True,
+    "output_scores":True,
+    "num_return_sequences":50,
+    # "num_beams":10,
+    "do_sample": True,
+}
+
+top_N = 50
+n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 
 # model_checkpoint_path = "/home/hrant/chem/tigran/ChemLactica/checkpoints/facebook/galactica-125m/ac7915df73b24ee3a4e172d6/checkpoint-253952"
@@ -114,18 +128,20 @@ chemlactica_tokenizer_50028_path = "src/tokenizer/ChemLacticaTokenizer_50028"
 chemlactica_tokenizer_50066_path = "src/tokenizer/ChemLacticaTokenizer_50066"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-device = "cuda:0"
+device = "cuda:1"
+# device = 'cpu'
 
 evaluation_config = {
     "test_suite":            test_suite,
-    "property_range":        property_range,
-    "generation_config":     greedy_generation_config,
+    "property_range":        mock_property_range,
+    "generation_config":     nongreedy_generation_config,
     "model_checkpoint_path": model_125m_253k,
     "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
     "regexp":                regexp,
     "top_N":                 top_N,
+    "n_per_vs_rmse":         n_per_vs_rmse,
     "generate_log_file":     True,
     "include_eos":           True,
     "check_for_novelty":     False,

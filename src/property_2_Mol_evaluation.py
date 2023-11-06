@@ -41,8 +41,9 @@ class Property2Mol:
             tokenizer_path,
             torch_dtype,
             device,
+            top_N,
+            n_per_vs_rmse,
             include_eos=True,
-            top_N=10,
             generate_log_file=True,
             check_for_novelty=True,
             ) -> None:
@@ -60,6 +61,7 @@ class Property2Mol:
         self.eos_string = "</s>"
         self.include_eos = include_eos
         self.top_N = top_N
+        self.n_per_vs_rmse = n_per_vs_rmse
 
         self.molecules_set = set()
         self.invalid_generations = {"not_captured":0,  "not_valid":0}
@@ -158,6 +160,8 @@ class Property2Mol:
         outputs = []
         raw_outputs = []
         perplexities_list = []
+        token_lengths = []
+        norm_logs_list = []
         self.molecules_set = set()
         self.invalid_generations = {"not_captured":0,  "not_valid":0}        
         for input_id in input_ids:
@@ -183,18 +187,29 @@ class Property2Mol:
             end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
             perplexities = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
                              for index in end_smiles_indices]
+            norm_logs = [round(scores[index[0], :index[1] - context_length + 1].mean().item(), 4) 
+                         for index in end_smiles_indices]
             # perplexities = np.exp(-np.ma.masked_invalid(scores.cpu().numpy()).mean(axis=1).data)
             if self.generation_config["do_sample"] == True:
-                sorted_outputs = sorted(zip(perplexities, output.sequences[end_smiles_indices[:, 0]]), key=lambda x: x[0])[:self.top_N]
+                sorted_outputs = sorted(zip(norm_logs,
+                                            perplexities,
+                                            output.sequences[end_smiles_indices[:, 0]], end_smiles_indices[:, 1] - context_length + 1),
+                                            key=lambda x: x[0])[:self.top_N]
                 perplexities = []
                 texts = []
-                for perplexity, output in sorted_outputs:
+                lenghts = []
+                norm_log = []
+                for n_log, perplexity, output, len_ in sorted_outputs:
+                    norm_log.append(n_log)
                     texts.append(self.tokenizer.decode(output[context_length:]))
                     perplexities.append(perplexity)
+                    lenghts.append(len_)
             else:
                 texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
             raw_outputs.append(texts)
             perplexities_list.append(perplexities)
+            token_lengths.append(lenghts)
+            norm_logs_list.append(norm_log)
             out = []
             for text in texts:
                 try:    
@@ -206,7 +221,7 @@ class Property2Mol:
                 out.append(captured_text)
             outputs.append(out)
         
-        return outputs, raw_outputs, perplexities_list
+        return outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list
     
     def calculate_properties(self, property_fns):
         # TODO: drop the hard coded index and adjust for multiple targets
@@ -245,16 +260,18 @@ class Property2Mol:
                             f" {len(self.targets)} cases\n----------\n\n")
 
         for items in zip(self.inputs, self.targets, self.outputs, self.raw_outputs,
-                        self.calculated_properties, self.errors, self.perplexities):
-            input, target, output, raw_output, c_prop, err, perplexity = items
+                        self.calculated_properties, self.errors, self.perplexities,
+                        self.token_lengths):
+            input, target, output, raw_output, c_prop, err, perplexity, length = items
             self.log_file.write(f'input: {input}\n')
             self.log_file.write(f'target value: {target[0]}\n')
             for r in raw_output:
                 self.log_file.write(f'raw_output: {r}\n')
             self.log_file.write('-----------\n')
-            for o, cp, e, per in zip(output, c_prop, err, perplexity):
+            for o, cp, e, per, l in zip(output, c_prop, err, perplexity, length):
                 self.log_file.write(f'captured_output: {o}\n')
-                self.log_file.write(f'generated_property: {cp} diff: {e}, perplexity: {per}\n')
+                self.log_file.write(f'generated_property: {cp} diff: {e}, perplexity: {per}, '\
+                                    f'token length: {l}, char length: {len(o)}\n')
             self.log_file.write('***********\n')
 
     def clean_outputs(self):
@@ -305,27 +322,34 @@ class Property2Mol:
         plt.close()
 
     def generate_perplexity_vs_rmse(self, test_name):
-        indices = np.linspace(0, len(self.perplexities) - 1, 5, dtype=int)
-        for i in indices:
-            perplexity_clean, error_clean, invalid = [], [], []
-            for p, e in zip(self.perplexities[i], self.errors[i]):
+        indices = np.linspace(0, len(self.perplexities) - 1, self.n_per_vs_rmse + 2, dtype=int)[1:self.n_per_vs_rmse + 1]
+        fig, axs = plt.subplots(1, self.n_per_vs_rmse, figsize=(self.n_per_vs_rmse * 6, 6))
+        fig.suptitle(f'Perplexity vs. Length vs. Absolute Error overall RMSE={round(self.rmse, 2)} N samples={self.top_N}')
+        color_max = 0
+        for en, i in enumerate(indices):
+            perplexity_clean, error_clean, invalid, lengths = [], [], [], []
+            for p, e, l in zip(self.perplexities[i], self.errors[i], self.token_lengths[i]):
                 if e > 0:
                     perplexity_clean.append(p)
                     error_clean.append(e)
+                    lengths.append(l)
                 else:
                     invalid.append(p)
-            max_ = max(error_clean)
-            plt.figure()
-            plt.title(test_name + f'perplexity vs absolute error at target={self.targets[i][0]}')
-            plt.grid(True)
-            plt.xlabel(f'generated molecule perplexity')
-            plt.ylabel(f'{test_name} score diff')
-            plt.text(0.1 , 0.9 * max_, f"number of invalid strings: {len(invalid)}")
-            plt.scatter(perplexity_clean, error_clean)
-            plt.vlines(invalid, ymin=0, ymax=max_, color='r', alpha=0.3)
-            plt.savefig(self.results_path + "per_vs_rmse/" + f'{test_name}_{i}.png', dpi=300, format="png")
-            plt.clf()
-            plt.close()
+
+            im = axs[en].scatter(perplexity_clean, lengths, c=error_clean, s=70)
+            axs[en].set_title(f'{test_name}={self.targets[i][0]}')
+            axs[en].set_xlim((0, 6))
+            axs[en].set_ylim((0, 170))
+            axs[en].set_xlabel('Perplexity')
+            # axs[en].set_xlabel('Normalized logs')
+            axs[en].set_ylabel('Length')
+            axs[en].grid()
+            color_max = max(color_max, max(error_clean, default=0))
+
+        cbar = fig.colorbar(im, label='Error')
+        plt.savefig(self.results_path + "per_vs_rmse/" + f'{test_name}_per_vs_len.png', dpi=300, format="png")
+        plt.clf()
+        plt.close()
 
     def run_property_2_Mol_test(self):    
         for test_name, sample in list(self.test_suite.items()):
@@ -335,12 +359,12 @@ class Property2Mol:
             self.targets = self.get_targets(target_properties)
             self.inputs = self.get_inputs(input_properties)
             property_fns = self.get_property_fns(target_properties)
-            self.outputs, self.raw_outputs, self.perplexities = self.generate_outputs()
+            self.outputs, self.raw_outputs, self.perplexities, self.token_lengths, self.norm_logs = self.generate_outputs()
             self.calculated_properties = self.calculate_properties(property_fns)
             self.errors, self.invalid_generations, self.n_unique, self.n_in_pubchem = self.get_stats()
-            target_clean, generated_clean, nones, correlation, rmse, mape = self.clean_outputs()
+            target_clean, generated_clean, nones, correlation, self.rmse, mape = self.clean_outputs()
             self.write_to_file(test_name)
-            self.generate_plot(test_name, target_clean, generated_clean, nones, correlation, rmse, mape)
+            self.generate_plot(test_name, target_clean, generated_clean, nones, correlation, self.rmse, mape)
             if self.generation_config["do_sample"] == True:
                 path = self.results_path + "per_vs_rmse/"
                 if not os.path.exists(path):
