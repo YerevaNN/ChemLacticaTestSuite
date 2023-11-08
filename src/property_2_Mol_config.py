@@ -142,7 +142,7 @@ evaluation_config = {
     "regexp":                regexp,
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
-    "generate_log_file":     True,
     "include_eos":           True,
     "check_for_novelty":     False,
+    "track":                 True,
 }

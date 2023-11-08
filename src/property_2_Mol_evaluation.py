@@ -1,6 +1,6 @@
-
 import re
 import os
+import glob
 import time
 import json
 import pickle
@@ -11,6 +11,7 @@ import numpy as np
 from scipy.stats import spearmanr
 from sklearn import metrics
 import matplotlib.pyplot as plt
+from aim import Run, Image
 import torch
 from torch import bfloat16, float32
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -43,9 +44,9 @@ class Property2Mol:
             device,
             top_N,
             n_per_vs_rmse,
-            include_eos=True,
-            generate_log_file=True,
-            check_for_novelty=True,
+            include_eos,
+            check_for_novelty,
+            track,
             ) -> None:
         
         self.test_suite=test_suite
@@ -64,7 +65,8 @@ class Property2Mol:
         self.n_per_vs_rmse = n_per_vs_rmse
 
         self.molecules_set = set()
-
+        self.track = track
+        self.aim_run = Run() if self.track else None
         self.model = self.load_model()
         self.tokenizer = self.load_tokenizer()
         self.log_file = self.start_log_file()
@@ -224,7 +226,7 @@ class Property2Mol:
 
     def get_stats(self):
         errors = []
-        invalid_generations = 0
+        n_invalid_generations = 0
         for c_property, target in zip(self.calculated_properties, self.targets):
             error = []
             for prop in c_property:
@@ -232,7 +234,7 @@ class Property2Mol:
                     error.append(round(abs(prop - target[0]), 2))
                 else:
                     error.append(0)
-                    invalid_generations += 1
+                    n_invalid_generations += 1
             errors.append(error)
         errors.append(error)
         uniques = set(mol_util.get_canonical(list(chain(*self.outputs))))
@@ -241,16 +243,16 @@ class Property2Mol:
             in_pubchem = check_in_pubchem(uniques)
             n_in_pubchem = sum(in_pubchem.values())
         else:
-            n_in_pubchem = 'no count'
-        return errors, invalid_generations, n_uniques, n_in_pubchem
+            n_in_pubchem = 0
+        n_total_gens = len(self.inputs) * self.generation_config['num_return_sequences']
+        return errors, n_invalid_generations, n_uniques, n_in_pubchem, n_total_gens
 
     def write_to_file(self, test_name):
         self.log_file.write(f'properties under test: {test_name}\n')
-        self.log_file.write(f'number of total generations: '\
-                            f'{len(self.inputs) * self.generation_config["num_return_sequences"]}\n')
+        self.log_file.write(f'number of total generations: {self.n_total_gens}\n')
         self.log_file.write(f'number of unique molecules generated: {self.n_unique}\n')
         self.log_file.write(f'number of in pubchem molecules generated: {self.n_in_pubchem}\n')
-        self.log_file.write(f"No valid SMILES generated in {self.invalid_generations} out of"\
+        self.log_file.write(f"No valid SMILES generated in {self.n_invalid_generations} out of"\
                             f" {len(self.targets)} cases\n----------\n\n")
 
         for items in zip(self.inputs, self.targets, self.outputs, self.raw_outputs,
@@ -302,9 +304,8 @@ class Property2Mol:
         plt.title(title)
         plt.grid(True)
         ax1.text(1.2 * max_, 0.90 * max(max_g, max_), f"Spearman correlation: {correlation:.3f}")
-        ax1.text(1.2 * max_, 0.85 * max(max_g, max_), f"N invalid gens: {self.invalid_generations}")
-        ax1.text(1.2 * max_, 0.80 * max(max_g, max_), f"N of total gens: "\
-                 f"{len(self.inputs) * self.generation_config['num_return_sequences']}")
+        ax1.text(1.2 * max_, 0.85 * max(max_g, max_), f"N invalid gens: {self.n_invalid_generations}")
+        ax1.text(1.2 * max_, 0.80 * max(max_g, max_), f"N of total gens: {self.n_total_gens}")
         ax1.text(1.2 * max_, 0.75 * max(max_g, max_), f"N of Unique Mols: {self.n_unique}")
         ax1.text(1.2 * max_, 0.70 * max(max_g, max_), f"N of in PubChem Mols: {self.n_in_pubchem}")
         ax1.scatter(target_clean, generated_clean, c='b')
@@ -349,7 +350,6 @@ class Property2Mol:
                 axs1[en].grid()
                 color_max = max(error_clean, default=0)
                 cbar1 = fig1.colorbar(im1, label='Error')
-                # cbar1.set_clim(0, color_max)
 
                 im2 = axs2[en].scatter(x_axis, error_clean, c=lengths, s=70)
                 axs2[en].set_title(f'{test_name}={self.targets[i][0]}')
@@ -360,11 +360,35 @@ class Property2Mol:
                 axs2[en].grid()
                 color_max = max(lengths, default=0)
                 cbar2 = fig2.colorbar(im2, label='Length')
-                # cbar2.set_clim(0, color_max)
             fig1.savefig(self.results_path + "per_vs_rmse/" + f'{test_name}_{data_name}_vs_len.png', dpi=300, format="png")
             fig1.clf()
             fig2.savefig(self.results_path + "per_vs_rmse/" + f'{test_name}_{data_name}_vs_err.png', dpi=300, format="png")
             fig2.clf()
+
+    def track_stats(self, test_name):
+        self.aim_run['hparams'] = evaluation_config
+        self.aim_run.track(
+            {
+                "rmse": self.rmse,
+                "Spearman correlation": self.correlation,
+                "mape": self.mape,
+                "N total gens": self.n_total_gens,
+                "N invalid gens": self.n_invalid_generations,
+                "N of Unique Mols": self.n_unique,
+                "N of in PubChem Mols": self.n_in_pubchem,
+            },
+        context={'subset': test_name}
+        )
+        image_paths = [path for path in glob.glob(self.results_path + '**', recursive=True) 
+                       if '.png' in path and test_name in path] 
+        for path in image_paths:
+            aim_image = Image(
+                    path,
+                    format='png',
+                    optimize=True,
+                    quality=50
+                )
+            self.aim_run.track(aim_image, name=path.split('/')[-1], context={'subset': test_name})
 
     def run_property_2_Mol_test(self):    
         for test_name, sample in list(self.test_suite.items()):
@@ -376,15 +400,17 @@ class Property2Mol:
             property_fns = self.get_property_fns(target_properties)
             self.outputs, self.raw_outputs, self.perplexities, self.token_lengths, self.norm_logs = self.generate_outputs()
             self.calculated_properties = self.calculate_properties(property_fns)
-            self.errors, self.invalid_generations, self.n_unique, self.n_in_pubchem = self.get_stats()
-            target_clean, generated_clean, nones, correlation, self.rmse, mape = self.clean_outputs()
+            self.errors, self.n_invalid_generations, self.n_unique, self.n_in_pubchem, self.n_total_gens = self.get_stats()
+            target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape = self.clean_outputs()
             self.write_to_file(test_name)
-            self.generate_plot(test_name, target_clean, generated_clean, nones, correlation, self.rmse, mape)
+            self.generate_plot(test_name, target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape)
             if self.generation_config["do_sample"] == True:
                 path = self.results_path + "per_vs_rmse/"
                 if not os.path.exists(path):
                     os.makedirs(path)
                 self.generate_perplexity_vs_rmse(test_name)
+            if self.track:
+                self.track_stats(test_name)
             print(f"finished evaluating test for {test_name}")
             print(f"{len(self.inputs)} samples evaluated in {time.time()-time_start} seconds")
 
