@@ -2,7 +2,6 @@
 import re
 import os
 import time
-import math
 import json
 import pickle
 from itertools import chain
@@ -65,7 +64,6 @@ class Property2Mol:
         self.n_per_vs_rmse = n_per_vs_rmse
 
         self.molecules_set = set()
-        self.invalid_generations = {"not_captured":0,  "not_valid":0}
 
         self.model = self.load_model()
         self.tokenizer = self.load_tokenizer()
@@ -158,13 +156,7 @@ class Property2Mol:
 
     def generate_outputs(self):
         input_ids = [self.tokenizer(input, return_tensors="pt").to(self.device).input_ids for input in self.inputs]
-        outputs = []
-        raw_outputs = []
-        perplexities_list = []
-        token_lengths = []
-        norm_logs_list = []
-        self.molecules_set = set()
-        self.invalid_generations = {"not_captured":0,  "not_valid":0}        
+        outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list, self.molecules_set = [], [], [], [], [], set()
         for input_id in input_ids:
             context_length = input_id.shape[1]
             output = self.model.generate(
@@ -197,10 +189,8 @@ class Property2Mol:
                                             norm_logs,
                                             output.sequences[end_smiles_indices[:, 0]], end_smiles_indices[:, 1] - context_length + 1),
                                             key=lambda x: x[0])[:self.top_N]
-                perplexities = []
-                texts = []
-                lenghts = []
-                norm_log = []
+                perplexities, texts, lenghts, norm_log = [], [], [], []
+
                 for perplexity, n_log, output, len_ in sorted_outputs:
                     norm_log.append(n_log)
                     texts.append(self.tokenizer.decode(output[context_length:]))
@@ -250,12 +240,13 @@ class Property2Mol:
             in_pubchem = check_in_pubchem(uniques)
             n_in_pubchem = sum(in_pubchem.values())
         else:
-            n_in_pubchem = 'NC'
+            n_in_pubchem = 'no count'
         return errors, invalid_generations, n_uniques, n_in_pubchem
 
     def write_to_file(self, test_name):
         self.log_file.write(f'properties under test: {test_name}\n')
-        self.log_file.write(f'number of total generations: {len(self.inputs)}\n')
+        self.log_file.write(f'number of total generations: '\
+                            f'{len(self.inputs) * self.generation_config["num_return_sequences"]}\n')
         self.log_file.write(f'number of unique molecules generated: {self.n_unique}\n')
         self.log_file.write(f'number of in pubchem molecules generated: {self.n_in_pubchem}\n')
         self.log_file.write(f"No valid SMILES generated in {self.invalid_generations} out of"\
@@ -272,7 +263,8 @@ class Property2Mol:
             self.log_file.write('-----------\n')
             for o, cp, e, per, l, nl in zip(output, c_prop, err, perplexity, length, n_logs):
                 self.log_file.write(f'captured_output: {o}\n')
-                self.log_file.write(f'generated_property: {cp} diff: {e}, perplexity: {per}, normalized logs sum: {nl} '\
+                self.log_file.write(f'generated_property: {cp} diff: {e}, '\
+                                    f'perplexity: {per}, normalized logs sum: {nl} '\
                                     f'token length: {l}, char length: {len(o)}\n')
             self.log_file.write('***********\n')
 
@@ -310,7 +302,8 @@ class Property2Mol:
         plt.grid(True)
         ax1.text(1.2 * max_, 0.90 * max(max_g, max_), f"Spearman correlation: {correlation:.3f}")
         ax1.text(1.2 * max_, 0.85 * max(max_g, max_), f"N invalid gens: {self.invalid_generations}")
-        ax1.text(1.2 * max_, 0.80 * max(max_g, max_), f"N of total Gens: {len(self.inputs)}")
+        ax1.text(1.2 * max_, 0.80 * max(max_g, max_), f"N of total gens: "\
+                 f"{len(self.inputs) * self.generation_config['num_return_sequences']}")
         ax1.text(1.2 * max_, 0.75 * max(max_g, max_), f"N of Unique Mols: {self.n_unique}")
         ax1.text(1.2 * max_, 0.70 * max(max_g, max_), f"N of in PubChem Mols: {self.n_in_pubchem}")
         ax1.scatter(target_clean, generated_clean, c='b')
