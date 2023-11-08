@@ -90,9 +90,10 @@ class Property2Mol:
         
         log_file.write(f'results of property to molecule test performed at '\
                             f'{datetime.now().strftime("%Y-%m-%d, %H:%M")}\n')
-        log_file.write(f'model checkpoint path: {self.model_checkpoint_path}\n')
-        log_file.write(f'property combinations being evaluated: \n{json.dumps(self.test_suite, indent=4)}\n')
-        log_file.write(f'generation config: \n{json.dumps(self.generation_config, indent=4)}\n\n')
+        # log_file.write(f'model checkpoint path: {self.model_checkpoint_path}\n')
+        log_file.write(f'evaluation config: \n{json.dumps(evaluation_config, indent=4)}\n')
+        # log_file.write(f'property combinations being evaluated: \n{json.dumps(self.test_suite, indent=4)}\n')
+        # log_file.write(f'generation config: \n{json.dumps(self.generation_config, insdent=4)}\n\n')
 
         return log_file
 
