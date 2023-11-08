@@ -2,6 +2,7 @@
 import re
 import os
 import time
+import math
 import json
 import pickle
 from itertools import chain
@@ -187,19 +188,20 @@ class Property2Mol:
             end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
             perplexities = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
                              for index in end_smiles_indices]
-            norm_logs = [round(scores[index[0], :index[1] - context_length + 1].mean().item(), 4) 
+            norm_logs = [round(scores[index[0], :index[1] - context_length + 1].sum().item(), 4) 
                          for index in end_smiles_indices]
+            # print(norm_logs)
             # perplexities = np.exp(-np.ma.masked_invalid(scores.cpu().numpy()).mean(axis=1).data)
             if self.generation_config["do_sample"] == True:
-                sorted_outputs = sorted(zip(norm_logs,
-                                            perplexities,
+                sorted_outputs = sorted(zip(perplexities,
+                                            norm_logs,
                                             output.sequences[end_smiles_indices[:, 0]], end_smiles_indices[:, 1] - context_length + 1),
                                             key=lambda x: x[0])[:self.top_N]
                 perplexities = []
                 texts = []
                 lenghts = []
                 norm_log = []
-                for n_log, perplexity, output, len_ in sorted_outputs:
+                for perplexity, n_log, output, len_ in sorted_outputs:
                     norm_log.append(n_log)
                     texts.append(self.tokenizer.decode(output[context_length:]))
                     perplexities.append(perplexity)
@@ -261,16 +263,16 @@ class Property2Mol:
 
         for items in zip(self.inputs, self.targets, self.outputs, self.raw_outputs,
                         self.calculated_properties, self.errors, self.perplexities,
-                        self.token_lengths):
-            input, target, output, raw_output, c_prop, err, perplexity, length = items
+                        self.token_lengths, self.norm_logs):
+            input, target, output, raw_output, c_prop, err, perplexity, length, n_logs = items
             self.log_file.write(f'input: {input}\n')
             self.log_file.write(f'target value: {target[0]}\n')
             for r in raw_output:
                 self.log_file.write(f'raw_output: {r}\n')
             self.log_file.write('-----------\n')
-            for o, cp, e, per, l in zip(output, c_prop, err, perplexity, length):
+            for o, cp, e, per, l, nl in zip(output, c_prop, err, perplexity, length, n_logs):
                 self.log_file.write(f'captured_output: {o}\n')
-                self.log_file.write(f'generated_property: {cp} diff: {e}, perplexity: {per}, '\
+                self.log_file.write(f'generated_property: {cp} diff: {e}, perplexity: {per}, normalized logs sum: {nl} '\
                                     f'token length: {l}, char length: {len(o)}\n')
             self.log_file.write('***********\n')
 
@@ -323,33 +325,52 @@ class Property2Mol:
 
     def generate_perplexity_vs_rmse(self, test_name):
         indices = np.linspace(0, len(self.perplexities) - 1, self.n_per_vs_rmse + 2, dtype=int)[1:self.n_per_vs_rmse + 1]
-        fig, axs = plt.subplots(1, self.n_per_vs_rmse, figsize=(self.n_per_vs_rmse * 6, 6))
-        fig.suptitle(f'Perplexity vs. Length vs. Absolute Error overall RMSE={round(self.rmse, 2)} N samples={self.top_N}')
-        color_max = 0
-        for en, i in enumerate(indices):
-            perplexity_clean, error_clean, invalid, lengths = [], [], [], []
-            for p, e, l in zip(self.perplexities[i], self.errors[i], self.token_lengths[i]):
-                if e > 0:
-                    perplexity_clean.append(p)
-                    error_clean.append(e)
-                    lengths.append(l)
-                else:
-                    invalid.append(p)
+        for data in [self.norm_logs, self.perplexities]:
+            data_name = "Log_probs" if data[0][0] < 0 else "Perplexity"
+            
+            fig1, axs1 = plt.subplots(1, self.n_per_vs_rmse, figsize=(self.n_per_vs_rmse * 6, 6))
+            fig1.suptitle(f'{data_name} vs. Length vs. Absolute Error, overall RMSE={round(self.rmse, 2)} '\
+                        f'N samples={self.generation_config["num_return_sequences"]}') 
+            
+            fig2, axs2 = plt.subplots(1, self.n_per_vs_rmse, figsize=(self.n_per_vs_rmse * 6, 6))
+            fig2.suptitle(f'{data_name} vs. Absolute Error vs. Length, overall RMSE={round(self.rmse, 2)} '\
+                        f'N samples={self.generation_config["num_return_sequences"]}')
+            
+            for en, i in enumerate(indices):
+                x_axis, error_clean, invalid, lengths = [], [], [], []
+                for x, e, l in zip(data[i], self.errors[i], self.token_lengths[i]):
+                    if e > 0:
+                        x_axis.append(x)
+                        error_clean.append(e)
+                        lengths.append(l)
+                    else:
+                        invalid.append(x)
 
-            im = axs[en].scatter(perplexity_clean, lengths, c=error_clean, s=70)
-            axs[en].set_title(f'{test_name}={self.targets[i][0]}')
-            axs[en].set_xlim((0, 6))
-            axs[en].set_ylim((0, 170))
-            axs[en].set_xlabel('Perplexity')
-            # axs[en].set_xlabel('Normalized logs')
-            axs[en].set_ylabel('Length')
-            axs[en].grid()
-            color_max = max(color_max, max(error_clean, default=0))
+                im1 = axs1[en].scatter(x_axis, lengths, c=error_clean, s=70)
+                axs1[en].set_title(f'{test_name}={self.targets[i][0]}')
+                # axs[en].set_xlim((0, 2000))
+                # axs[en].set_ylim((0, 300))
+                axs1[en].set_xlabel(data_name)
+                axs1[en].set_ylabel('Length')
+                axs1[en].grid()
+                color_max = max(error_clean, default=0)
+                cbar1 = fig1.colorbar(im1, label='Error')
+                # cbar1.set_clim(0, color_max)
 
-        cbar = fig.colorbar(im, label='Error')
-        plt.savefig(self.results_path + "per_vs_rmse/" + f'{test_name}_per_vs_len.png', dpi=300, format="png")
-        plt.clf()
-        plt.close()
+                im2 = axs2[en].scatter(x_axis, error_clean, c=lengths, s=70)
+                axs2[en].set_title(f'{test_name}={self.targets[i][0]}')
+                # axs[en].set_xlim((0, 2000))
+                # axs[en].set_ylim((0, 300))
+                axs2[en].set_xlabel(data_name)
+                axs2[en].set_ylabel('Error')
+                axs2[en].grid()
+                color_max = max(lengths, default=0)
+                cbar2 = fig2.colorbar(im2, label='Length')
+                # cbar2.set_clim(0, color_max)
+            fig1.savefig(self.results_path + "per_vs_rmse/" + f'{test_name}_{data_name}_vs_len.png', dpi=300, format="png")
+            fig1.clf()
+            fig2.savefig(self.results_path + "per_vs_rmse/" + f'{test_name}_{data_name}_vs_err.png', dpi=300, format="png")
+            fig2.clf()
 
     def run_property_2_Mol_test(self):    
         for test_name, sample in list(self.test_suite.items()):

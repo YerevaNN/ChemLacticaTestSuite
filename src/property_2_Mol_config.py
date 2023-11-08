@@ -92,9 +92,9 @@ nongreedy_generation_config = {
     "temperature": 1.0,
     "top_k": None,
     "top_p": 1.0,
-    "repetition_penalty": 1.0,
+    # "repetition_penalty": 1.0,
     "do_sample": True,  
-    "num_return_sequences": 50,
+    "num_return_sequences": 100,
     "num_beams": 1,
     "return_dict_in_generate":True,
     "output_scores":True
@@ -108,12 +108,12 @@ contrastive_generation_config = {
     "num_beams": 1,
     "return_dict_in_generate":True,
     "output_scores":True,
-    "num_return_sequences":50,
+    "num_return_sequences":500,
     # "num_beams":10,
     "do_sample": True,
 }
 
-top_N = 50
+top_N = 1000
 n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 
@@ -132,7 +132,7 @@ device = "cuda:1"
 # device = 'cpu'
 
 evaluation_config = {
-    "test_suite":            test_suite,
+    "test_suite":            mock_test_suite,
     "property_range":        mock_property_range,
     "generation_config":     nongreedy_generation_config,
     "model_checkpoint_path": model_125m_253k,
