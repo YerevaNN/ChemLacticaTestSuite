@@ -192,18 +192,20 @@ class Property2Mol:
                                             norm_logs,
                                             output.sequences[end_smiles_indices[:, 0]], end_smiles_indices[:, 1] - context_length + 1),
                                             key=lambda x: x[0])[:self.top_N]
-                perplexities, texts, lenghts, norm_log = [], [], [], []
+                perplexities, texts, lengths, norm_log = [], [], [], []
 
                 for perplexity, n_log, output, len_ in sorted_outputs:
                     norm_log.append(n_log)
                     texts.append(self.tokenizer.decode(output[context_length:]))
                     perplexities.append(perplexity)
-                    lenghts.append(len_)
+                    lengths.append(len_)
             else:
+                lengths = [output.sequences[end_smiles_indices[:, 0]], end_smiles_indices[:, 1] - context_length + 1]
                 texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
+                norm_log = [norm_logs]
             raw_outputs.append(texts)
             perplexities_list.append(perplexities)
-            token_lengths.append(lenghts)
+            token_lengths.append(lengths)
             norm_logs_list.append(norm_log)
             out = []
             for text in texts:
