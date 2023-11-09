@@ -66,7 +66,6 @@ greedy_generation_config = {
     "eos_token_id": 20,
     "max_length": 300,
     "temperature": 1.0,
-    "repetition_penalty": 1.0,
     "do_sample": False,  
     "num_return_sequences": 1,
     "num_beams": 1,
@@ -78,7 +77,6 @@ greedy_beam_generation_config = {
     "eos_token_id": 20,
     "max_length": 300,
     "temperature": 1.0,
-    "repetition_penalty": 1.0,
     "do_sample": False,  
     "num_return_sequences": 1,
     "num_beams": 5,
@@ -92,7 +90,6 @@ nongreedy_generation_config = {
     "temperature": 1.0,
     "top_k": None,
     "top_p": 1.0,
-    # "repetition_penalty": 1.0,
     "do_sample": True,  
     "num_return_sequences": 100,
     "num_beams": 1,
@@ -128,13 +125,13 @@ chemlactica_tokenizer_50028_path = "src/tokenizer/ChemLacticaTokenizer_50028"
 chemlactica_tokenizer_50066_path = "src/tokenizer/ChemLacticaTokenizer_50066"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-device = "cuda:1"
+device = "cuda:0"
 # device = 'cpu'
 
 evaluation_config = {
     "test_suite":            test_suite,
-    "property_range":        property_range,
-    "generation_config":     greedy_generation_config,
+    "property_range":        mock_property_range,
+    "generation_config":     nongreedy_generation_config,
     "model_checkpoint_path": model_125m_253k,
     "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,

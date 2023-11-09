@@ -83,8 +83,8 @@ class Property2Mol:
     
     def start_log_file(self):
         model_name = self.model_checkpoint_path.split("/")[-2]
-        self.results_path = os.path.join(f"/home/menuab/code/ChemLacticaTestSuite/results/property_2_Mol/{datetime.now().strftime('%Y-%m-%d-%H:%M')}"\
-                                    f"-{model_name}/")
+        self.results_path = os.path.join(f"/home/menuab/code/ChemLacticaTestSuite/results/property_2_Mol/"\
+                                         f"{datetime.now().strftime('%Y-%m-%d-%H:%M')}-{model_name}/")
         print(f'results_path = {self.results_path}\n')
         if not os.path.exists(self.results_path):
             os.makedirs(self.results_path)
@@ -162,62 +162,66 @@ class Property2Mol:
         outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list, self.molecules_set = [], [], [], [], [], set()
         for input_id in input_ids:
             context_length = input_id.shape[1]
-            output = self.model.generate(
-                input_ids=input_id,
-                **self.generation_config   
-            )
-            if self.generation_config["num_beams"] > 1:
-                scores = self.model.compute_transition_scores(
-                        sequences=output.sequences,
-                        scores=output.scores,
-                        beam_indices=output.beam_indices,
-                        normalize_logits=True
-                    )
-            else:
-                scores = self.model.compute_transition_scores(
-                        sequences=output.sequences,
-                        scores=output.scores,
-                        normalize_logits=True
-                    )
-            end_smiles = torch.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
-            end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
-            perplexities = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
-                             for index in end_smiles_indices]
-            norm_logs = [round(scores[index[0], :index[1] - context_length + 1].sum().item(), 4) 
-                         for index in end_smiles_indices]
-            # print(norm_logs)
-            # perplexities = np.exp(-np.ma.masked_invalid(scores.cpu().numpy()).mean(axis=1).data)
-            if self.generation_config["do_sample"] == True:
-                sorted_outputs = sorted(zip(perplexities,
-                                            norm_logs,
-                                            output.sequences[end_smiles_indices[:, 0]], end_smiles_indices[:, 1] - context_length + 1),
-                                            key=lambda x: x[0])[:self.top_N]
-                perplexities, texts, lengths, norm_log = [], [], [], []
+            perplexities, texts, lengths, norm_log, out = [], [], [], [], []
+            range_ = 10 if self.generation_config["num_return_sequences"] == 100 else 1
+            for _ in range(range_):
+                output = self.model.generate(
+                    input_ids=input_id,
+                    **self.generation_config   
+                )
+                if self.generation_config["num_beams"] > 1:
+                    scores = self.model.compute_transition_scores(
+                            sequences=output.sequences,
+                            scores=output.scores,
+                            beam_indices=output.beam_indices,
+                            normalize_logits=True
+                        ).cpu().detach()
+                else:
+                    scores = self.model.compute_transition_scores(
+                            sequences=output.sequences,
+                            scores=output.scores,
+                            normalize_logits=True
+                        ).cpu().detach()
+                end_smiles = np.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
+                end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
+                perplexities = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
+                                for index in end_smiles_indices]
+                norm_logs = [round(scores[index[0], :index[1] - context_length + 1].sum().item(), 4) 
+                            for index in end_smiles_indices]
+                # print(norm_logs)
+                # perplexities = np.exp(-np.ma.masked_invalid(scores.cpu().numpy()).mean(axis=1).data)
+                if self.generation_config["do_sample"] == True:
+                    sorted_outputs = sorted(zip(perplexities,
+                                                norm_logs,
+                                                output.sequences[end_smiles_indices[:, 0]],
+                                                end_smiles_indices[:, 1] - context_length + 1),
+                                                key=lambda x: x[0])[:self.top_N]
+                    
 
-                for perplexity, n_log, output, len_ in sorted_outputs:
-                    norm_log.append(n_log)
-                    texts.append(self.tokenizer.decode(output[context_length:]))
-                    perplexities.append(perplexity)
-                    lengths.append(len_)
-            else:
-                lengths = [output.sequences[end_smiles_indices[:, 0]], end_smiles_indices[:, 1] - context_length + 1]
-                texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
-                norm_log = [norm_logs]
+                    for perplexity, n_log, output, len_ in sorted_outputs:
+                        norm_log.append(n_log)
+                        texts.append(self.tokenizer.decode(output[context_length:]))
+                        perplexities.append(perplexity)
+                        lengths.append(len_)
+                else:
+                    lengths = [output.sequences[end_smiles_indices[:, 0]], end_smiles_indices[:, 1] - context_length + 1]
+                    texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
+                    norm_log = [norm_logs]
+            
+                for text in texts:
+                    try:    
+                        captured_text = re.match(self.regexp, text).group()
+                        if captured_text not in self.molecules_set:
+                            self.molecules_set.add(captured_text)
+                    except:
+                        captured_text = ''
+                    out.append(captured_text)
+            outputs.append(out)
             raw_outputs.append(texts)
             perplexities_list.append(perplexities)
             token_lengths.append(lengths)
             norm_logs_list.append(norm_log)
-            out = []
-            for text in texts:
-                try:    
-                    captured_text = re.match(self.regexp, text).group()
-                    if captured_text not in self.molecules_set:
-                        self.molecules_set.add(captured_text)
-                except:
-                    captured_text = ''
-                out.append(captured_text)
-            outputs.append(out)
-        
+
         return outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list
     
     def calculate_properties(self, property_fns):
@@ -303,8 +307,7 @@ class Property2Mol:
         property_range = self.property_range[test_name]["range"]
         stats_width = (property_range[1] - property_range[0]) / 100
         ax2.bar([interval.mid for interval in stats.index], stats, width=stats_width, alpha=0.3) 
-        plt.title(title)
-        plt.grid(True)
+        
         ax1.text(1.2 * max_, 0.90 * max(max_g, max_), f"Spearman correlation: {correlation:.3f}")
         ax1.text(1.2 * max_, 0.85 * max(max_g, max_), f"N invalid gens: {self.n_invalid_generations}")
         ax1.text(1.2 * max_, 0.80 * max(max_g, max_), f"N of total gens: {self.n_total_gens}")
@@ -315,6 +318,8 @@ class Property2Mol:
         ax1.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
         ax1.set_xlabel(f'target {test_name}')
         ax1.set_ylabel(f'generated {test_name}')
+        plt.title(title)
+        plt.grid(True)
         plt.tight_layout()
         fig.savefig(self.results_path + test_name + '.png', dpi=300, format="png")
         fig.clf()
