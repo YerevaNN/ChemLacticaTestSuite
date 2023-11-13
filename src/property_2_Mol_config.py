@@ -129,9 +129,9 @@ device = "cuda:0"
 # device = 'cpu'
 
 evaluation_config = {
-    "test_suite":            test_suite,
+    "test_suite":            mock_test_suite,
     "property_range":        mock_property_range,
-    "generation_config":     nongreedy_generation_config,
+    "generation_config":     greedy_generation_config,
     "model_checkpoint_path": model_125m_253k,
     "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,
@@ -140,6 +140,6 @@ evaluation_config = {
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
-    "check_for_novelty":     False,
+    "check_for_novelty":     True,
     "track":                 True,
 }
