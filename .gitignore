@@ -2,3 +2,5 @@
 results/
 __pycache__
 .aim/*
+
+utils/contrastive_decoding/contrastive_decodable_transformers/build

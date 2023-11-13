@@ -46,6 +46,7 @@ from contrastive_decodable_transformers import (
     AutoConfig,
     AutoModelForCausalLM,
     AutoTokenizer,
+    PreTrainedTokenizerFast
     # OPTLMHeadModel,
 )
 
@@ -144,7 +145,7 @@ MAX_LENGTH = int(10000)  # Hardcoded max length to avoid infinite loop
 
 MODEL_CLASSES = {
     "gpt2": (GPT2LMHeadModel, GPT2Tokenizer),
-    "opt": (OPTForCausalLM, GPT2Tokenizer),
+    "opt": (OPTForCausalLM, PreTrainedTokenizerFast),
     "ctrl": (CTRLLMHeadModel, CTRLTokenizer),
     "openai-gpt": (OpenAIGPTLMHeadModel, OpenAIGPTTokenizer),
     "xlnet": (XLNetLMHeadModel, XLNetTokenizer),
@@ -764,8 +765,34 @@ def main(args):
         else:
             input_ids = encoded_prompt
 
-        print(len(encoded_prompt[0]), input_ids.shape) 
+        # print("prompt text", prompt_text)
+        # print("input tokens", input_ids, input_ids.shape)
         if args.do_sample == 'no' and (args.contrastive_decoding == 'student' or args.contrastive_decoding == 'earlystop' or args.contrastive_decoding == 'ngram') :
+            # print("prompt text", prompt_text)
+            # print("input tokens", input_ids, input_ids.shape)
+            # print(args)
+            print({
+                "input_ids": input_ids,
+                "max_length": args.length + len(encoded_prompt[0]),
+                "min_length": args.length + len(encoded_prompt[0]),
+                "temperature": args.temperature,
+                "top_k": args.k,
+                "top_p": args.p,
+                "min_prob": args.min_prob,
+                "repetition_penalty": args.repetition_penalty,
+                "do_sample": False,
+                "num_beams": args.num_beam,
+                "num_return_sequences": args.num_return_sequences,
+                # "student_lm": student_lm,
+                "teacher_student": True,
+                "model_kwargs_student": {}, 
+                "st_coef": args.st_coef,
+                "tokenizer": tokenizer, # analysis
+                "student_min_prob": args.student_min_prob,
+                "student_temperature": args.student_temperature,
+                "use_cap_student": (args.use_cap_student=='yes'), #cap student debug
+                "use_switch": (args.use_switch == 'yes')
+            })
             output_sequences = model.generate(
                 input_ids=input_ids,
                 max_length=args.length + len(encoded_prompt[0]),
@@ -788,6 +815,7 @@ def main(args):
                 use_cap_student=(args.use_cap_student=='yes'), #cap student debug
                 use_switch=(args.use_switch == 'yes')
             )
+            print(output_sequences)
             print('student=smaller model')
 
         elif args.do_sample == 'no' and args.contrastive_decoding == 'prompt':
@@ -819,6 +847,7 @@ def main(args):
             # print(input_ids)
             # prompt = prefix_model.get_prompt(src, None, gpt2=gpt2, bsz=1) #src, control_code=None, gpt2=None, bsz=None, attn_mask=None
             # prompt = [x.expand(-1, args.num_return_sequences , -1, -1, -1) for x in prompt]
+            print("input tokens:", input_ids)
             output_sequences = model.generate(
                 input_ids=input_ids,
                 max_length=args.length + len(encoded_prompt[0]),
@@ -1036,12 +1065,13 @@ def main(args):
 
     out_file(args.outfile, generation_lst)
     return generation_lst
-    
+
     
 if __name__ == "__main__":
     args = get_args()
     # with torch.cuda.amp.autocast():
     main(args)
+    # print([a[0] for a in args._get_kwargs()])
 
     # import submitit, copy 
     # jobs = []
