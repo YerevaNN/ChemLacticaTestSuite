@@ -1,4 +1,5 @@
 .vscode/
 results/
+.aim/
 __pycache__
-.aim/*
+
