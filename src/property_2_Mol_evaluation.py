@@ -47,11 +47,13 @@ class Property2Mol:
             include_eos,
             check_for_novelty,
             track,
+            description,
             ) -> None:
         
         self.test_suite=test_suite
         self.property_range=property_range
-        self.generation_config=generation_config
+        self.generation_config=generation_config["config"]
+        self.generation_config_name=generation_config["name"]
         self.regexp=regexp
         self.model_checkpoint_path = model_checkpoint_path + '/' if model_checkpoint_path[-1] != '/' else model_checkpoint_path
         self.tokenizer_path=tokenizer_path
@@ -66,9 +68,11 @@ class Property2Mol:
 
         self.molecules_set = set()
         self.track = track
-        self.aim_run = Run() if self.track else None
+        self.aim_run = Run(experiment=description) if self.track else None
         self.model = self.load_model()
         self.tokenizer = self.load_tokenizer()
+        self.training_args = vars(torch.load(self.model_checkpoint_path + '/training_args.bin'))
+        # self.training_args = {k: v for k, v in self.training_args.items() if isinstance(v, (str, int, bool, float))}
         self.log_file = self.start_log_file()
         # assert_model_tokenizer()
         self.pubchem_stats = self.get_pubchem_stats()
@@ -373,6 +377,12 @@ class Property2Mol:
             fig2.clf()
 
     def track_stats(self, test_name):
+        evaluation_config['learning_rate'] = self.training_args['learning_rate']
+        evaluation_config['output_dir'] = self.training_args['output_dir']
+        evaluation_config['per_device_train_batch_size'] = self.training_args['per_device_train_batch_size']
+        evaluation_config['weight_decay'] = self.training_args['weight_decay']
+        evaluation_config['max_steps'] = self.training_args['max_steps']
+        evaluation_config['model_hash'] = self.training_args['output_dir'].split('/')[-1]
         self.aim_run['hparams'] = evaluation_config
         self.aim_run.track(
             {
