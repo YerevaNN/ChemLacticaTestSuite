@@ -77,7 +77,7 @@ greedy_generation_config = {
 }
 
 greedy_beam_generation_config = {
-    "name": "greedy with beam",
+    "name": "greedy with beam=5",
     "config": {
         "eos_token_id": 20,
         "max_length": 300,
@@ -126,19 +126,21 @@ top_N = 5
 n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 
-# model_checkpoint_path = "/home/hrant/chem/tigran/ChemLactica/checkpoints/facebook/galactica-125m/ac7915df73b24ee3a4e172d6/checkpoint-253952"
-model_125m_253k_ac79 = "/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/125m_253k_ac79/"
+model_125m_249k_0d99 = "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_249k_0d99/"
 model_125m_253k_0d99 = "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_253k_0d99/"
-model_125m_241k = "/home/menuab/code/checkpoints/125m_241k/"
-model_1b_131k = "/home/menuab/code/checkpoints/1.3b_131k/"
-model_125m_76k_new = "/home/menuab/code/checkpoints/87dc7180e49141deae4ded57/checkpoint-73728/"
-model_125m_73k_assay = "/home/menuab/code/checkpoints/c6af41c79f1244f698cc1153/125m_73k_withassay"
-galactica_tokenizer_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/galactica-125m/"
+model_125m_256k_0d99 = "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_256k_0d99/"
+model_125m_253k_ac79 = "/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/125m_253k_ac79/"
+model_125m_241k_ac79 = "/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/125m_241k_ac79/"
+model_1b_131k_d5c2   = "/home/menuab/code/checkpoints/d5c2c8db3c554447a27697bf/1.3b_131k_d5c2/"
+model_125m_73k_assay_87dc = "/home/menuab/code/checkpoints/87dc7180e49141deae4ded57/125m_73k_assay_87dc/"
+model_125m_73k_assay_c6af = "/home/menuab/code/checkpoints/c6af41c79f1244f698cc1153/125m_73k_assay_c6af"
+galactica_tokenizer_path =         "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/galactica-125m/"
 chemlactica_tokenizer_50028_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50028"
 chemlactica_tokenizer_50066_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
 device = "cuda:1"
+device = "cuda:0"
 # device = 'cpu'
 
 evaluation_config = {
