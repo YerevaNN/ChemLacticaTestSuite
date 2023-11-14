@@ -297,10 +297,10 @@ class Property2Mol:
 
     def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape):
         max_, min_, max_g = np.max(self.targets), np.min(self.targets), np.max(generated_clean)
-        title = f'greedy (n_beams={self.generation_config["num_beams"]}) generation of {test_name} '\
-                f'with {self.model_checkpoint_path.split("/")[-2]}\n rmse {rmse:.3f} mape {mape:.3f}'
-        if self.generation_config["do_sample"] == True:
-            title = 'non ' + title
+        title = f'{self.generation_config_name} generation of {test_name} with {self.model_checkpoint_path.split("/")[-2]}\n'\
+                f'rmse {rmse:.3f} mape {mape:.3f}\ncorr: {correlation:.3f}, N invalid: {self.n_invalid_generations}, '\
+                f'N total: {self.n_total_gens}\n N Unique: {self.n_unique}, N in PubChem: {self.n_in_pubchem}'
+        
         fig, ax1 = plt.subplots()
         fig.set_figheight(6)
         fig.set_figwidth(8)
@@ -311,11 +311,11 @@ class Property2Mol:
         stats_width = (property_range[1] - property_range[0]) / 100
         ax2.bar([interval.mid for interval in stats.index], stats, width=stats_width, alpha=0.3) 
         
-        ax1.text(1.2 * max_, 0.90 * max(max_g, max_), f"Spearman correlation: {correlation:.3f}")
-        ax1.text(1.2 * max_, 0.85 * max(max_g, max_), f"N invalid gens: {self.n_invalid_generations}")
-        ax1.text(1.2 * max_, 0.80 * max(max_g, max_), f"N of total gens: {self.n_total_gens}")
-        ax1.text(1.2 * max_, 0.75 * max(max_g, max_), f"N of Unique Mols: {self.n_unique}")
-        ax1.text(1.2 * max_, 0.70 * max(max_g, max_), f"N of in PubChem Mols: {self.n_in_pubchem}")
+        # ax1.text(1.2 * max_, 0.90 * max(max_g, max_), f"Spearman correlation: {correlation:.3f}")
+        # ax1.text(1.2 * max_, 0.85 * max(max_g, max_), f"N invalid gens: {self.n_invalid_generations}")
+        # ax1.text(1.2 * max_, 0.80 * max(max_g, max_), f"N of total gens: {self.n_total_gens}")
+        # ax1.text(1.2 * max_, 0.75 * max(max_g, max_), f"N of Unique Mols: {self.n_unique}")
+        # ax1.text(1.2 * max_, 0.70 * max(max_g, max_), f"N of in PubChem Mols: {self.n_in_pubchem}")
         ax1.scatter(target_clean, generated_clean, c='b')
         ax1.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
         ax1.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
