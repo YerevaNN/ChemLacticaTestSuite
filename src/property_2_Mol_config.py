@@ -77,7 +77,7 @@ greedy_generation_config = {
 }
 
 greedy_beam_generation_config = {
-    "name": "greedy with beam=5",
+    "name": "greedy_beam=5",
     "config": {
         "eos_token_id": 20,
         "max_length": 300,
@@ -143,10 +143,13 @@ device = "cuda:1"
 device = "cuda:0"
 # device = 'cpu'
 
+models = [model_125m_256k_0d99, model_125m_253k_ac79]
+gen_configs = [greedy_generation_config, greedy_beam_generation_config, nongreedy_generation_config]
+
 evaluation_config = {
-    "test_suite":            test_suite,
+    "test_suite":            mock_test_suite,
     "property_range":        property_range,
-    "generation_config":     nongreedy_generation_config,
+    "generation_config":     greedy_generation_config,
     "model_checkpoint_path": model_125m_253k_ac79,
     "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,
@@ -159,3 +162,14 @@ evaluation_config = {
     "track":                 True,
     "description": "125m old training no assay full test",
 }
+
+eval_configs = []
+for model in models:
+    for gen_config in gen_configs:
+        conf = evaluation_config
+        conf["model_checkpoint_path"] = model
+        conf["generation_config"] = gen_config
+        conf["description"] = f"{gen_config['name']} {model.split('/')[-1]}"
+        eval_configs.append(conf)
+
+eval_configs = [evaluation_config]

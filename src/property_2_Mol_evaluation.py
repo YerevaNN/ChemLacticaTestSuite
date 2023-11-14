@@ -69,6 +69,7 @@ class Property2Mol:
         self.molecules_set = set()
         self.track = track
         self.aim_run = Run(experiment=description) if self.track else None
+        self.eval_hash = self.aim_run.hash if self.aim_run else 'none'
         self.model = self.load_model()
         self.tokenizer = self.load_tokenizer()
         self.training_args = vars(torch.load(self.model_checkpoint_path + '/training_args.bin'))
@@ -88,18 +89,16 @@ class Property2Mol:
     def start_log_file(self):
         model_name = self.model_checkpoint_path.split("/")[-2]
         self.results_path = os.path.join(f"/home/menuab/code/ChemLacticaTestSuite/results/property_2_Mol/"\
-                                         f"{datetime.now().strftime('%Y-%m-%d-%H:%M')}-{model_name}/")
+                                         f"{datetime.now().strftime('%Y-%m-%d-%H:%M')}-{model_name}"\
+                                         f"-{self.generation_config_name}-{self.eval_hash}/")
         print(f'results_path = {self.results_path}\n')
         if not os.path.exists(self.results_path):
             os.makedirs(self.results_path)
         log_file = open(self.results_path + 'full_log.txt', 'w+')
         
         log_file.write(f'results of property to molecule test performed at '\
-                            f'{datetime.now().strftime("%Y-%m-%d, %H:%M")}\n')
-        # log_file.write(f'model checkpoint path: {self.model_checkpoint_path}\n')
+                            f'{datetime.now().strftime("&Y-%m-%d, %H:%M")}\n')
         log_file.write(f'evaluation config: \n{json.dumps(evaluation_config, indent=4)}\n')
-        # log_file.write(f'property combinations being evaluated: \n{json.dumps(self.test_suite, indent=4)}\n')
-        # log_file.write(f'generation config: \n{json.dumps(self.generation_config, insdent=4)}\n\n')
 
         return log_file
 
