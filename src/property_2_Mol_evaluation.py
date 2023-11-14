@@ -18,7 +18,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 
 from utils import mol_util
 from custom_modeling_opt import CustomOPTForCausalLM
-from property_2_Mol_config import evaluation_config
+from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
 # from assert_tokenizer import assert_tokenizer
 
@@ -433,6 +433,7 @@ class Property2Mol:
 
 if __name__ == "__main__":
     
-    property_2_Mol = Property2Mol(**evaluation_config)
-    property_2_Mol.run_property_2_Mol_test()
-    property_2_Mol.log_file.close()
+    for evaluation_config in evaluation_configs:
+        property_2_Mol = Property2Mol(**evaluation_config)
+        property_2_Mol.run_property_2_Mol_test()
+        property_2_Mol.log_file.close()

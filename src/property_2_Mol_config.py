@@ -163,13 +163,13 @@ evaluation_config = {
     "description": "125m old training no assay full test",
 }
 
-eval_configs = []
+evaluation_configs = []
 for model in models:
     for gen_config in gen_configs:
         conf = evaluation_config
         conf["model_checkpoint_path"] = model
         conf["generation_config"] = gen_config
         conf["description"] = f"{gen_config['name']} {model.split('/')[-1]}"
-        eval_configs.append(conf)
+        evaluation_configs.append(conf)
 
-eval_configs = [evaluation_config]
+evaluation_configs = [evaluation_config]
