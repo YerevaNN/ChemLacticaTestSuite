@@ -1,3 +1,5 @@
+import copy
+
 test_suite = {
     "sas": {
         "input_properties": ["sas"],
@@ -139,11 +141,11 @@ chemlactica_tokenizer_50028_path = "/home/menuab/code/ChemLacticaTestSuite/src/t
 chemlactica_tokenizer_50066_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-device = "cuda:1"
+# device = "cuda:1"
 device = "cuda:0"
 # device = 'cpu'
 
-models = [model_125m_256k_0d99, model_125m_253k_ac79]
+models = [model_125m_256k_0d99, model_125m_253k_0d99, model_125m_253k_ac79]
 gen_configs = [greedy_generation_config, greedy_beam_generation_config, nongreedy_generation_config]
 
 evaluation_config = {
@@ -166,10 +168,10 @@ evaluation_config = {
 evaluation_configs = []
 for model in models:
     for gen_config in gen_configs:
-        conf = evaluation_config
+        conf = copy.copy(evaluation_config)
         conf["model_checkpoint_path"] = model
         conf["generation_config"] = gen_config
         conf["description"] = f"{gen_config['name']} {model.split('/')[-1]}"
         evaluation_configs.append(conf)
 
-evaluation_configs = [evaluation_config]
+# evaluation_configs = [evaluation_config]

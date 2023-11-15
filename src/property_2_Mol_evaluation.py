@@ -434,6 +434,9 @@ class Property2Mol:
 if __name__ == "__main__":
     
     for evaluation_config in evaluation_configs:
+        print(f"evaluating model: {'/'.join(evaluation_config['model_checkpoint_path'].split('/')[-3:-1])} "\
+              f"with {evaluation_config['generation_config']['name']} config")
         property_2_Mol = Property2Mol(**evaluation_config)
-        property_2_Mol.run_property_2_Mol_test()
-        property_2_Mol.log_file.close()
+        # property_2_Mol.run_property_2_Mol_test()
+        # property_2_Mol.log_file.close()
+        del property_2_Mol
