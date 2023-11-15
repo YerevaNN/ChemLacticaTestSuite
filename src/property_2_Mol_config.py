@@ -171,7 +171,7 @@ for model in models:
         conf = copy.copy(evaluation_config)
         conf["model_checkpoint_path"] = model
         conf["generation_config"] = gen_config
-        conf["description"] = f"{gen_config['name']} {model.split('/')[-1]}"
+        conf["description"] = f"{model.split('/')[-2]}_{gen_config['name']}"
         evaluation_configs.append(conf)
 
 # evaluation_configs = [evaluation_config]

@@ -59,6 +59,7 @@ class Property2Mol:
         self.tokenizer_path=tokenizer_path
         self.torch_dtype=torch_dtype
         self.device = device
+        self.track = track
         
         self.smiles_prefix = "[START_SMILES]"
         self.eos_string = "</s>"
@@ -67,14 +68,10 @@ class Property2Mol:
         self.n_per_vs_rmse = n_per_vs_rmse
 
         self.molecules_set = set()
-        self.track = track
-        self.aim_run = Run(experiment=description) if self.track else None
-        self.eval_hash = self.aim_run.hash if self.aim_run else 'none'
         self.model = self.load_model()
         self.tokenizer = self.load_tokenizer()
-        self.training_args = vars(torch.load(self.model_checkpoint_path + '/training_args.bin'))
-        # self.training_args = {k: v for k, v in self.training_args.items() if isinstance(v, (str, int, bool, float))}
-        self.log_file = self.start_log_file()
+        self.start_aim_tracking(description)
+        self.start_log_file()
         # assert_model_tokenizer()
         self.pubchem_stats = self.get_pubchem_stats()
         self.check_for_novelty = check_for_novelty
@@ -85,6 +82,18 @@ class Property2Mol:
         pubchem_stats = pickle.load(pubchem_stats_file)
         pubchem_stats_file.close()
         return pubchem_stats
+
+    def start_aim_tracking(self, description):
+        self.aim_run = Run(experiment=description) if self.track else None
+        self.eval_hash = self.aim_run.hash if self.aim_run else 'none'
+        training_args = vars(torch.load(self.model_checkpoint_path + '/training_args.bin'))
+        evaluation_config['learning_rate'] = training_args['learning_rate']
+        evaluation_config['output_dir'] = training_args['output_dir']
+        evaluation_config['per_device_train_batch_size'] = training_args['per_device_train_batch_size']
+        evaluation_config['weight_decay'] = training_args['weight_decay']
+        evaluation_config['max_steps'] = training_args['max_steps']
+        evaluation_config['model_hash'] = training_args['output_dir'].split('/')[-1]
+        self.aim_run['hparams'] = evaluation_config
     
     def start_log_file(self):
         model_name = self.model_checkpoint_path.split("/")[-2]
@@ -94,13 +103,11 @@ class Property2Mol:
         print(f'results_path = {self.results_path}\n')
         if not os.path.exists(self.results_path):
             os.makedirs(self.results_path)
-        log_file = open(self.results_path + 'full_log.txt', 'w+')
+        self.log_file = open(self.results_path + 'full_log.txt', 'w+')
         
-        log_file.write(f'results of property to molecule test performed at '\
+        self.log_file.write(f'results of property to molecule test performed at '\
                             f'{datetime.now().strftime("&Y-%m-%d, %H:%M")}\n')
-        log_file.write(f'evaluation config: \n{json.dumps(evaluation_config, indent=4)}\n')
-
-        return log_file
+        self.log_file.write(f'evaluation config: \n{json.dumps(evaluation_config, indent=4)}\n')
 
     def load_model(self):
         # model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=self.torch_dtype)
@@ -376,13 +383,6 @@ class Property2Mol:
             fig2.clf()
 
     def track_stats(self, test_name):
-        evaluation_config['learning_rate'] = self.training_args['learning_rate']
-        evaluation_config['output_dir'] = self.training_args['output_dir']
-        evaluation_config['per_device_train_batch_size'] = self.training_args['per_device_train_batch_size']
-        evaluation_config['weight_decay'] = self.training_args['weight_decay']
-        evaluation_config['max_steps'] = self.training_args['max_steps']
-        evaluation_config['model_hash'] = self.training_args['output_dir'].split('/')[-1]
-        self.aim_run['hparams'] = evaluation_config
         self.aim_run.track(
             {
                 "rmse": self.rmse,
@@ -434,7 +434,7 @@ class Property2Mol:
 if __name__ == "__main__":
     
     for evaluation_config in evaluation_configs:
-        print(f"evaluating model: {'/'.join(evaluation_config['model_checkpoint_path'].split('/')[-3:-1])} "\
+        print(f"evaluating model: {evaluation_config['model_checkpoint_path'].split('/')[-2]} "\
               f"with {evaluation_config['generation_config']['name']} config")
         property_2_Mol = Property2Mol(**evaluation_config)
         # property_2_Mol.run_property_2_Mol_test()
