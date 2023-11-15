@@ -161,7 +161,7 @@ evaluation_config = {
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
     "check_for_novelty":     True,
-    "track":                 True,
+    "track":                 False,
     "description": "125m old training no assay full test",
 }
 
@@ -174,4 +174,4 @@ for model in models:
         conf["description"] = f"{model.split('/')[-2]}_{gen_config['name']}"
         evaluation_configs.append(conf)
 
-# evaluation_configs = [evaluation_config]
+evaluation_configs = [evaluation_config]

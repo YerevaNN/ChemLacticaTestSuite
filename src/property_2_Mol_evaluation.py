@@ -70,7 +70,10 @@ class Property2Mol:
         self.molecules_set = set()
         self.model = self.load_model()
         self.tokenizer = self.load_tokenizer()
-        self.start_aim_tracking(description)
+        if self.track:
+            self.start_aim_tracking(description)
+        else:
+            self.eval_hash = 'none'
         self.start_log_file()
         # assert_model_tokenizer()
         self.pubchem_stats = self.get_pubchem_stats()
@@ -214,7 +217,7 @@ class Property2Mol:
                         perplexities.append(perplexity)
                         lengths.append(len_)
                 else:
-                    lengths = [output.sequences[end_smiles_indices[:, 0]], end_smiles_indices[:, 1] - context_length + 1]
+                    lengths = [output.sequences.shape[-1] - context_length]
                     texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
                     norm_log = [norm_logs]
             
@@ -437,6 +440,6 @@ if __name__ == "__main__":
         print(f"evaluating model: {evaluation_config['model_checkpoint_path'].split('/')[-2]} "\
               f"with {evaluation_config['generation_config']['name']} config")
         property_2_Mol = Property2Mol(**evaluation_config)
-        # property_2_Mol.run_property_2_Mol_test()
-        # property_2_Mol.log_file.close()
+        property_2_Mol.run_property_2_Mol_test()
+        property_2_Mol.log_file.close()
         del property_2_Mol
