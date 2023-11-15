@@ -20,9 +20,9 @@ test_suite = {
 }
 
 mock_test_suite = {
-    "clogp": {
-        "input_properties": ["clogp"],
-        "target_properties": ["clogp"]
+    "weight": {
+        "input_properties": ["weight"],
+        "target_properties": ["weight"]
     }
 }
 
@@ -59,7 +59,7 @@ mock_property_range = {
         "step":  .1
     },
     "weight": {
-        "range": (100.1, 1000),
+        "range": (104.1, 1000),
         "step":  200
     }
 }
@@ -94,6 +94,7 @@ greedy_beam_generation_config = {
 
 nongreedy_generation_config = {
     "name": "nongreedy",
+    "top_N": 5,
     "config": {
         "eos_token_id": 20,
         "max_length": 400,
@@ -102,6 +103,23 @@ nongreedy_generation_config = {
         "top_p": 1.0,
         "do_sample": True,  
         "num_return_sequences": 20,
+        "num_beams": 1,
+        "return_dict_in_generate":True,
+        "output_scores":True
+    }
+}
+
+nongreedy_calibration_generation_config = {
+    "name": "nongreedy_calibration_1k",
+    "top_N": 500,
+    "config": {
+        "eos_token_id": 20,
+        "max_length": 400,
+        "temperature": 1.0,
+        "top_k": None,
+        "top_p": 1.0,
+        "do_sample": True,  
+        "num_return_sequences": 100,
         "num_beams": 1,
         "return_dict_in_generate":True,
         "output_scores":True
@@ -124,7 +142,7 @@ contrastive_generation_config = {
     }
 }
 
-top_N = 5
+top_N = 100
 n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 
@@ -141,17 +159,17 @@ chemlactica_tokenizer_50028_path = "/home/menuab/code/ChemLacticaTestSuite/src/t
 chemlactica_tokenizer_50066_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-# device = "cuda:1"
-device = "cuda:0"
+device = "cuda:1"
+# device = "cuda:0"
 # device = 'cpu'
 
 models = [model_125m_256k_0d99, model_125m_253k_0d99, model_125m_253k_ac79]
-gen_configs = [greedy_generation_config, greedy_beam_generation_config, nongreedy_generation_config]
+gen_configs = [greedy_generation_config, greedy_beam_generation_config]
 
 evaluation_config = {
     "test_suite":            mock_test_suite,
-    "property_range":        property_range,
-    "generation_config":     greedy_generation_config,
+    "property_range":        mock_property_range,
+    "generation_config":     nongreedy_calibration_generation_config,
     "model_checkpoint_path": model_125m_253k_ac79,
     "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,
@@ -160,7 +178,7 @@ evaluation_config = {
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
-    "check_for_novelty":     True,
+    "check_for_novelty":     False,
     "track":                 False,
     "description": "125m old training no assay full test",
 }

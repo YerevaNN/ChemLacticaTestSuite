@@ -64,7 +64,8 @@ class Property2Mol:
         self.smiles_prefix = "[START_SMILES]"
         self.eos_string = "</s>"
         self.include_eos = include_eos
-        self.top_N = top_N
+        self.top_N = generation_config.get("top_N", 0)
+        # self.top_N = top_N
         self.n_per_vs_rmse = n_per_vs_rmse
 
         self.molecules_set = set()
@@ -197,20 +198,19 @@ class Property2Mol:
                         ).cpu().detach()
                 end_smiles = np.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
                 end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
-                perplexities = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
+                perplexities_ = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
                                 for index in end_smiles_indices]
                 norm_logs = [round(scores[index[0], :index[1] - context_length + 1].sum().item(), 4) 
                             for index in end_smiles_indices]
                 # print(norm_logs)
                 # perplexities = np.exp(-np.ma.masked_invalid(scores.cpu().numpy()).mean(axis=1).data)
                 if self.generation_config["do_sample"] == True:
-                    sorted_outputs = sorted(zip(perplexities,
+                    sorted_outputs = sorted(zip(perplexities_,
                                                 norm_logs,
                                                 output.sequences[end_smiles_indices[:, 0]],
                                                 end_smiles_indices[:, 1] - context_length + 1),
                                                 key=lambda x: x[0])[:self.top_N]
                     
-
                     for perplexity, n_log, output, len_ in sorted_outputs:
                         norm_log.append(n_log)
                         texts.append(self.tokenizer.decode(output[context_length:]))
@@ -220,7 +220,7 @@ class Property2Mol:
                     lengths = [output.sequences.shape[-1] - context_length]
                     texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
                     norm_log = [norm_logs]
-            
+                out = []
                 for text in texts:
                     try:    
                         captured_text = re.match(self.regexp, text).group()
@@ -229,12 +229,14 @@ class Property2Mol:
                     except:
                         captured_text = ''
                     out.append(captured_text)
+                # print(_, len(out))
             outputs.append(out)
             raw_outputs.append(texts)
             perplexities_list.append(perplexities)
             token_lengths.append(lengths)
             norm_logs_list.append(norm_log)
-
+            # print('gen time',len(out), len(outputs[-1]), len(raw_outputs[-1]), len(perplexities_list[-1]), len(token_lengths[-1]), len(norm_logs_list[-1]))
+            
         return outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list
     
     def calculate_properties(self, property_fns):
@@ -246,6 +248,7 @@ class Property2Mol:
     def get_stats(self):
         errors = []
         n_invalid_generations = 0
+        # print('get stats lengs', len(self.calculated_properties), len(self.targets))
         for c_property, target in zip(self.calculated_properties, self.targets):
             error = []
             for prop in c_property:
@@ -338,6 +341,38 @@ class Property2Mol:
         fig.clf()
         plt.close()
 
+    def generate_length_calibration_plots(self, x_axis_name, test_name, log_norms, lengths, errors, target):
+        # print(x_axis_name)
+        # print(lengths[:20])
+        path = self.results_path + "per_vs_rmse/calibration/"
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        len_ranges = [30, 60, 90, 120, 150, 170]
+        tol = 2
+        x_axis, y_axis, z_axis = [[],[],[],[],[],[],[]], [[],[],[],[],[],[],[]], [[],[],[],[],[],[],[]]
+        for lnorm, leng, err in zip(log_norms, lengths, errors):
+            for en, lenr in enumerate(len_ranges):
+                if leng in range(lenr-tol, lenr+tol+1):
+                    x_axis[en].append(lnorm)
+                    y_axis[en].append(err)
+                    z_axis[en].append(leng)
+
+        fig1, axs1 = plt.subplots(6, 1, figsize=(12, 40))
+        fig1.suptitle(f'Calibration Log prob vs. Error with {test_name}={target}')
+
+        for en, lr in enumerate(len_ranges):
+            im1 = axs1[en].scatter(x_axis[en], y_axis[en], c=z_axis[en], s=70)
+            correlation, pvalue = spearmanr(x_axis[en], y_axis[en])
+            axs1[en].set_title(f'length= {lr} +/-{tol}, Spearman correlation= {correlation:.3f}')
+            axs1[en].set_xlabel(x_axis_name)
+            axs1[en].set_ylabel('Error')
+            axs1[en].grid()
+            cbar1 = fig1.colorbar(im1, label='Length')
+
+        fig1.savefig(path + f'{test_name}_{target}_calibration_{x_axis_name}_vs_err.png', dpi=300, format="png")
+        fig1.clf()
+
     def generate_perplexity_vs_rmse(self, test_name):
         indices = np.linspace(0, len(self.perplexities) - 1, self.n_per_vs_rmse + 2, dtype=int)[1:self.n_per_vs_rmse + 1]
         for data in [self.norm_logs, self.perplexities]:
@@ -352,6 +387,7 @@ class Property2Mol:
                         f'N samples={self.generation_config["num_return_sequences"]}')
             
             for en, i in enumerate(indices):
+                # print('pre len',i, data_name, len(data[i]), len(self.errors[i]), len(self.token_lengths[i]))
                 x_axis, error_clean, invalid, lengths = [], [], [], []
                 for x, e, l in zip(data[i], self.errors[i], self.token_lengths[i]):
                     if e > 0:
@@ -360,6 +396,8 @@ class Property2Mol:
                         lengths.append(l)
                     else:
                         invalid.append(x)
+                # print('post len',i, data_name, len(x_axis), len(error_clean), len(lengths))
+                self.generate_length_calibration_plots(data_name, test_name, x_axis, lengths, error_clean, self.targets[i][0])
 
                 im1 = axs1[en].scatter(x_axis, lengths, c=error_clean, s=70)
                 axs1[en].set_title(f'{test_name}={self.targets[i][0]}')
@@ -418,6 +456,8 @@ class Property2Mol:
             self.inputs = self.get_inputs(input_properties)
             property_fns = self.get_property_fns(target_properties)
             self.outputs, self.raw_outputs, self.perplexities, self.token_lengths, self.norm_logs = self.generate_outputs()
+            # for i in range(len(self.targets)):
+            #     print(i, len(self.inputs[i]), len(self.targets[i]), len(self.outputs[i]), len(self.perplexities[i]), len(self.token_lengths[i]), len(self.norm_logs[i]))
             self.calculated_properties = self.calculate_properties(property_fns)
             self.errors, self.n_invalid_generations, self.n_unique, self.n_in_pubchem, self.n_total_gens = self.get_stats()
             target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape = self.clean_outputs()
@@ -431,7 +471,7 @@ class Property2Mol:
             if self.track:
                 self.track_stats(test_name)
             print(f"finished evaluating test for {test_name}")
-            print(f"{len(self.inputs)} samples evaluated in {time.time()-time_start} seconds")
+            print(f"{len(self.inputs)} samples evaluated in {int(time.time()-time_start)} seconds")
 
 
 if __name__ == "__main__":
