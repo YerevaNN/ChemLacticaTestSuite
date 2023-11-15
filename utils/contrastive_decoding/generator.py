@@ -150,9 +150,8 @@ man is chased outside and beaten. Twenty years later, Rasputin sees a vision of
 the Virgin Mary, prompting him to become a priest. Rasputin quickly becomes famous,
 with people, even a bishop, begging for his blessing. <eod> </s> <eos>"""
 
-#
-# Functions to prepare models' input
-#
+
+
 
 def prepare_ctrl_input( _, tokenizer, prompt_text):
     if temperature > 0.7:
@@ -458,8 +457,11 @@ if __name__ == "__main__":
     set_seed(42)
     device = "cuda:0"
 
-    tokenizer = AutoTokenizer.from_pretrained("facebook/galactica-125m")
-    input_prompt = "</s> A version of Sonic the Hedgehog was developed by Ancient and released in 1991"
+    # tokenizer = AutoTokenizer.from_pretrained("facebook/galactica-125m")
+    tokenizer = AutoTokenizer.from_pretrained("/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50028")
+
+    # input_prompt = "</s> A version of Sonic the Hedgehog was developed by Ancient and released in 1991"
+    input_prompt = "</s>[WEIGHT 875.1][START_SMILES]"
     input_ids = tokenizer.encode(input_prompt, return_tensors="pt").to(device)
 
     # from transformers import AutoModelForCausalLM, OPTForCausalLM
@@ -470,20 +472,25 @@ if __name__ == "__main__":
     # )[0]))
 
                 # load the expert model with OPTForCausalLM 
-    expert_lm = OPTForCausalLM.from_pretrained("facebook/galactica-1.3b").to(device)
+    # expert_lm = OPTForCausalLM.from_pretrained("facebook/galactica-1.3b").to(device)
+    expert_lm = OPTForCausalLM.from_pretrained("/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_256k_0d99").to(device)
                 # load the student model with AutoModelForCausalLM it is important
-    student_lm = AutoModelForCausalLM.from_pretrained("facebook/galactica-125m").to(device)
+    # student_lm = AutoModelForCausalLM.from_pretrained("facebook/galactica-125m").to(device)
+    student_lm = AutoModelForCausalLM.from_pretrained("/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_253k_0d99").to(device)
+
     # print(input_ids)
     output_tokens = generate(
         input_ids=input_ids,
         expert_lm=expert_lm,
         student_lm=student_lm,
-        num_beam=5,
+        eos_token_id=20,
+        # num_beam=1,
         return_dict_in_generate=True,
         output_scores=True,
-        length=256,
+        # length=256,
         st_coef=1.0,
         student_temperature=0.5,
     )
+    # out = student_lm.generate(input_ids, max_length=200, do_sample=False)
     print(output_tokens)
     print(tokenizer.decode(output_tokens.sequences[0]))
