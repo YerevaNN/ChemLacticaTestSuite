@@ -90,13 +90,16 @@ class Property2Mol:
     def start_aim_tracking(self, description):
         self.aim_run = Run(experiment=description) if self.track else None
         self.eval_hash = self.aim_run.hash if self.aim_run else 'none'
-        training_args = vars(torch.load(self.model_checkpoint_path + '/training_args.bin'))
-        evaluation_config['learning_rate'] = training_args['learning_rate']
-        evaluation_config['output_dir'] = training_args['output_dir']
-        evaluation_config['per_device_train_batch_size'] = training_args['per_device_train_batch_size']
-        evaluation_config['weight_decay'] = training_args['weight_decay']
-        evaluation_config['max_steps'] = training_args['max_steps']
-        evaluation_config['model_hash'] = training_args['output_dir'].split('/')[-1]
+        try:
+            training_args = vars(torch.load(self.model_checkpoint_path + '/training_args.bin'))
+            evaluation_config['learning_rate'] = training_args['learning_rate']
+            evaluation_config['output_dir'] = training_args['output_dir']
+            evaluation_config['per_device_train_batch_size'] = training_args['per_device_train_batch_size']
+            evaluation_config['weight_decay'] = training_args['weight_decay']
+            evaluation_config['max_steps'] = training_args['max_steps']
+            evaluation_config['model_hash'] = training_args['output_dir'].split('/')[-1]
+        except:
+            pass
         self.aim_run['hparams'] = evaluation_config
     
     def start_log_file(self):

@@ -93,7 +93,7 @@ greedy_beam_generation_config = {
 }
 
 nongreedy_generation_config = {
-    "name": "nongreedy",
+    "name": "nongreedy_5of20",
     "top_N": 5,
     "config": {
         "eos_token_id": 20,
@@ -127,7 +127,7 @@ nongreedy_calibration_generation_config = {
 }
 
 contrastive_generation_config = {
-    "name": "contrastive",
+    "name": "contrastive_decoding",
     "config": {
         "eos_token_id": 20,
         "penalty_alpha" : 0.6,
@@ -159,16 +159,16 @@ chemlactica_tokenizer_50028_path = "/home/menuab/code/ChemLacticaTestSuite/src/t
 chemlactica_tokenizer_50066_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-device = "cuda:1"
-# device = "cuda:0"
+# device = "cuda:1"
+device = "cuda:0"
 # device = 'cpu'
 
 models = [model_125m_256k_0d99, model_125m_253k_0d99, model_125m_253k_ac79]
-gen_configs = [greedy_generation_config, greedy_beam_generation_config]
+gen_configs = [greedy_generation_config, greedy_beam_generation_config, nongreedy_generation_config, nongreedy_calibration_generation_config]
 
 evaluation_config = {
-    "test_suite":            mock_test_suite,
-    "property_range":        mock_property_range,
+    "test_suite":            test_suite,
+    "property_range":        property_range,
     "generation_config":     nongreedy_calibration_generation_config,
     "model_checkpoint_path": model_125m_253k_ac79,
     "tokenizer_path":        chemlactica_tokenizer_50028_path,
@@ -178,18 +178,20 @@ evaluation_config = {
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
-    "check_for_novelty":     False,
-    "track":                 False,
+    "check_for_novelty":     True,
+    "track":                 True,
     "description": "125m old training no assay full test",
 }
 
 evaluation_configs = []
-for model in models:
-    for gen_config in gen_configs:
+for gen_config in gen_configs:
+    for model in models:
+    # model = model_1b_131k_d5c2
         conf = copy.copy(evaluation_config)
+        # conf["tokenizer_path"] = galactica_tokenizer_path
         conf["model_checkpoint_path"] = model
         conf["generation_config"] = gen_config
         conf["description"] = f"{model.split('/')[-2]}_{gen_config['name']}"
         evaluation_configs.append(conf)
 
-evaluation_configs = [evaluation_config]
+# evaluation_configs = [evaluation_config]
