@@ -388,6 +388,7 @@ def generate(
         st_coef: float=0.5,
         stop_token=None,
         fp16=False,
+        tokenizer=None,
 
         # not used
         # xlm_language',
@@ -431,7 +432,7 @@ def generate(
         min_prob=min_prob,
         repetition_penalty=repetition_penalty,
         do_sample=do_sample,
-        num_beams=num_beam,
+        # num_beams=num_beam,
         num_return_sequences=num_return_sequences,
         student_lm=student_lm,
         teacher_student=True,

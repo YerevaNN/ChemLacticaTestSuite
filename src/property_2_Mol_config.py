@@ -66,10 +66,9 @@ mock_property_range = {
 
 greedy_generation_config = {
     "name": "greedy",
+    "multiple_rounds_generation": False,
     "config": {
         "eos_token_id": 20,
-        "max_length": 300,
-        "temperature": 1.0,
         "do_sample": False,  
         "num_return_sequences": 1,
         "num_beams": 1,
@@ -80,10 +79,9 @@ greedy_generation_config = {
 
 greedy_beam_generation_config = {
     "name": "greedy_beam=5",
+    "multiple_rounds_generation": False,
     "config": {
         "eos_token_id": 20,
-        "max_length": 300,
-        "temperature": 1.0,
         "do_sample": False,  
         "num_return_sequences": 1,
         "num_beams": 5,
@@ -95,10 +93,9 @@ greedy_beam_generation_config = {
 nongreedy_generation_config = {
     "name": "nongreedy_5of20",
     "top_N": 5,
+    "multiple_rounds_generation": False,
     "config": {
         "eos_token_id": 20,
-        "max_length": 400,
-        "temperature": 1.0,
         "top_k": None,
         "top_p": 1.0,
         "do_sample": True,  
@@ -112,10 +109,9 @@ nongreedy_generation_config = {
 nongreedy_calibration_generation_config = {
     "name": "nongreedy_calibration_1k",
     "top_N": 500,
+    "multiple_rounds_generation": True,
     "config": {
         "eos_token_id": 20,
-        "max_length": 400,
-        "temperature": 1.0,
         "top_k": None,
         "top_p": 1.0,
         "do_sample": True,  
@@ -128,17 +124,20 @@ nongreedy_calibration_generation_config = {
 
 contrastive_generation_config = {
     "name": "contrastive_decoding",
+    "multiple_rounds_generation": False,
+    "student_model": "/home/menuab/code/checkpoints/8c311987db124d9e87fc26da/125m_24k_8c31",
+    "expert_model": "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_256k_0d99/",
     "config": {
         "eos_token_id": 20,
-        "penalty_alpha" : 0.6,
-        "top_k" : 4,
-        "max_length" : 300,
-        "num_beams": 1,
+        "st_coef": 1.0,
+        "student_temperature": 0.5,
+        "num_beams": 2,
         "return_dict_in_generate":True,
         "output_scores":True,
-        "num_return_sequences":500,
-        # "num_beams":10,
-        "do_sample": True,
+        "num_return_sequences":1,
+        "do_sample": False,
+        "student_min_prob": 0.0,
+        "contrastive_decoding": "student",
     }
 }
 
@@ -159,19 +158,19 @@ chemlactica_tokenizer_50028_path = "/home/menuab/code/ChemLacticaTestSuite/src/t
 chemlactica_tokenizer_50066_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-# device = "cuda:1"
-device = "cuda:0"
+device = "cuda:1"
+# device = "cuda:0"
 # device = 'cpu'
 
-models = [model_125m_256k_0d99, model_125m_253k_0d99, model_125m_253k_ac79]
-gen_configs = [greedy_generation_config, greedy_beam_generation_config, nongreedy_generation_config, nongreedy_calibration_generation_config]
+models = [model_125m_253k_ac79]
+gen_configs = [nongreedy_calibration_generation_config]
 
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
-    "generation_config":     nongreedy_calibration_generation_config,
-    "model_checkpoint_path": model_125m_253k_ac79,
-    "tokenizer_path":        chemlactica_tokenizer_50028_path,
+    "generation_config":     greedy_generation_config,
+    "model_checkpoint_path": model_125m_256k_0d99,
+    "tokenizer_path":        galactica_tokenizer_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
     "regexp":                regexp,
@@ -180,18 +179,18 @@ evaluation_config = {
     "include_eos":           True,
     "check_for_novelty":     True,
     "track":                 True,
-    "description": "125m old training no assay full test",
+    "description": "125m_256k_0d99-nongreedy_calibration_1k",
 }
 
-evaluation_configs = []
-for gen_config in gen_configs:
-    for model in models:
-    # model = model_1b_131k_d5c2
-        conf = copy.copy(evaluation_config)
-        # conf["tokenizer_path"] = galactica_tokenizer_path
-        conf["model_checkpoint_path"] = model
-        conf["generation_config"] = gen_config
-        conf["description"] = f"{model.split('/')[-2]}_{gen_config['name']}"
-        evaluation_configs.append(conf)
+# evaluation_configs = []
+# for gen_config in gen_configs:
+#     for model in models:
+#     # model = model_1b_131k_d5c2
+#         conf = copy.copy(evaluation_config)
+#         # conf["tokenizer_path"] = galactica_tokenizer_path
+#         conf["model_checkpoint_path"] = model
+#         conf["generation_config"] = gen_config
+#         conf["description"] = f"{model.split('/')[-2]}_{gen_config['name']}"
+#         evaluation_configs.append(conf)
 
-# evaluation_configs = [evaluation_config]
+evaluation_configs = [evaluation_config]

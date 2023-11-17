@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from aim import Run, Image
 import torch
 from torch import bfloat16, float32
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, OPTForCausalLM
 
 from utils import mol_util
 from custom_modeling_opt import CustomOPTForCausalLM
@@ -52,7 +52,8 @@ class Property2Mol:
         
         self.test_suite=test_suite
         self.property_range=property_range
-        self.generation_config=generation_config["config"]
+        self.generation_config=generation_config
+        self.generation_decoding_config=generation_config["config"]
         self.generation_config_name=generation_config["name"]
         self.regexp=regexp
         self.model_checkpoint_path = model_checkpoint_path + '/' if model_checkpoint_path[-1] != '/' else model_checkpoint_path
@@ -117,12 +118,14 @@ class Property2Mol:
         self.log_file.write(f'evaluation config: \n{json.dumps(evaluation_config, indent=4)}\n')
 
     def load_model(self):
-        # model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=self.torch_dtype)
-        model = CustomOPTForCausalLM.from_pretrained(
-            self.model_checkpoint_path,
-            use_flash_attn=True,
-            torch_dtype=getattr(torch, self.torch_dtype)
-            )
+        if "1.3b" in self.model_checkpoint_path:
+            model = OPTForCausalLM.from_pretrained(self.model_checkpoint_path)
+        else:
+            model = CustomOPTForCausalLM.from_pretrained(
+                self.model_checkpoint_path,
+                use_flash_attn=True,
+                torch_dtype=getattr(torch, self.torch_dtype)
+                )
         model.eval()
         model.to(self.device)
         print(f'model loaded with embedding size of : {model.model.decoder.embed_tokens.num_embeddings}')
@@ -180,13 +183,13 @@ class Property2Mol:
         for input_id in input_ids:
             context_length = input_id.shape[1]
             perplexities, texts, lengths, norm_log, out = [], [], [], [], []
-            range_ = 10 if self.generation_config["num_return_sequences"] == 100 else 1
+            range_ = 20 if self.generation_config["multiple_rounds_generation"] == True else 1
             for _ in range(range_):
                 output = self.model.generate(
                     input_ids=input_id,
-                    **self.generation_config   
+                    **self.generation_decoding_config   
                 )
-                if self.generation_config["num_beams"] > 1:
+                if self.generation_decoding_config["num_beams"] > 1:
                     scores = self.model.compute_transition_scores(
                             sequences=output.sequences,
                             scores=output.scores,
@@ -205,9 +208,7 @@ class Property2Mol:
                                 for index in end_smiles_indices]
                 norm_logs = [round(scores[index[0], :index[1] - context_length + 1].sum().item(), 4) 
                             for index in end_smiles_indices]
-                # print(norm_logs)
-                # perplexities = np.exp(-np.ma.masked_invalid(scores.cpu().numpy()).mean(axis=1).data)
-                if self.generation_config["do_sample"] == True:
+                if self.generation_decoding_config["do_sample"] == True:
                     sorted_outputs = sorted(zip(perplexities_,
                                                 norm_logs,
                                                 output.sequences[end_smiles_indices[:, 0]],
@@ -232,13 +233,11 @@ class Property2Mol:
                     except:
                         captured_text = ''
                     out.append(captured_text)
-                # print(_, len(out))
             outputs.append(out)
             raw_outputs.append(texts)
             perplexities_list.append(perplexities)
             token_lengths.append(lengths)
             norm_logs_list.append(norm_log)
-            # print('gen time',len(out), len(outputs[-1]), len(raw_outputs[-1]), len(perplexities_list[-1]), len(token_lengths[-1]), len(norm_logs_list[-1]))
             
         return outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list
     
@@ -251,7 +250,6 @@ class Property2Mol:
     def get_stats(self):
         errors = []
         n_invalid_generations = 0
-        # print('get stats lengs', len(self.calculated_properties), len(self.targets))
         for c_property, target in zip(self.calculated_properties, self.targets):
             error = []
             for prop in c_property:
@@ -269,7 +267,7 @@ class Property2Mol:
             n_in_pubchem = sum(in_pubchem.values())
         else:
             n_in_pubchem = 0
-        n_total_gens = len(self.inputs) * self.generation_config['num_return_sequences']
+        n_total_gens = len(self.inputs) * self.generation_decoding_config['num_return_sequences']
         return errors, n_invalid_generations, n_uniques, n_in_pubchem, n_total_gens
 
     def write_to_file(self, test_name):
@@ -299,7 +297,7 @@ class Property2Mol:
     def clean_outputs(self):
         target_clean, generated_clean, nones = [], [], []
         for target, c_props in zip(self.targets, self.calculated_properties):
-            target *= self.generation_config["num_return_sequences"]
+            target *= self.generation_decoding_config["num_return_sequences"]
             for t, cp in zip(target, c_props):
                 if  cp != None:
                     target_clean.append(t)
@@ -315,7 +313,7 @@ class Property2Mol:
         max_, min_, max_g = np.max(self.targets), np.min(self.targets), np.max(generated_clean)
         title = f'{self.generation_config_name} generation of {test_name} with {self.model_checkpoint_path.split("/")[-2]}\n'\
                 f'rmse {rmse:.3f} mape {mape:.3f}\ncorr: {correlation:.3f}, N invalid: {self.n_invalid_generations}, '\
-                f'N total: {self.n_total_gens}\n N Unique: {self.n_unique}, N in PubChem: {self.n_in_pubchem}'
+                f'N total: {self.n_total_gens} N Unique: {self.n_unique}, N in PubChem: {self.n_in_pubchem}'
         
         fig, ax1 = plt.subplots()
         fig.set_figheight(6)
@@ -327,11 +325,6 @@ class Property2Mol:
         stats_width = (property_range[1] - property_range[0]) / 100
         ax2.bar([interval.mid for interval in stats.index], stats, width=stats_width, alpha=0.3) 
         
-        # ax1.text(1.2 * max_, 0.90 * max(max_g, max_), f"Spearman correlation: {correlation:.3f}")
-        # ax1.text(1.2 * max_, 0.85 * max(max_g, max_), f"N invalid gens: {self.n_invalid_generations}")
-        # ax1.text(1.2 * max_, 0.80 * max(max_g, max_), f"N of total gens: {self.n_total_gens}")
-        # ax1.text(1.2 * max_, 0.75 * max(max_g, max_), f"N of Unique Mols: {self.n_unique}")
-        # ax1.text(1.2 * max_, 0.70 * max(max_g, max_), f"N of in PubChem Mols: {self.n_in_pubchem}")
         ax1.scatter(target_clean, generated_clean, c='b')
         ax1.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
         ax1.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
@@ -345,14 +338,13 @@ class Property2Mol:
         plt.close()
 
     def generate_length_calibration_plots(self, x_axis_name, test_name, log_norms, lengths, errors, target):
-        # print(x_axis_name)
-        # print(lengths[:20])
+
         path = self.results_path + "per_vs_rmse/calibration/"
         if not os.path.exists(path):
             os.makedirs(path)
 
         len_ranges = [30, 60, 90, 120, 150, 170]
-        tol = 2
+        tol = 5
         x_axis, y_axis, z_axis = [[],[],[],[],[],[],[]], [[],[],[],[],[],[],[]], [[],[],[],[],[],[],[]]
         for lnorm, leng, err in zip(log_norms, lengths, errors):
             for en, lenr in enumerate(len_ranges):
@@ -384,14 +376,13 @@ class Property2Mol:
             
             fig1, axs1 = plt.subplots(1, self.n_per_vs_rmse, figsize=(self.n_per_vs_rmse * 6, 6))
             fig1.suptitle(f'{data_name} vs. Length vs. Absolute Error, overall RMSE={round(self.rmse, 2)} '\
-                        f'N samples={self.generation_config["num_return_sequences"]}') 
+                        f'N samples={self.generation_decoding_config["num_return_sequences"]}') 
             
             fig2, axs2 = plt.subplots(1, self.n_per_vs_rmse, figsize=(self.n_per_vs_rmse * 6, 6))
             fig2.suptitle(f'{data_name} vs. Absolute Error vs. Length, overall RMSE={round(self.rmse, 2)} '\
-                        f'N samples={self.generation_config["num_return_sequences"]}')
+                        f'N samples={self.generation_decoding_config["num_return_sequences"]}')
             
             for en, i in enumerate(indices):
-                # print('pre len',i, data_name, len(data[i]), len(self.errors[i]), len(self.token_lengths[i]))
                 x_axis, error_clean, invalid, lengths = [], [], [], []
                 for x, e, l in zip(data[i], self.errors[i], self.token_lengths[i]):
                     if e > 0:
@@ -400,13 +391,10 @@ class Property2Mol:
                         lengths.append(l)
                     else:
                         invalid.append(x)
-                # print('post len',i, data_name, len(x_axis), len(error_clean), len(lengths))
                 self.generate_length_calibration_plots(data_name, test_name, x_axis, lengths, error_clean, self.targets[i][0])
 
                 im1 = axs1[en].scatter(x_axis, lengths, c=error_clean, s=70)
                 axs1[en].set_title(f'{test_name}={self.targets[i][0]}')
-                # axs[en].set_xlim((0, 2000))
-                # axs[en].set_ylim((0, 300))
                 axs1[en].set_xlabel(data_name)
                 axs1[en].set_ylabel('Length')
                 axs1[en].grid()
@@ -415,8 +403,6 @@ class Property2Mol:
 
                 im2 = axs2[en].scatter(x_axis, error_clean, c=lengths, s=70)
                 axs2[en].set_title(f'{test_name}={self.targets[i][0]}')
-                # axs[en].set_xlim((0, 2000))
-                # axs[en].set_ylim((0, 300))
                 axs2[en].set_xlabel(data_name)
                 axs2[en].set_ylabel('Error')
                 axs2[en].grid()
@@ -461,14 +447,12 @@ class Property2Mol:
             self.inputs = self.get_inputs(input_properties)
             property_fns = self.get_property_fns(target_properties)
             self.outputs, self.raw_outputs, self.perplexities, self.token_lengths, self.norm_logs = self.generate_outputs()
-            # for i in range(len(self.targets)):
-            #     print(i, len(self.inputs[i]), len(self.targets[i]), len(self.outputs[i]), len(self.perplexities[i]), len(self.token_lengths[i]), len(self.norm_logs[i]))
             self.calculated_properties = self.calculate_properties(property_fns)
             self.errors, self.n_invalid_generations, self.n_unique, self.n_in_pubchem, self.n_total_gens = self.get_stats()
             target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape = self.clean_outputs()
             self.write_to_file(test_name)
             self.generate_plot(test_name, target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape)
-            if self.generation_config["do_sample"] == True:
+            if self.generation_decoding_config["do_sample"] == True:
                 path = self.results_path + "per_vs_rmse/"
                 if not os.path.exists(path):
                     os.makedirs(path)
@@ -483,7 +467,7 @@ if __name__ == "__main__":
     
     for evaluation_config in evaluation_configs:
         print(f"evaluating model: {evaluation_config['model_checkpoint_path'].split('/')[-2]} "\
-              f"with {evaluation_config['generation_config']['name']} config")
+            f"with {evaluation_config['generation_config']['name']} config")
         property_2_Mol = Property2Mol(**evaluation_config)
         property_2_Mol.run_property_2_Mol_test()
         property_2_Mol.log_file.close()
