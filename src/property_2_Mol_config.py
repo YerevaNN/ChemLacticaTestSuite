@@ -20,9 +20,9 @@ test_suite = {
 }
 
 mock_test_suite = {
-    "weight": {
-        "input_properties": ["weight"],
-        "target_properties": ["weight"]
+    "clogp": {
+        "input_properties": ["clogp"],
+        "target_properties": ["clogp"]
     }
 }
 
@@ -158,17 +158,17 @@ chemlactica_tokenizer_50028_path = "/home/menuab/code/ChemLacticaTestSuite/src/t
 chemlactica_tokenizer_50066_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-device = "cuda:1"
-# device = "cuda:0"
+# device = "cuda:1"
+device = "cuda:0"
 # device = 'cpu'
 
 models = [model_125m_253k_ac79]
 gen_configs = [nongreedy_calibration_generation_config]
 
 evaluation_config = {
-    "test_suite":            test_suite,
-    "property_range":        property_range,
-    "generation_config":     greedy_generation_config,
+    "test_suite":            mock_test_suite,
+    "property_range":        mock_property_range,
+    "generation_config":     contrastive_generation_config,
     "model_checkpoint_path": model_125m_256k_0d99,
     "tokenizer_path":        galactica_tokenizer_path,
     "torch_dtype":           torch_dtype,
@@ -177,9 +177,9 @@ evaluation_config = {
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
-    "check_for_novelty":     True,
-    "track":                 True,
-    "description": "125m_256k_0d99-nongreedy_calibration_1k",
+    "check_for_novelty":     False,
+    "track":                 False,
+    "description": f"contrastive testing",
 }
 
 # evaluation_configs = []

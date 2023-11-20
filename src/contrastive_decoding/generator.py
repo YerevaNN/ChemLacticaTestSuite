@@ -477,7 +477,7 @@ if __name__ == "__main__":
     expert_lm = OPTForCausalLM.from_pretrained("/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_256k_0d99").to(device)
                 # load the student model with AutoModelForCausalLM it is important
     # student_lm = AutoModelForCausalLM.from_pretrained("facebook/galactica-125m").to(device)
-    student_lm = AutoModelForCausalLM.from_pretrained("/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_253k_0d99").to(device)
+    student_lm = AutoModelForCausalLM.from_pretrained("/home/menuab/code/checkpoints/8c311987db124d9e87fc26da/125m_24k_8c31").to(device)
 
     # print(input_ids)
     output_tokens = generate(

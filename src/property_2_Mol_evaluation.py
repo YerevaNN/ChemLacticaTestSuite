@@ -20,6 +20,9 @@ from utils import mol_util
 from custom_modeling_opt import CustomOPTForCausalLM
 from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
+from contrastive_decoding.generator import generate as generate_CD
+from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
+from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
 # from assert_tokenizer import assert_tokenizer
 
 seed_value = 42
@@ -120,6 +123,12 @@ class Property2Mol:
     def load_model(self):
         if "1.3b" in self.model_checkpoint_path:
             model = OPTForCausalLM.from_pretrained(self.model_checkpoint_path)
+        elif self.generation_config_name == "contrastive_decoding":
+            model = load_CD_expert_model.from_pretrained(self.generation_config["expert_model"])
+            self.student_model = load_CD_student_model.from_pretrained(self.generation_config["student_model"])
+            self.student_model.eval()
+            self.student_model.to(self.device)
+            print(f'student model loaded with embedding size of: {self.student_model.model.decoder.embed_tokens.num_embeddings}, model dtype: {self.student_model.dtype}')
         else:
             model = CustomOPTForCausalLM.from_pretrained(
                 self.model_checkpoint_path,
@@ -128,7 +137,7 @@ class Property2Mol:
                 )
         model.eval()
         model.to(self.device)
-        print(f'model loaded with embedding size of : {model.model.decoder.embed_tokens.num_embeddings}')
+        print(f'model loaded with embedding size of : {model.model.decoder.embed_tokens.num_embeddings}, model dtype: {model.dtype}')
 
         return model
 
@@ -185,23 +194,36 @@ class Property2Mol:
             perplexities, texts, lengths, norm_log, out = [], [], [], [], []
             range_ = 20 if self.generation_config["multiple_rounds_generation"] == True else 1
             for _ in range(range_):
-                output = self.model.generate(
-                    input_ids=input_id,
-                    **self.generation_decoding_config   
-                )
-                if self.generation_decoding_config["num_beams"] > 1:
-                    scores = self.model.compute_transition_scores(
+                if self.generation_config_name == "contrastive_decoding":
+                    output = generate_CD(
+                        input_ids=input_ids[0],
+                        expert_lm=self.model,
+                        student_lm=self.student_model,
+                        **self.generation_decoding_config
+                    )
+                    scores = self.model.compute_transition_beam_scores(
                             sequences=output.sequences,
                             scores=output.scores,
                             beam_indices=output.beam_indices,
-                            normalize_logits=True
                         ).cpu().detach()
                 else:
-                    scores = self.model.compute_transition_scores(
-                            sequences=output.sequences,
-                            scores=output.scores,
-                            normalize_logits=True
-                        ).cpu().detach()
+                    output = self.model.generate(
+                        input_ids=input_id,
+                        **self.generation_decoding_config   
+                    )
+                    if self.generation_decoding_config["num_beams"] > 1:
+                        scores = self.model.compute_transition_scores(
+                                sequences=output.sequences,
+                                scores=output.scores,
+                                beam_indices=output.beam_indices,
+                                normalize_logits=True
+                            ).cpu().detach()
+                    else:
+                        scores = self.model.compute_transition_scores(
+                                sequences=output.sequences,
+                                scores=output.scores,
+                                normalize_logits=True
+                            ).cpu().detach()
                 end_smiles = np.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
                 end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
                 perplexities_ = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
