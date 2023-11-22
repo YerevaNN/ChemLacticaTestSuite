@@ -50,6 +50,7 @@ class Property2Mol:
             include_eos,
             check_for_novelty,
             track,
+            plot,
             description,
             ) -> None:
         
@@ -64,6 +65,7 @@ class Property2Mol:
         self.torch_dtype=torch_dtype
         self.device = device
         self.track = track
+        self.plot = plot
         
         self.smiles_prefix = "[START_SMILES]"
         self.eos_string = "</s>"
@@ -190,22 +192,25 @@ class Property2Mol:
         input_ids = [self.tokenizer(input, return_tensors="pt").to(self.device).input_ids for input in self.inputs]
         outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list, self.molecules_set = [], [], [], [], [], set()
         for input_id in input_ids:
+            # input_id = self.tokenizer("123", return_tensors="pt").to(self.device).input_ids 
             context_length = input_id.shape[1]
             perplexities, texts, lengths, norm_log, out = [], [], [], [], []
             range_ = 20 if self.generation_config["multiple_rounds_generation"] == True else 1
             for _ in range(range_):
                 if self.generation_config_name == "contrastive_decoding":
                     output = generate_CD(
-                        input_ids=input_ids[0],
+                        input_ids=input_id,
                         expert_lm=self.model,
                         student_lm=self.student_model,
                         **self.generation_decoding_config
                     )
+                    beams = output.get("beam_indices", torch.zeros_like(output.sequences))
+                    beams[:, -context_length:] = -1
                     scores = self.model.compute_transition_beam_scores(
                             sequences=output.sequences,
                             scores=output.scores,
-                            beam_indices=output.beam_indices,
-                        ).cpu().detach()
+                            beam_indices=beams,
+                        )
                 else:
                     output = self.model.generate(
                         input_ids=input_id,
@@ -327,8 +332,11 @@ class Property2Mol:
                 else:
                     nones.append(t)
         correlation, pvalue = spearmanr(target_clean, generated_clean)
-        rmse = metrics.mean_squared_error(target_clean, generated_clean, squared=False)
-        mape = metrics.mean_absolute_percentage_error(target_clean, generated_clean)
+        if target_clean:
+            rmse = metrics.mean_squared_error(target_clean, generated_clean, squared=False)
+            mape = metrics.mean_absolute_percentage_error(target_clean, generated_clean)
+        else:
+            rmse = mape = 0
         return target_clean, generated_clean, nones, correlation, rmse, mape
 
     def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape):
@@ -473,12 +481,13 @@ class Property2Mol:
             self.errors, self.n_invalid_generations, self.n_unique, self.n_in_pubchem, self.n_total_gens = self.get_stats()
             target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape = self.clean_outputs()
             self.write_to_file(test_name)
-            self.generate_plot(test_name, target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape)
-            if self.generation_decoding_config["do_sample"] == True:
-                path = self.results_path + "per_vs_rmse/"
-                if not os.path.exists(path):
-                    os.makedirs(path)
-                self.generate_perplexity_vs_rmse(test_name)
+            if self.plot:
+                self.generate_plot(test_name, target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape)
+                if self.generation_decoding_config["do_sample"] == True:
+                    path = self.results_path + "per_vs_rmse/"
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+                    self.generate_perplexity_vs_rmse(test_name)
             if self.track:
                 self.track_stats(test_name)
             print(f"finished evaluating test for {test_name}")

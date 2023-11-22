@@ -421,11 +421,11 @@ def generate(
         "use_cap_student": (use_cap_student=='yes'), #cap student debug
         "use_switch": (use_switch == 'yes'),
     }
-    print(args)
+    # print(args)
     output_sequences = expert_lm.generate(
         input_ids=input_ids,
-        max_length=length + len(input_ids),
-        min_length=length + len(input_ids),
+        # max_length=length + len(input_ids),
+        # min_length=length + len(input_ids),
         temperature=temperature,
         top_k=top_k,
         top_p=top_p,
