@@ -28,7 +28,7 @@ mock_test_suite = {
 
 property_range = {
     "sas": {
-        "range": (1, 10),
+        "range": (1.1, 10),
         "step":  0.1
     },
     "qed": {
@@ -40,7 +40,7 @@ property_range = {
         "step":  1
     },
     "clogp": {
-        "range": (1, 10),
+        "range": (1.1, 10),
         "step":  0.1
     }
 }  
@@ -193,9 +193,9 @@ gen_configs = [nongreedy_calibration_generation_config]
 # }
 
 evaluation_config = {
-    "test_suite":            test_suite,
+    "test_suite":            mock_test_suite,
     "property_range":        property_range,
-    "generation_config":     contrastive_generation_config,
+    "generation_config":     greedy_generation_config,
     "model_checkpoint_path": model_125m_512k_fe31,
     "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,
@@ -204,7 +204,7 @@ evaluation_config = {
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
-    "check_for_novelty":     True,
+    "check_for_novelty":     False,
     "track":                 True,
     "plot":                  True,
     "description": f"CD greedy",

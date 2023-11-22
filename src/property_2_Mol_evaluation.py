@@ -192,7 +192,6 @@ class Property2Mol:
         input_ids = [self.tokenizer(input, return_tensors="pt").to(self.device).input_ids for input in self.inputs]
         outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list, self.molecules_set = [], [], [], [], [], set()
         for input_id in input_ids:
-            # input_id = self.tokenizer("123", return_tensors="pt").to(self.device).input_ids 
             context_length = input_id.shape[1]
             perplexities, texts, lengths, norm_log, out = [], [], [], [], []
             range_ = 20 if self.generation_config["multiple_rounds_generation"] == True else 1
@@ -210,25 +209,32 @@ class Property2Mol:
                             sequences=output.sequences,
                             scores=output.scores,
                             beam_indices=beams,
-                        )
+                        ).cpu().detach()
                 else:
                     output = self.model.generate(
                         input_ids=input_id,
                         **self.generation_decoding_config   
                     )
-                    if self.generation_decoding_config["num_beams"] > 1:
-                        scores = self.model.compute_transition_scores(
+                    beams = output.get("beam_indices", None)
+                    scores = self.model.compute_transition_scores(
                                 sequences=output.sequences,
                                 scores=output.scores,
-                                beam_indices=output.beam_indices,
+                                beam_indices=beams,
                                 normalize_logits=True
                             ).cpu().detach()
-                    else:
-                        scores = self.model.compute_transition_scores(
-                                sequences=output.sequences,
-                                scores=output.scores,
-                                normalize_logits=True
-                            ).cpu().detach()
+                    # if self.generation_decoding_config["num_beams"] > 1:
+                    #     scores = self.model.compute_transition_scores(
+                    #             sequences=output.sequences,
+                    #             scores=output.scores,
+                    #             beam_indices=output.beam_indices,
+                    #             normalize_logits=True
+                    #         ).cpu().detach()
+                    # else:
+                    #     scores = self.model.compute_transition_scores(
+                    #             sequences=output.sequences,
+                    #             scores=output.scores,
+                    #             normalize_logits=True
+                    #         ).cpu().detach()
                 end_smiles = np.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
                 end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
                 perplexities_ = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
@@ -321,8 +327,10 @@ class Property2Mol:
                                     f'token length: {l}, char length: {len(o)}\n')
             self.log_file.write('***********\n')
 
-    def clean_outputs(self):
+    def clean_outputs(self, test_name):
         target_clean, generated_clean, nones = [], [], []
+        corrected_calculated = np.array(self.calculated_properties)
+        corrected_calculated[corrected_calculated == None] = sum(self.property_range[test_name]['range']) / 2
         for target, c_props in zip(self.targets, self.calculated_properties):
             target *= self.generation_decoding_config["num_return_sequences"]
             for t, cp in zip(target, c_props):
@@ -332,18 +340,22 @@ class Property2Mol:
                 else:
                     nones.append(t)
         correlation, pvalue = spearmanr(target_clean, generated_clean)
+        correlation_c, pvalue = spearmanr(self.targets, corrected_calculated)
         if target_clean:
             rmse = metrics.mean_squared_error(target_clean, generated_clean, squared=False)
+            rmse_c = metrics.mean_squared_error(self.targets, corrected_calculated, squared=False)
             mape = metrics.mean_absolute_percentage_error(target_clean, generated_clean)
+            mape_c = metrics.mean_absolute_percentage_error(self.targets, corrected_calculated)
         else:
             rmse = mape = 0
-        return target_clean, generated_clean, nones, correlation, rmse, mape
+        return target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c
 
-    def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape):
+    def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c):
         max_, min_, max_g = np.max(self.targets), np.min(self.targets), np.max(generated_clean)
         title = f'{self.generation_config_name} generation of {test_name} with {self.model_checkpoint_path.split("/")[-2]}\n'\
-                f'rmse {rmse:.3f} mape {mape:.3f}\ncorr: {correlation:.3f}, N invalid: {self.n_invalid_generations}, '\
-                f'N total: {self.n_total_gens} N Unique: {self.n_unique}, N in PubChem: {self.n_in_pubchem}'
+                f'rmse {rmse:.3f} mape {mape:.3f} rmse_c {rmse_c:.3f} mape_c {mape_c:.3f}\n'\
+                f'corr: {correlation:.3f} corr_c: {correlation_c:.3f} corr_s: {correlation*(1-(self.n_invalid_generations/self.n_total_gens)):.3f}\n'\
+                f'N invalid: {self.n_invalid_generations}, N total: {self.n_total_gens} N Unique: {self.n_unique}, N in PubChem: {self.n_in_pubchem}'
         
         fig, ax1 = plt.subplots()
         fig.set_figheight(6)
@@ -448,8 +460,12 @@ class Property2Mol:
         self.aim_run.track(
             {
                 "rmse": self.rmse,
+                "rmse corrected w/mean": self.rmse_c,
                 "Spearman correlation": self.correlation,
+                "Spearman correlation corrected w/mean": self.correlation_c,
+                "Spearman correlation scaled": self.correlation * (1-(self.n_invalid_generations/self.n_total_gens)),
                 "mape": self.mape,
+                "mape corrected w/mean": self.mape_c,
                 "N total gens": self.n_total_gens,
                 "N invalid gens": self.n_invalid_generations,
                 "N of Unique Mols": self.n_unique,
@@ -479,10 +495,12 @@ class Property2Mol:
             self.outputs, self.raw_outputs, self.perplexities, self.token_lengths, self.norm_logs = self.generate_outputs()
             self.calculated_properties = self.calculate_properties(property_fns)
             self.errors, self.n_invalid_generations, self.n_unique, self.n_in_pubchem, self.n_total_gens = self.get_stats()
-            target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape = self.clean_outputs()
+            target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape,\
+            self.correlation_c, self.rmse_c, self.mape_c = self.clean_outputs(test_name)
             self.write_to_file(test_name)
             if self.plot:
-                self.generate_plot(test_name, target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape)
+                self.generate_plot(test_name, target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape, \
+                                   self.correlation_c, self.rmse_c, self.mape_c)
                 if self.generation_decoding_config["do_sample"] == True:
                     path = self.results_path + "per_vs_rmse/"
                     if not os.path.exists(path):
