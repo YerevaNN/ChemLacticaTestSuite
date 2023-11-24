@@ -125,7 +125,7 @@ class Property2Mol:
     def load_model(self):
         if "1.3b" in self.model_checkpoint_path:
             model = OPTForCausalLM.from_pretrained(self.model_checkpoint_path)
-        elif self.generation_config_name == "contrastive_decoding":
+        elif "contrastive" in self.generation_config_name:
             model = load_CD_expert_model.from_pretrained(self.generation_config["expert_model"])
             self.student_model = load_CD_student_model.from_pretrained(self.generation_config["student_model"])
             self.student_model.eval()
@@ -194,9 +194,9 @@ class Property2Mol:
         for input_id in input_ids:
             context_length = input_id.shape[1]
             perplexities, texts, lengths, norm_log, out = [], [], [], [], []
-            range_ = 20 if self.generation_config["multiple_rounds_generation"] == True else 1
+            range_ = self.generation_config["total_gen_range"] if self.generation_config["multiple_rounds_generation"] == True else 1
             for _ in range(range_):
-                if self.generation_config_name == "contrastive_decoding":
+                if "contrastive" in self.generation_config_name:
                     output = generate_CD(
                         input_ids=input_id,
                         expert_lm=self.model,
@@ -205,6 +205,8 @@ class Property2Mol:
                     )
                     beams = output.get("beam_indices", torch.zeros_like(output.sequences))
                     beams[:, -context_length:] = -1
+                    # beam_indices = torch.arange(output.scores[0].shape[0]).view(-1, 1).to(self.device)
+                    # beam_indices = beam_indices.expand(-1, len(output.scores))
                     scores = self.model.compute_transition_beam_scores(
                             sequences=output.sequences,
                             scores=output.scores,
@@ -331,7 +333,7 @@ class Property2Mol:
     def clean_outputs(self, test_name):
         target_clean, generated_clean, nones = [], [], []
         corrected_calculated = np.array(self.calculated_properties)
-        corrected_calculated[corrected_calculated == None] = sum(self.property_range[test_name]['range']) / 2
+        corrected_calculated[corrected_calculated == None] = self.property_range[test_name]['mean']
         for target, c_props in zip(self.targets, self.calculated_properties):
             target *= self.generation_decoding_config["num_return_sequences"]
             for t, cp in zip(target, c_props):
