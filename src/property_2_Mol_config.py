@@ -16,6 +16,10 @@ test_suite = {
     "clogp": {
         "input_properties": ["clogp"],
         "target_properties": ["clogp"]
+    },
+    "similarity": {
+        "input_properties": ["similarity"],
+        "target_properties": ["similarity"]
     }
 }
 
@@ -31,22 +35,33 @@ property_range = {
         "range": (1.1, 10),
         "step":  0.1,
         "mean": 2.8,
+        "smiles": ""
     },
     "qed": {
         "range": (0.01, 1),
         "step":  0.01,
         "mean": 0.75,
+        "smiles": ""
+    },
+    "similarity":
+    {
+        "range": (0.01, 1),
+        "step":  0.01,
+        "smiles": " CC(CN)O"
+        "mean": 0 # TODO need to update
     },
     "weight": {
         "range": (100.1, 1000),
         "step":  1,
         "mean": 290,
+        "smiles": ""
     },
     "clogp": {
         "range": (1.1, 10),
         "step":  0.1,
         "mean": 3,
-    }
+        "smiles": ""
+    },
 }  
 
 mock_property_range = {
@@ -54,22 +69,33 @@ mock_property_range = {
         "range": (3.2, 10),
         "step":  1,
         "mean": 3,
+        "smiles": ""
     },
     "sas": {
         "range": (1.2, 10),
         "step":  1,
         "mean": 2.8,
+        "smiles": ""
     },
     "qed": {
         "range": (0.01, 1),
         "step":  .1,
         "mean": 0.75,
+        "smiles": ""
     },
     "weight": {
         "range": (104.1, 1000),
         "step":  200,
         "mean": 290,
-    }
+        "smiles": ""
+    },
+    "similarity":
+    {
+        "range": (0.01, 1),
+        "step":  0.01,
+        "smiles": " CC(CN)O",
+        "mean": 1000 # TODO need to update
+    },
 }
 
 greedy_generation_config = {

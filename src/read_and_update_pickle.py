@@ -1,12 +1,9 @@
-#%%
-
 import pandas as pd
 import pickle
 
 with open("pubchem_stats.pkl", 'rb') as pubchem_stats_file:
     pubchem_stats = pickle.load(pubchem_stats_file)
 tanim = pd.read_csv("tanimoto_sim.csv")
-tanim.plot.bar(x="TanimotoSimilarity", y="count")
 
 tan_pd = []
 interval = pd.IntervalIndex.from_arrays(tanim.TanimotoSimilarity-0.005, right=tanim.TanimotoSimilarity+0.005, name="SIMILARITY")
