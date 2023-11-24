@@ -254,6 +254,7 @@ class Property2Mol:
                         perplexities.append(perplexity)
                         lengths.append(len_)
                 else:
+                    perplexities = perplexities_
                     lengths = [output.sequences.shape[-1] - context_length]
                     texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
                     norm_log = [norm_logs]
