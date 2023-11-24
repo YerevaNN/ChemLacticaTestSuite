@@ -1338,10 +1338,10 @@ class GenerationMixin:
                 )
 
             if model_kwargs['teacher_student']:
-                print('setting the adaptive thresholding')
+                # print('setting the adaptive thresholding')
                 relative_top = None 
             else:
-                print('not setting adaptive thresholding')
+                # print('not setting adaptive thresholding')
                 relative_top = None 
 
             logits_warper = self._get_logits_warper(
@@ -1367,7 +1367,7 @@ class GenerationMixin:
                     num_beams=num_beams,
                     renormalize_logits=renormalize_logits,
                 )
-                print(logits_warper_student)
+                # print(logits_warper_student)
 
             # 10. run greedy search
             return self.greedy_search(
@@ -1387,10 +1387,10 @@ class GenerationMixin:
         elif is_sample_gen_mode:
             # 10. prepare logits warper
             if model_kwargs['teacher_student']:
-                print('setting the adaptive thresholding')
+                # print('setting the adaptive thresholding')
                 relative_top = 0.1 #None 
             else:
-                print('not setting adaptive thresholding')
+                # print('not setting adaptive thresholding')
                 relative_top = None 
 
             logits_warper = self._get_logits_warper(
@@ -1538,10 +1538,10 @@ class GenerationMixin:
 
             top_k = None 
             if model_kwargs['teacher_student']:
-                print('setting the adaptive thresholding')
+                # print('setting the adaptive thresholding')
                 relative_top = 0.1 #None 
             else:
-                print('not setting adaptive thresholding')
+                # print('not setting adaptive thresholding')
                 relative_top = None 
             # relative_top = None #jason version.  
             logits_warper = self._get_logits_warper(

@@ -20,6 +20,9 @@ from utils import mol_util
 from custom_modeling_opt import CustomOPTForCausalLM
 from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
+from contrastive_decoding.generator import generate as generate_CD
+from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
+from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
 # from assert_tokenizer import assert_tokenizer
 
 seed_value = 42
@@ -47,6 +50,7 @@ class Property2Mol:
             include_eos,
             check_for_novelty,
             track,
+            plot,
             description,
             ) -> None:
         
@@ -61,6 +65,7 @@ class Property2Mol:
         self.torch_dtype=torch_dtype
         self.device = device
         self.track = track
+        self.plot = plot
         
         self.smiles_prefix = "[START_SMILES]"
         self.eos_string = "</s>"
@@ -120,6 +125,12 @@ class Property2Mol:
     def load_model(self):
         if "1.3b" in self.model_checkpoint_path:
             model = OPTForCausalLM.from_pretrained(self.model_checkpoint_path)
+        elif "contrastive" in self.generation_config_name:
+            model = load_CD_expert_model.from_pretrained(self.generation_config["expert_model"])
+            self.student_model = load_CD_student_model.from_pretrained(self.generation_config["student_model"])
+            self.student_model.eval()
+            self.student_model.to(self.device)
+            print(f'student model loaded with embedding size of: {self.student_model.model.decoder.embed_tokens.num_embeddings}, model dtype: {self.student_model.dtype}')
         else:
             model = CustomOPTForCausalLM.from_pretrained(
                 self.model_checkpoint_path,
@@ -128,7 +139,7 @@ class Property2Mol:
                 )
         model.eval()
         model.to(self.device)
-        print(f'model loaded with embedding size of : {model.model.decoder.embed_tokens.num_embeddings}')
+        print(f'model loaded with embedding size of : {model.model.decoder.embed_tokens.num_embeddings}, model dtype: {model.dtype}')
 
         return model
 
@@ -183,25 +194,49 @@ class Property2Mol:
         for input_id in input_ids:
             context_length = input_id.shape[1]
             perplexities, texts, lengths, norm_log, out = [], [], [], [], []
-            range_ = 20 if self.generation_config["multiple_rounds_generation"] == True else 1
+            range_ = self.generation_config["total_gen_range"] if self.generation_config["multiple_rounds_generation"] == True else 1
             for _ in range(range_):
-                output = self.model.generate(
-                    input_ids=input_id,
-                    **self.generation_decoding_config   
-                )
-                if self.generation_decoding_config["num_beams"] > 1:
-                    scores = self.model.compute_transition_scores(
+                if "contrastive" in self.generation_config_name:
+                    output = generate_CD(
+                        input_ids=input_id,
+                        expert_lm=self.model,
+                        student_lm=self.student_model,
+                        **self.generation_decoding_config
+                    )
+                    beams = output.get("beam_indices", torch.zeros_like(output.sequences))
+                    beams[:, -context_length:] = -1
+                    # beam_indices = torch.arange(output.scores[0].shape[0]).view(-1, 1).to(self.device)
+                    # beam_indices = beam_indices.expand(-1, len(output.scores))
+                    scores = self.model.compute_transition_beam_scores(
                             sequences=output.sequences,
                             scores=output.scores,
-                            beam_indices=output.beam_indices,
-                            normalize_logits=True
+                            beam_indices=beams,
                         ).cpu().detach()
                 else:
+                    output = self.model.generate(
+                        input_ids=input_id,
+                        **self.generation_decoding_config   
+                    )
+                    beams = output.get("beam_indices", None)
                     scores = self.model.compute_transition_scores(
-                            sequences=output.sequences,
-                            scores=output.scores,
-                            normalize_logits=True
-                        ).cpu().detach()
+                                sequences=output.sequences,
+                                scores=output.scores,
+                                beam_indices=beams,
+                                normalize_logits=True
+                            ).cpu().detach()
+                    # if self.generation_decoding_config["num_beams"] > 1:
+                    #     scores = self.model.compute_transition_scores(
+                    #             sequences=output.sequences,
+                    #             scores=output.scores,
+                    #             beam_indices=output.beam_indices,
+                    #             normalize_logits=True
+                    #         ).cpu().detach()
+                    # else:
+                    #     scores = self.model.compute_transition_scores(
+                    #             sequences=output.sequences,
+                    #             scores=output.scores,
+                    #             normalize_logits=True
+                    #         ).cpu().detach()
                 end_smiles = np.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
                 end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
                 perplexities_ = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
@@ -221,6 +256,7 @@ class Property2Mol:
                         perplexities.append(perplexity)
                         lengths.append(len_)
                 else:
+                    perplexities = perplexities_
                     lengths = [output.sequences.shape[-1] - context_length]
                     texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
                     norm_log = [norm_logs]
@@ -294,8 +330,10 @@ class Property2Mol:
                                     f'token length: {l}, char length: {len(o)}\n')
             self.log_file.write('***********\n')
 
-    def clean_outputs(self):
+    def clean_outputs(self, test_name):
         target_clean, generated_clean, nones = [], [], []
+        corrected_calculated = np.array(self.calculated_properties)
+        corrected_calculated[corrected_calculated == None] = self.property_range[test_name]['mean']
         for target, c_props in zip(self.targets, self.calculated_properties):
             target *= self.generation_decoding_config["num_return_sequences"]
             for t, cp in zip(target, c_props):
@@ -305,15 +343,22 @@ class Property2Mol:
                 else:
                     nones.append(t)
         correlation, pvalue = spearmanr(target_clean, generated_clean)
-        rmse = metrics.mean_squared_error(target_clean, generated_clean, squared=False)
-        mape = metrics.mean_absolute_percentage_error(target_clean, generated_clean)
-        return target_clean, generated_clean, nones, correlation, rmse, mape
+        correlation_c, pvalue = spearmanr(self.targets, corrected_calculated)
+        if target_clean:
+            rmse = metrics.mean_squared_error(target_clean, generated_clean, squared=False)
+            rmse_c = metrics.mean_squared_error(self.targets, corrected_calculated, squared=False)
+            mape = metrics.mean_absolute_percentage_error(target_clean, generated_clean)
+            mape_c = metrics.mean_absolute_percentage_error(self.targets, corrected_calculated)
+        else:
+            rmse = mape = 0
+        return target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c
 
-    def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape):
+    def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c):
         max_, min_, max_g = np.max(self.targets), np.min(self.targets), np.max(generated_clean)
         title = f'{self.generation_config_name} generation of {test_name} with {self.model_checkpoint_path.split("/")[-2]}\n'\
-                f'rmse {rmse:.3f} mape {mape:.3f}\ncorr: {correlation:.3f}, N invalid: {self.n_invalid_generations}, '\
-                f'N total: {self.n_total_gens} N Unique: {self.n_unique}, N in PubChem: {self.n_in_pubchem}'
+                f'rmse {rmse:.3f} mape {mape:.3f} rmse_c {rmse_c:.3f} mape_c {mape_c:.3f}\n'\
+                f'corr: {correlation:.3f} corr_c: {correlation_c:.3f} corr_s: {correlation*(1-(self.n_invalid_generations/self.n_total_gens)):.3f}\n'\
+                f'N invalid: {self.n_invalid_generations}, N total: {self.n_total_gens} N Unique: {self.n_unique}, N in PubChem: {self.n_in_pubchem}'
         
         fig, ax1 = plt.subplots()
         fig.set_figheight(6)
@@ -418,8 +463,12 @@ class Property2Mol:
         self.aim_run.track(
             {
                 "rmse": self.rmse,
+                "rmse corrected w/mean": self.rmse_c,
                 "Spearman correlation": self.correlation,
+                "Spearman correlation corrected w/mean": self.correlation_c,
+                "Spearman correlation scaled": self.correlation * (1-(self.n_invalid_generations/self.n_total_gens)),
                 "mape": self.mape,
+                "mape corrected w/mean": self.mape_c,
                 "N total gens": self.n_total_gens,
                 "N invalid gens": self.n_invalid_generations,
                 "N of Unique Mols": self.n_unique,
@@ -449,14 +498,17 @@ class Property2Mol:
             self.outputs, self.raw_outputs, self.perplexities, self.token_lengths, self.norm_logs = self.generate_outputs()
             self.calculated_properties = self.calculate_properties(property_fns)
             self.errors, self.n_invalid_generations, self.n_unique, self.n_in_pubchem, self.n_total_gens = self.get_stats()
-            target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape = self.clean_outputs()
+            target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape,\
+            self.correlation_c, self.rmse_c, self.mape_c = self.clean_outputs(test_name)
             self.write_to_file(test_name)
-            self.generate_plot(test_name, target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape)
-            if self.generation_decoding_config["do_sample"] == True:
-                path = self.results_path + "per_vs_rmse/"
-                if not os.path.exists(path):
-                    os.makedirs(path)
-                self.generate_perplexity_vs_rmse(test_name)
+            if self.plot:
+                self.generate_plot(test_name, target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape, \
+                                   self.correlation_c, self.rmse_c, self.mape_c)
+                if self.generation_decoding_config["do_sample"] == True:
+                    path = self.results_path + "per_vs_rmse/"
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+                    self.generate_perplexity_vs_rmse(test_name)
             if self.track:
                 self.track_stats(test_name)
             print(f"finished evaluating test for {test_name}")
