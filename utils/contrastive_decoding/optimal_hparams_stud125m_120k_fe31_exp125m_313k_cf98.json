@@ -1,0 +1,877 @@
+[
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.8227233895500285,
+        "student_coef": 0.2,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.8023775594230071,
+        "student_coef": 0.2,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.773531212991113,
+        "student_coef": 0.2,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.7625513322665098,
+        "student_coef": 0.2,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.7582717512633044,
+        "student_coef": 0.2,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.7803449850275592,
+        "student_coef": 0.4,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.747390603931351,
+        "student_coef": 0.4,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.718544365512293,
+        "student_coef": 0.4,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.7075646911536784,
+        "student_coef": 0.4,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.703285774034251,
+        "student_coef": 0.4,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.759499343499734,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.7152277997405052,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.68638150336334,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.6754017324078812,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.6711223235226922,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.7374391345029359,
+        "student_coef": 0.8,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.6924110969346757,
+        "student_coef": 0.8,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.6635648901291327,
+        "student_coef": 0.8,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.6525854432121818,
+        "student_coef": 0.8,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.6483066692317176,
+        "student_coef": 0.8,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.720322656368024,
+        "student_coef": 1.0,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.674707433795402,
+        "student_coef": 1.0,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.6458612463092275,
+        "student_coef": 1.0,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.6348814753537668,
+        "student_coef": 1.0,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.1,
+        "expert_temp": 1.0,
+        "loss": 1.6306020453929022,
+        "student_coef": 1.0,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.7538061967431715,
+        "student_coef": 0.2,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.771894599851324,
+        "student_coef": 0.2,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.7615556822297322,
+        "student_coef": 0.2,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.758480253799184,
+        "student_coef": 0.2,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.7582757424693516,
+        "student_coef": 0.2,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.7098773610306495,
+        "student_coef": 0.4,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.7164991266380578,
+        "student_coef": 0.4,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.706160237117367,
+        "student_coef": 0.4,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.7030849123088916,
+        "student_coef": 0.4,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.7028810191988715,
+        "student_coef": 0.4,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6783713583129543,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6840972979424402,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6737583908586868,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6706829360835462,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6704785599892966,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6560207282640667,
+        "student_coef": 0.8,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6611111071886941,
+        "student_coef": 0.8,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6507722317184539,
+        "student_coef": 0.8,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6476971466457864,
+        "student_coef": 0.8,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.647493300956037,
+        "student_coef": 0.8,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6386786517078273,
+        "student_coef": 1.0,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6432760670698794,
+        "student_coef": 1.0,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6329371854525685,
+        "student_coef": 1.0,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6298617069672936,
+        "student_coef": 1.0,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.30000000000000004,
+        "expert_temp": 1.0,
+        "loss": 1.6296572052971436,
+        "student_coef": 1.0,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.750627114627902,
+        "student_coef": 0.2,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.7669684803507826,
+        "student_coef": 0.2,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.762041261402501,
+        "student_coef": 0.2,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.7613462418262902,
+        "student_coef": 0.2,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.762430098833958,
+        "student_coef": 0.2,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.7056422444338297,
+        "student_coef": 0.4,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.7112257792365708,
+        "student_coef": 0.4,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.7062985831202724,
+        "student_coef": 0.4,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.7056036048172587,
+        "student_coef": 0.4,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.7066881151708668,
+        "student_coef": 0.4,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6735773270960004,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6786208837730447,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.673693623551567,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6729985591895449,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6740825487983382,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.650830224952206,
+        "student_coef": 0.8,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6554906486806287,
+        "student_coef": 0.8,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6505634464172583,
+        "student_coef": 0.8,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6498686560390186,
+        "student_coef": 0.8,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6509532164473564,
+        "student_coef": 0.8,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6331806147735208,
+        "student_coef": 1.0,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6375439188976542,
+        "student_coef": 1.0,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6326166182811304,
+        "student_coef": 1.0,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6319214792760923,
+        "student_coef": 1.0,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.5,
+        "expert_temp": 1.0,
+        "loss": 1.6330053424308322,
+        "student_coef": 1.0,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.7453958729134516,
+        "student_coef": 0.2,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.7709521211093744,
+        "student_coef": 0.2,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.7687493617582937,
+        "student_coef": 0.2,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.769291450964153,
+        "student_coef": 0.2,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.7710679354588623,
+        "student_coef": 0.2,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6999072396294195,
+        "student_coef": 0.4,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.7147332634056474,
+        "student_coef": 0.4,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.7125304434620006,
+        "student_coef": 0.4,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.7130726020419578,
+        "student_coef": 0.4,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.7148497381263006,
+        "student_coef": 0.4,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6675693826341718,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6818498845038932,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.679646974110471,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6801889921859272,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6819656242103647,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6446287039235152,
+        "student_coef": 0.8,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6585220605628919,
+        "student_coef": 0.8,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6563192116401912,
+        "student_coef": 0.8,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6568615388255534,
+        "student_coef": 0.8,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6586387144267885,
+        "student_coef": 0.8,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6268289629267065,
+        "student_coef": 1.0,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6404221097408738,
+        "student_coef": 1.0,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6382191888096151,
+        "student_coef": 1.0,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6387610997503856,
+        "student_coef": 1.0,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.7000000000000001,
+        "expert_temp": 1.0,
+        "loss": 1.6405375175054566,
+        "student_coef": 1.0,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.7585478320745263,
+        "student_coef": 0.2,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.7790579286508574,
+        "student_coef": 0.2,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.7782468927499333,
+        "student_coef": 0.2,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.7794258677937491,
+        "student_coef": 0.2,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.7815621790525884,
+        "student_coef": 0.2,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.7121810351067932,
+        "student_coef": 0.4,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.7222535614589733,
+        "student_coef": 0.4,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.721442523801743,
+        "student_coef": 0.4,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.7226214645975855,
+        "student_coef": 0.4,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.7247584555469613,
+        "student_coef": 0.4,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6793224561280304,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6890277555195232,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6882165922863925,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6893954452669195,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.691531887370579,
+        "student_coef": 0.6000000000000001,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6560123743931876,
+        "student_coef": 0.8,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6654570475906743,
+        "student_coef": 0.8,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.66464591421475,
+        "student_coef": 0.8,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6658250376664476,
+        "student_coef": 0.8,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6679620488133438,
+        "student_coef": 0.8,
+        "student_temp": 1.0
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6379261122224085,
+        "student_coef": 1.0,
+        "student_temp": 0.2
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.647168682864138,
+        "student_coef": 1.0,
+        "student_temp": 0.4
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6463574160089371,
+        "student_coef": 1.0,
+        "student_temp": 0.6000000000000001
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6475361232160435,
+        "student_coef": 1.0,
+        "student_temp": 0.8
+    },
+    {
+        "adaptability_constant": 0.9,
+        "expert_temp": 1.0,
+        "loss": 1.6496723782730807,
+        "student_coef": 1.0,
+        "student_temp": 1.0
+    }
+]

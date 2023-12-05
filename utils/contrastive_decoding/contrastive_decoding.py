@@ -38,7 +38,7 @@ def _update_model_kwargs_for_generation(
             )
         return model_kwargs
 
-
+@torch.no_grad()
 def contrast_logits(
         expert_logits: torch.Tensor,
         student_logits: torch.Tensor,
@@ -47,15 +47,65 @@ def contrast_logits(
         expert_temp: float,
         student_temp: float
     ):
+    batch_size, context_length, vocab_size = expert_logits.shape
     expert_probs = (expert_logits / expert_temp).softmax(-1)
     student_probs = (student_logits / student_temp).softmax(-1)
-    inds_to_ignore = expert_probs < adaptability_constant * torch.max(expert_probs)
     contrasted_probs = torch.empty_like(expert_probs)
-    contrasted_probs[inds_to_ignore] = float('-inf')
-    contrasted_probs[~inds_to_ignore] = torch.log(expert_probs[~inds_to_ignore] / (student_coef * student_probs[~inds_to_ignore]))
+    for i in range(batch_size):
+        inds_to_ignore = expert_probs[i] < adaptability_constant * expert_probs[i].max(-1).values.view(context_length, 1)
+        contrasted_probs[i] = expert_probs[i] / (1 if student_coef == 0.0 else student_coef * student_probs[i])
+        contrasted_probs[i][inds_to_ignore] = float('-inf')
+    contrasted_probs[contrasted_probs != float('-inf')] = torch.log(contrasted_probs[contrasted_probs != float('-inf')])
     return contrasted_probs
 
 
+def contrastive_forward(
+        input_ids: torch.Tensor,
+        expert_lm,
+        student_lm,
+        expert_temp: float=1.0,
+        student_temp: float=1.0,
+        student_coef: float=1.0,
+        adaptability_constant: float=0.0,
+        **model_kwargs
+    ):
+    assert 0 < expert_temp <= 1
+    assert 0 < student_temp <= 1
+    assert 0 <= student_coef <= 1
+    assert 0 <= adaptability_constant <= 1
+
+    expert_lm.eval()
+    student_lm.eval()
+    # define attention mask
+    model_kwargs["attention_mask"] = torch.ones(input_ids.shape[:2], dtype=torch.long, device=input_ids.device)
+    model_inputs = expert_lm.prepare_inputs_for_generation(input_ids, **model_kwargs)
+    
+    # forward pass to get next token
+    expert_lm_outputs = expert_lm(
+        **model_inputs,
+        return_dict=True
+    )
+    student_lm_outputs = student_lm(
+        **model_inputs,
+        return_dict=True
+    )
+
+    expert_lm_logits = expert_lm_outputs.logits
+    student_lm_logits = student_lm_outputs.logits
+
+    next_tokens_scores = contrast_logits(
+        expert_lm_logits,
+        student_lm_logits,
+        adaptability_constant=adaptability_constant,
+        student_coef=student_coef,
+        expert_temp=expert_temp,
+        student_temp=student_temp
+    )
+
+    return next_tokens_scores
+
+
+@torch.no_grad()
 def contrastive_generate(
         input_ids: torch.Tensor,
         expert_lm,
@@ -88,32 +138,6 @@ def contrastive_generate(
 
     if not do_sample:
         for i in range(max_length):
-            # expert_output = expert_lm.generate(
-            #     input_ids=input_ids,
-            #     do_sample=do_sample,
-            #     temperature=expert_temp,
-            #     max_length=max_length,
-            #     num_return_sequences=num_return_sequences,
-            #     num_beams=num_beams,
-            #     return_dict_in_generate=return_dict_in_generate,
-            #     output_scores=output_scores,
-            #     use_cache=True,
-            #     output_hidden_states=True,
-            #     return_dict=True
-            # )
-            # student_output = expert_lm.generate(
-            #     input_ids=input_ids,
-            #     do_sample=do_sample,
-            #     temperature=student_temp,
-            #     max_length=max_length,
-            #     num_return_sequences=num_return_sequences,
-            #     num_beams=num_beams,
-            #     return_dict_in_generate=return_dict_in_generate,
-            #     output_scores=output_scores,
-            #     use_cache=True,
-            #     output_hidden_states=True,
-            #     return_dict=True
-            # )
             model_inputs = expert_lm.prepare_inputs_for_generation(input_ids, **model_kwargs)
 
             # forward pass to get next token
@@ -126,11 +150,9 @@ def contrastive_generate(
                 return_dict=True
             )
 
-            expert_lm_logits = expert_lm_outputs.logits[:, -1, :]
-            student_lm_logits = student_lm_outputs.logits[:, -1, :]
+            expert_lm_logits = expert_lm_outputs.logits
+            student_lm_logits = student_lm_outputs.logits
 
-            # pre-process distribution
-            # next_tokens_scores = logits_processor(input_ids, next_token_logits)
             next_tokens_scores = contrast_logits(
                 expert_lm_logits,
                 student_lm_logits,
@@ -138,7 +160,7 @@ def contrastive_generate(
                 student_coef=student_coef,
                 expert_temp=expert_temp,
                 student_temp=student_temp
-            )
+            )[0]
 
             # Store scores, attentions and hidden_states when required
             if return_dict_in_generate:
@@ -173,7 +195,7 @@ if __name__ == "__main__":
     device = "cuda:1"
     student_path = "/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_120k_fe31"
     expert_path = "/home/menuab/code/checkpoints/cf982665b6c04c83a310b97d/125m_313k_cf98"
-    expert_lm = CustomOPTForCausalLM.from_pretrained(student_path, use_flash_attn=True, torch_dtype=torch.bfloat16).to(device)
+    expert_lm = CustomOPTForCausalLM.from_pretrained(expert_path, use_flash_attn=True, torch_dtype=torch.bfloat16).to(device)
     student_lm = CustomOPTForCausalLM.from_pretrained(student_path, use_flash_attn=True, torch_dtype=torch.bfloat16).to(device)
     
     tokenizer = get_tokenizer()
