@@ -170,8 +170,8 @@ class Property2Mol:
                                               property_step), 3))
         
         inputs = []
-        decim = len(str(property_step).split('.')[-1])
-        # decim = 2
+        # decim = len(str(property_step).split('.')[-1])
+        decim = 2
         print(property_range, decim)
         for value in inputs_[0]:
             if len(self.tokenizer) == 50028:
@@ -190,7 +190,7 @@ class Property2Mol:
         #         if property != "similarity":
         #             input = f'[{property.upper()}]{self.smiles_prefix}'
         #         else:
-        #             input = f"[START_SMILES] {self.property_smiles[1:]} [END_SMILES][SIMILAR] {value}"
+        #             input =  
         #     else:
         #         if property != "similarity":
         #             input = f'[{property.upper()}]{value}[/{property.upper()}]{self.smiles_prefix}'
