@@ -159,11 +159,14 @@ class Property2Mol:
                                               property_step), 3))
         
         inputs = []
+        decim = len(str(property_step).split('.')[-1])
+        # decim = 2
+        print(property_range, decim)
         for value in inputs_[0]:
             if len(self.tokenizer) == 50028:
-                input = f'[{property.upper()} {value}]{self.smiles_prefix}'
+                input = f'[{property.upper()} {value:.{decim}f}]{self.smiles_prefix}'
             else:
-                input = f'[{property.upper()}]{value}[/{property.upper()}]{self.smiles_prefix}'
+                input = f'[{property.upper()}]{value:.{decim}f}[/{property.upper()}]{self.smiles_prefix}'
             if self.include_eos:
                 input = self.eos_string + input
             inputs.append(input)
@@ -255,6 +258,22 @@ class Property2Mol:
                         texts.append(self.tokenizer.decode(output[context_length:]))
                         perplexities.append(perplexity)
                         lengths.append(len_)
+                elif self.generation_decoding_config["do_sample"] == False and self.generation_decoding_config["num_beams"] > 1:
+                    if perplexities_:
+                        sorted_outputs = sorted(zip(perplexities_,
+                                                    norm_logs,
+                                                    output.sequences[end_smiles_indices[:, 0]],
+                                                    end_smiles_indices[:, 1] - context_length + 1),
+                                                    key=lambda x: x[0])[0]
+                        perplexity, n_log, output, len_ = sorted_outputs
+                        perplexities = perplexities_
+                        lengths = [len_]
+                        texts = [self.tokenizer.decode(output)]
+                        norm_log = [norm_logs]
+                    else:
+                        lengths = [0]
+                        texts = [""]
+                        norm_log = [0]
                 else:
                     perplexities = perplexities_
                     lengths = [output.sequences.shape[-1] - context_length]
