@@ -6,7 +6,8 @@ import json
 import pickle
 from itertools import chain
 from datetime import datetime
-
+import argparse
+from tqdm import tqdm
 import numpy as np
 from scipy.stats import spearmanr
 from sklearn import metrics
@@ -24,6 +25,15 @@ from contrastive_decoding.generator import generate as generate_CD
 from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
 from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
 # from assert_tokenizer import assert_tokenizer
+
+parser = argparse.ArgumentParser(description='ChemLactica test evaluation')
+
+parser.add_argument('--result-path', type=str,
+                    default="/home/menuab/code/ChemLacticaTestSuite/results/")
+
+
+args = parser.parse_args()
+result_path = args.result_path
 
 seed_value = 42
 np.random.seed(seed_value)
@@ -88,7 +98,7 @@ class Property2Mol:
         
     @staticmethod
     def get_pubchem_stats():
-        pubchem_stats_file = open("src/pubchem_stats.pkl", 'rb')
+        pubchem_stats_file = open("src/stats_data/pubchem_stats.pkl", 'rb')
         pubchem_stats = pickle.load(pubchem_stats_file)
         pubchem_stats_file.close()
         return pubchem_stats
@@ -110,7 +120,7 @@ class Property2Mol:
     
     def start_log_file(self):
         model_name = self.model_checkpoint_path.split("/")[-2]
-        self.results_path = os.path.join(f"/home/menuab/code/ChemLacticaTestSuite/results/property_2_Mol/"\
+        self.results_path = os.path.join( os.path.join(result_path, "property_2_Mol/"), \
                                          f"{datetime.now().strftime('%Y-%m-%d-%H:%M')}-{model_name}"\
                                          f"-{self.generation_config_name}-{self.eval_hash}/")
         print(f'results_path = {self.results_path}\n')
@@ -154,6 +164,7 @@ class Property2Mol:
         for property in properties:
             property_range = self.property_range[property]["range"]
             property_step = self.property_range[property]["step"]
+            self.property_smiles = self.property_range[property]["smiles"]
             inputs_.append(np.round(np.arange(property_range[0],
                                               property_range[1] + property_step,
                                               property_step), 3))
@@ -170,12 +181,33 @@ class Property2Mol:
             if self.include_eos:
                 input = self.eos_string + input
             inputs.append(input)
+            if property == "similarity":
+                self.inp_smiles.append([self.property_smiles[1:][1:]])
 
         return inputs
+        # for value in inputs_[0]:
+        #     if len(self.tokenizer) == 50028:
+        #         if property != "similarity":
+        #             input = f'[{property.upper()}]{self.smiles_prefix}'
+        #         else:
+        #             input = f"[START_SMILES] {self.property_smiles[1:]} [END_SMILES][SIMILAR] {value}"
+        #     else:
+        #         if property != "similarity":
+        #             input = f'[{property.upper()}]{value}[/{property.upper()}]{self.smiles_prefix}'
+        #         else:
+        #             input = f'[SIMILAR] {value}'
+        #     if self.include_eos:
+        #         input = self.eos_string + input
+        #     inputs.append(input)
+        #     self.inp_smiles.append([self.property_smiles[1:]])
+
+
+        # return inputs
 
     def get_targets(self, properties):
         targets = []
         for property in properties:
+
             property_range = self.property_range[property]["range"]
             property_step = self.property_range[property]["step"]
             targets = [[t] for t in np.round(np.arange(property_range[0],
@@ -297,10 +329,20 @@ class Property2Mol:
         return outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list
     
     def calculate_properties(self, property_fns):
+
         # TODO: drop the hard coded index and adjust for multiple targets
         calculated_properties = [property_fns[0](out) for out in self.outputs]
 
+
         return calculated_properties
+    def calculate_similarity(self, property_fns):
+
+        # TODO: drop the hard coded index and adjust for multiple targets
+
+        calculated_properties = [property_fns[0](out, inp) for out, inp in zip(self.outputs, self.inp_smiles)]
+
+        return calculated_properties
+
 
     def get_stats(self):
         errors = []
@@ -374,10 +416,14 @@ class Property2Mol:
 
     def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c):
         max_, min_, max_g = np.max(self.targets), np.min(self.targets), np.max(generated_clean)
+        if len(self.property_smiles[1:])>0:
+            sm = f", Smiles: {self.property_smiles[1:]}"
+        else:
+            sm = ""
         title = f'{self.generation_config_name} generation of {test_name} with {self.model_checkpoint_path.split("/")[-2]}\n'\
                 f'rmse {rmse:.3f} mape {mape:.3f} rmse_c {rmse_c:.3f} mape_c {mape_c:.3f}\n'\
                 f'corr: {correlation:.3f} corr_c: {correlation_c:.3f} corr_s: {correlation*(1-(self.n_invalid_generations/self.n_total_gens)):.3f}\n'\
-                f'N invalid: {self.n_invalid_generations}, N total: {self.n_total_gens} N Unique: {self.n_unique}, N in PubChem: {self.n_in_pubchem}'
+                f'N invalid: {self.n_invalid_generations}, N total: {self.n_total_gens} N Unique: {self.n_unique}, N in PubChem: {self.n_in_pubchem}{sm}'
         
         fig, ax1 = plt.subplots()
         fig.set_figheight(6)
@@ -507,7 +553,7 @@ class Property2Mol:
             self.aim_run.track(aim_image, name=path.split('/')[-1], context={'subset': test_name})
 
     def run_property_2_Mol_test(self):    
-        for test_name, sample in list(self.test_suite.items()):
+        for test_name, sample in tqdm(list(self.test_suite.items())):
             time_start = time.time()
             input_properties = sample["input_properties"]
             target_properties = sample["target_properties"]
@@ -515,7 +561,10 @@ class Property2Mol:
             self.inputs = self.get_inputs(input_properties)
             property_fns = self.get_property_fns(target_properties)
             self.outputs, self.raw_outputs, self.perplexities, self.token_lengths, self.norm_logs = self.generate_outputs()
-            self.calculated_properties = self.calculate_properties(property_fns)
+            if input_properties[0] != 'similarity':
+                self.calculated_properties = self.calculate_properties(property_fns)
+            else:
+                self.calculated_properties = self.calculate_similarity(property_fns)
             self.errors, self.n_invalid_generations, self.n_unique, self.n_in_pubchem, self.n_total_gens = self.get_stats()
             target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape,\
             self.correlation_c, self.rmse_c, self.mape_c = self.clean_outputs(test_name)
@@ -532,6 +581,8 @@ class Property2Mol:
                 self.track_stats(test_name)
             print(f"finished evaluating test for {test_name}")
             print(f"{len(self.inputs)} samples evaluated in {int(time.time()-time_start)} seconds")
+            # else:
+            #     continue
 
 
 if __name__ == "__main__":

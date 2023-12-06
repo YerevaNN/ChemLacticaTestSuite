@@ -1,8 +1,13 @@
-import rdkit.Chem as Chem
+from rdkit.Chem.Fingerprints import FingerprintMols
 from rdkit.Chem import RDConfig, QED
 from rdkit.Chem import Descriptors
-import os
+from rdkit.Chem import MACCSkeys
+from rdkit import DataStructs
+import rdkit.Chem as Chem
+import numpy as np
 import sys
+import os
+
 sys.path.append(os.path.join(RDConfig.RDContribDir, 'SA_Score'))
 import sascorer
 
@@ -83,4 +88,39 @@ def get_weight(mols):
         else:
             weights = None
         scores.append(weights)
+    return scores
+
+
+def get_similarity(out_sm, inp_smiles):
+    # scores = []
+
+    # mol1 = Chem.MolFromSmiles(out_sm[0])
+    # mol2 = Chem.MolFromSmiles(inp_smiles)
+    # maccs1 = list(MACCSkeys.GenMACCSKeys(mol1).ToBitString())
+    # maccs2 = list(MACCSkeys.GenMACCSKeys(mol2).ToBitString())
+
+    # maccs1 = np.array(maccs1)
+    # maccs2 = np.array(maccs2)
+
+    # intersection = np.sum(np.bitwise_and(maccs1, maccs2), axis=1)
+    # similarity = intersection / (
+    #     np.sum(maccs1, axis=1) + np.sum(maccs2, axis=1) - intersection
+    # )
+    # scores.append(np.round(similarity, decimals=3))
+    # return scores
+    if not isinstance(out_sm, list):
+        out_sm = [out_sm]
+    scores = []
+
+    for sm, inp_sm in zip(out_sm, inp_smiles):
+        try:
+            mol_out = Chem.MolFromSmiles(sm)
+            mol_in = Chem.MolFromSmiles(inp_sm)
+            inp_fp = Chem.RDKFingerprint(mol_in)
+            out_fp = Chem.RDKFingerprint(mol_out)
+            similarity = DataStructs.TanimotoSimilarity(inp_fp, out_fp)
+            tanimoto = np.round(similarity, decimals=3)
+        except:
+            tanimoto = None
+        scores.append(tanimoto)
     return scores
