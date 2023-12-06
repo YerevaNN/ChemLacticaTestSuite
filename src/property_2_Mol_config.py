@@ -43,11 +43,10 @@ property_range = {
         "mean": 0.75,
         "smiles": ""
     },
-    "similarity":
-    {
+    "similarity": {
         "range": (0.01, 1),
         "step":  0.01,
-        "smiles": " CC(CN)O"
+        "smiles": " CC(CN)O",
         "mean": 0 # TODO need to update
     },
     "weight": {
@@ -229,9 +228,9 @@ models = [model_125m_253k_ac79, model_125m_512k_fe31, model_125m_256k_0d99]
 gen_configs = [nongreedy_calibration_generation_config]
 
 evaluation_config = {
-    "test_suite":            test_suite,
-    "property_range":        property_range,
-    "generation_config":     contrastive_generation_config_fe31,
+    "test_suite":            mock_test_suite,
+    "property_range":        mock_property_range,
+    "generation_config":     greedy_generation_config,
     "model_checkpoint_path": model_125m_512k_fe31,
     "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,
