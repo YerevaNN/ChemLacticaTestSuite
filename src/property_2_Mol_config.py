@@ -178,6 +178,7 @@ contrastive_generation_config_od99 = {
         "do_sample": False,
         "student_min_prob": 0.0,
         "contrastive_decoding": "student",
+        "use_cache": True,
     }
 }
 
@@ -199,6 +200,7 @@ contrastive_generation_config_fe31 = {
         "do_sample": False,
         "student_min_prob": 0.0,
         "contrastive_decoding": "student",
+        "use_cache": True,
     }
 }
 
@@ -232,9 +234,9 @@ gen_configs = [nongreedy_calibration_generation_config]
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
-    "generation_config":     greedy_generation_config,
-    "model_checkpoint_path": model_125m_43k_f2c6,
-    "tokenizer_path":        chemlactica_tokenizer_50066_path,
+    "generation_config":     contrastive_generation_config_fe31,
+    "model_checkpoint_path": model_125m_512k_fe31,
+    "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
     "regexp":                regexp,
@@ -244,7 +246,7 @@ evaluation_config = {
     "check_for_novelty":     True,
     "track":                 True,
     "plot":                  True,
-    "description": f"125m_40k_f2c6_newformat",
+    "description": f"125m_512k_fe31_constrastive",
 }
 
 # evaluation_config = {

@@ -21,7 +21,8 @@ from utils import mol_util
 from custom_modeling_opt import CustomOPTForCausalLM
 from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
-from contrastive_decoding.generator import generate as generate_CD
+# from contrastive_decoding.generator import generate as generate_CD
+from contrastive_decoding.contrastive_decoding import contrastive_generate as generate_CD
 from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
 from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
 # from assert_tokenizer import assert_tokenizer
@@ -136,8 +137,14 @@ class Property2Mol:
         if "1.3b" in self.model_checkpoint_path:
             model = OPTForCausalLM.from_pretrained(self.model_checkpoint_path)
         elif "contrastive" in self.generation_config_name:
-            model = load_CD_expert_model.from_pretrained(self.generation_config["expert_model"])
-            self.student_model = load_CD_student_model.from_pretrained(self.generation_config["student_model"])
+            # model = load_CD_expert_model.from_pretrained(self.generation_config["expert_model"])
+            # self.student_model = load_CD_student_model.from_pretrained(self.generation_config["student_model"])
+            model = CustomOPTForCausalLM.from_pretrained(self.generation_config["expert_model"],
+                                                         use_flash_attn=True,
+                                                         torch_dtype=torch.bfloat16)
+            self.student_model = CustomOPTForCausalLM.from_pretrained(self.generation_config["student_model"],
+                                                                use_flash_attn=True,
+                                                                torch_dtype=torch.bfloat16)
             self.student_model.eval()
             self.student_model.to(self.device)
             print(f'student model loaded with embedding size of: {self.student_model.model.decoder.embed_tokens.num_embeddings}, model dtype: {self.student_model.dtype}')
@@ -224,10 +231,10 @@ class Property2Mol:
         return property_fns
 
     def generate_outputs(self):
-        input_ids = [self.tokenizer(input, return_tensors="pt").to(self.device).input_ids for input in self.inputs]
+        input_ids = [self.tokenizer(input, return_tensors="pt").to(self.device) for input in self.inputs]
         outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list, self.molecules_set = [], [], [], [], [], set()
         for input_id in input_ids:
-            context_length = input_id.shape[1]
+            context_length = input_id.input_ids.shape[1]
             perplexities, texts, lengths, norm_log, out = [], [], [], [], []
             range_ = self.generation_config["total_gen_range"] if self.generation_config["multiple_rounds_generation"] == True else 1
             for _ in range(range_):
@@ -238,18 +245,17 @@ class Property2Mol:
                         student_lm=self.student_model,
                         **self.generation_decoding_config
                     )
-                    beams = output.get("beam_indices", torch.zeros_like(output.sequences))
-                    beams[:, -context_length:] = -1
+                    # beams = output.get("beam_indices", torch.zeros_like(output.sequences))
+                    # beams[:, -context_length:] = -1
                     # beam_indices = torch.arange(output.scores[0].shape[0]).view(-1, 1).to(self.device)
                     # beam_indices = beam_indices.expand(-1, len(output.scores))
-                    scores = self.model.compute_transition_beam_scores(
+                    scores = self.model.compute_transition_scores(
                             sequences=output.sequences,
                             scores=output.scores,
-                            beam_indices=beams,
                         ).cpu().detach()
                 else:
                     output = self.model.generate(
-                        input_ids=input_id,
+                        input_ids=input_id.input_ids,
                         **self.generation_decoding_config   
                     )
                     beams = output.get("beam_indices", None)
