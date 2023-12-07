@@ -207,6 +207,7 @@ n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 
 model_125m_43k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_43k_f2c6/"
+model_125m_63k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/"
 model_125m_313k_cf98 = "/home/menuab/code/checkpoints/cf982665b6c04c83a310b97d/125m_313k_cf98/"
 model_125m_512k_fe31 = "/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_512k_fe31/"
 model_125m_249k_0d99 = "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_249k_0d99/"
@@ -233,7 +234,7 @@ evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_generation_config,
-    "model_checkpoint_path": model_125m_43k_f2c6,
+    "model_checkpoint_path": model_125m_63k_f2c6,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
@@ -244,7 +245,7 @@ evaluation_config = {
     "check_for_novelty":     True,
     "track":                 True,
     "plot":                  True,
-    "description": f"125m_40k_f2c6_newformat",
+    "description": f"125m_63k_f2c6_newformat",
 }
 
 # evaluation_config = {
