@@ -17,10 +17,10 @@ test_suite = {
         "input_properties": ["clogp"],
         "target_properties": ["clogp"]
     },
-    "similarity": {
-        "input_properties": ["similarity"],
-        "target_properties": ["similarity"]
-    }
+    # "similarity": {
+    #     "input_properties": ["similarity"],
+    #     "target_properties": ["similarity"]
+    # }
 }
 
 mock_test_suite = {
@@ -43,13 +43,12 @@ property_range = {
         "mean": 0.75,
         "smiles": ""
     },
-    "similarity":
-    {
-        "range": (0.01, 1),
-        "step":  0.01,
-        "smiles": " CC(CN)O"
-        "mean": 0 # TODO need to update
-    },
+    # "similarity": {
+    #     "range": (0.01, 1),
+    #     "step":  0.01,
+    #     "smiles": " CC(CN)O",
+    #     "mean": 0 # TODO need to update
+    # },
     "weight": {
         "range": (100.1, 1000),
         "step":  1,
@@ -89,13 +88,13 @@ mock_property_range = {
         "mean": 290,
         "smiles": ""
     },
-    "similarity":
-    {
-        "range": (0.01, 1),
-        "step":  0.01,
-        "smiles": " CC(CN)O",
-        "mean": 1000 # TODO need to update
-    },
+    # "similarity":
+    # {
+    #     "range": (0.01, 1),
+    #     "step":  0.01,
+    #     "smiles": " CC(CN)O",
+    #     "mean": 1000 # TODO need to update
+    # },
 }
 
 greedy_generation_config = {
@@ -207,6 +206,8 @@ top_N = 100
 n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 
+model_125m_43k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_43k_f2c6/"
+model_125m_313k_cf98 = "/home/menuab/code/checkpoints/cf982665b6c04c83a310b97d/125m_313k_cf98/"
 model_125m_512k_fe31 = "/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_512k_fe31/"
 model_125m_249k_0d99 = "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_249k_0d99/"
 model_125m_253k_0d99 = "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_253k_0d99/"
@@ -231,19 +232,19 @@ gen_configs = [nongreedy_calibration_generation_config]
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
-    "generation_config":     contrastive_generation_config_fe31,
-    "model_checkpoint_path": model_125m_512k_fe31,
-    "tokenizer_path":        chemlactica_tokenizer_50028_path,
+    "generation_config":     greedy_generation_config,
+    "model_checkpoint_path": model_125m_43k_f2c6,
+    "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
     "regexp":                regexp,
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
-    "check_for_novelty":     False,
-    "track":                 False,
+    "check_for_novelty":     True,
+    "track":                 True,
     "plot":                  True,
-    "description": f"125m_512k_fe31-2xdata-CD-greedy",
+    "description": f"125m_40k_f2c6_newformat",
 }
 
 # evaluation_config = {
