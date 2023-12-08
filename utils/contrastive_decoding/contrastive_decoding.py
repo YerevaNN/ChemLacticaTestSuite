@@ -59,6 +59,7 @@ def contrast_logits(
     return contrasted_probs
 
 
+@torch.no_grad()
 def contrastive_forward(
         input_ids: torch.Tensor,
         expert_lm,
@@ -160,7 +161,9 @@ def contrastive_generate(
                 student_coef=student_coef,
                 expert_temp=expert_temp,
                 student_temp=student_temp
-            )[0]
+            )
+            
+            next_tokens_scores = next_tokens_scores[:, -1, :]
 
             # Store scores, attentions and hidden_states when required
             if return_dict_in_generate:
@@ -209,7 +212,8 @@ if __name__ == "__main__":
         output_scores=True,
         use_cache=True,
         student_coef=1.0,
-        adaptability_constant=0.1
+        adaptability_constant=0.1,
+        max_length=100
     )
     scores = expert_lm.compute_transition_scores(
         sequences=outputs.sequences,
