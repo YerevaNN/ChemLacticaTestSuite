@@ -232,7 +232,7 @@ models = [model_125m_253k_ac79, model_125m_512k_fe31, model_125m_256k_0d99]
 gen_configs = [nongreedy_calibration_generation_config]
 
 evaluation_config = {
-    "test_suite":            test_suite,
+    "test_suite":            mock_test_suite,
     "property_range":        property_range,
     "generation_config":     contrastive_generation_config_fe31,
     "model_checkpoint_path": model_125m_512k_fe31,
@@ -243,8 +243,8 @@ evaluation_config = {
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
-    "check_for_novelty":     True,
-    "track":                 True,
+    "check_for_novelty":     False,
+    "track":                 False,
     "plot":                  True,
     "description": f"125m_512k_fe31_constrastive",
 }

@@ -240,7 +240,7 @@ class Property2Mol:
             for _ in range(range_):
                 if "contrastive" in self.generation_config_name:
                     output = generate_CD(
-                        input_ids=input_id,
+                        input_ids=input_id.input_ids,
                         expert_lm=self.model,
                         student_lm=self.student_model,
                         **self.generation_decoding_config

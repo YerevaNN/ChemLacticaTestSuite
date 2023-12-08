@@ -132,6 +132,7 @@ def contrastive_generate(
     expert_lm.eval()
     student_lm.eval()
     # define attention mask
+    print(input_ids)
     model_kwargs["attention_mask"] = torch.ones(input_ids.shape[:2], dtype=torch.long, device=input_ids.device)
 
     scores = () if (return_dict_in_generate and output_scores) else None

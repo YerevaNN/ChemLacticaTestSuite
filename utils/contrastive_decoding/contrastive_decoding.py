@@ -199,7 +199,7 @@ if __name__ == "__main__":
     student_lm = CustomOPTForCausalLM.from_pretrained(student_path, use_flash_attn=True, torch_dtype=torch.bfloat16).to(device)
     
     tokenizer = get_tokenizer()
-    input_prompt = "</s>"
+    input_prompt = "</s>[SAS]1.20[/SAS][START_SMILES]"
     input_ids = tokenizer.encode(input_prompt, return_tensors="pt").to(device)
     outputs = contrastive_generate(
         input_ids=input_ids,
