@@ -1,7 +1,7 @@
 from typing import Dict, Any, Tuple, Optional
 import torch
 from custom_modeling_opt import CustomOPTForCausalLM
-from dataset_utils import get_tokenizer
+from utils.dataset_utils import get_tokenizer
 from transformers.generation.utils import GreedySearchDecoderOnlyOutput, ModelOutput
 
 

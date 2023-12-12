@@ -192,7 +192,7 @@ class Property2Mol:
                 input = self.eos_string + input
             if self.include_start_smiles:
                 input = input + self.smiles_prefix
-            # input = input + ']'
+            input = input + ']'
             inputs.append(input)
             if property == "similarity":
                 self.inp_smiles.append([self.property_smiles[1:][1:]])

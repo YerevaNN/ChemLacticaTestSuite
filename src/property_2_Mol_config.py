@@ -204,6 +204,28 @@ contrastive_generation_config_fe31 = {
     }
 }
 
+contrastive_generation_config_f2c6 = {
+    "name": "contrastive_decoding_greedy",
+    "multiple_rounds_generation": False,
+    "student_model": "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/",
+    "expert_model": "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/",
+    "config": {
+        "eos_token_id": 20,
+        "max_length": 300,
+        "st_coef": .2,
+        "student_temperature": 1.,
+        "num_beams": 1,
+        "adaptability_constant": 1,
+        "return_dict_in_generate": True,
+        "output_scores": True,
+        "num_return_sequences": 1,
+        "do_sample": False,
+        "student_min_prob": 0.0,
+        "contrastive_decoding": "student",
+        "use_cache": True,
+    }
+}
+
 top_N = 100
 n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
@@ -237,10 +259,10 @@ models = [model_125m_253k_ac79, model_125m_512k_fe31, model_125m_256k_0d99]
 gen_configs = [nongreedy_calibration_generation_config]
 
 evaluation_config = {
-    "test_suite":            mock_test_suite,
+    "test_suite":            test_suite,
     "property_range":        property_range,
-    "generation_config":     contrastive_generation_config_fe31,
-    "model_checkpoint_path": model_125m_512k_fe31,
+    "generation_config":     contrastive_generation_config_f2c6,
+    "model_checkpoint_path": model_125m_126k_f2c6,
     "tokenizer_path":        chemlactica_tokenizer_50028_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
@@ -248,12 +270,14 @@ evaluation_config = {
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
-    "include_start_smiles":  True,
+    "include_start_smiles":  False,
     "check_for_novelty":     True,
     "track":                 True,
     "plot":                  True,
-    "description": f"125m_126k_f3fb_greedy_noCoT",
+    "description":           ""
 }
+evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"][-12:]},'\
+    f'{evaluation_config["generation_config"]["name"]},noCoT:{evaluation_config["include_start_smiles"]}'
 
 # evaluation_config = {
 #     "test_suite":            test_suite,
