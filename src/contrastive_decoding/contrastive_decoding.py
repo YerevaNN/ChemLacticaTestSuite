@@ -1,7 +1,7 @@
 from typing import Dict, Any, Tuple, Optional
 import torch
 from custom_modeling_opt import CustomOPTForCausalLM
-from utils.dataset_utils import get_tokenizer
+from dataset_utils import get_tokenizer
 from transformers.generation.utils import GreedySearchDecoderOnlyOutput, ModelOutput
 
 
@@ -59,6 +59,7 @@ def contrast_logits(
     return contrasted_probs
 
 
+@torch.no_grad()
 def contrastive_forward(
         input_ids: torch.Tensor,
         expert_lm,
@@ -132,7 +133,6 @@ def contrastive_generate(
     expert_lm.eval()
     student_lm.eval()
     # define attention mask
-    print(input_ids)
     model_kwargs["attention_mask"] = torch.ones(input_ids.shape[:2], dtype=torch.long, device=input_ids.device)
 
     scores = () if (return_dict_in_generate and output_scores) else None
@@ -161,7 +161,9 @@ def contrastive_generate(
                 student_coef=student_coef,
                 expert_temp=expert_temp,
                 student_temp=student_temp
-            )[0]
+            )
+            
+            next_tokens_scores = next_tokens_scores[:, -1, :]
 
             # Store scores, attentions and hidden_states when required
             if return_dict_in_generate:
@@ -200,7 +202,7 @@ if __name__ == "__main__":
     student_lm = CustomOPTForCausalLM.from_pretrained(student_path, use_flash_attn=True, torch_dtype=torch.bfloat16).to(device)
     
     tokenizer = get_tokenizer()
-    input_prompt = "</s>"
+    input_prompt = "</s>[SAS]1.20[/SAS][START_SMILES]"
     input_ids = tokenizer.encode(input_prompt, return_tensors="pt").to(device)
     outputs = contrastive_generate(
         input_ids=input_ids,
@@ -210,7 +212,8 @@ if __name__ == "__main__":
         output_scores=True,
         use_cache=True,
         student_coef=1.0,
-        adaptability_constant=0.1
+        adaptability_constant=0.1,
+        max_length=100
     )
     scores = expert_lm.compute_transition_scores(
         sequences=outputs.sequences,
