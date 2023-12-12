@@ -208,7 +208,12 @@ top_N = 100
 n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 
+model_125m_126k_f3fb = "/home/menuab/code/checkpoints/f3fbd012918247a388efa732/125m_126k_f3fb/"
+model_125m_126k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/"
+model_125m_124k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_124k_f2c6/"
+model_125m_108k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_108k_f2c6/"
 model_125m_43k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_43k_f2c6/"
+model_125m_63k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/"
 model_125m_313k_cf98 = "/home/menuab/code/checkpoints/cf982665b6c04c83a310b97d/125m_313k_cf98/"
 model_125m_512k_fe31 = "/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_512k_fe31/"
 model_125m_249k_0d99 = "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_249k_0d99/"
@@ -243,10 +248,11 @@ evaluation_config = {
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
-    "check_for_novelty":     False,
-    "track":                 False,
+    "include_start_smiles":  True,
+    "check_for_novelty":     True,
+    "track":                 True,
     "plot":                  True,
-    "description": f"125m_512k_fe31_constrastive",
+    "description": f"125m_126k_f3fb_greedy_noCoT",
 }
 
 # evaluation_config = {
