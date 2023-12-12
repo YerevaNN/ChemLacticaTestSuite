@@ -4,8 +4,9 @@ import glob
 import time
 import json
 import pickle
-from itertools import chain
+from itertools import chain, zip_longest
 from datetime import datetime
+
 import argparse
 from tqdm import tqdm
 import numpy as np
@@ -58,6 +59,7 @@ class Property2Mol:
             top_N,
             n_per_vs_rmse,
             include_eos,
+            include_start_smiles,
             check_for_novelty,
             track,
             plot,
@@ -80,6 +82,7 @@ class Property2Mol:
         self.smiles_prefix = "[START_SMILES]"
         self.eos_string = "</s>"
         self.include_eos = include_eos
+        self.include_start_smiles = include_start_smiles
         self.top_N = generation_config.get("top_N", 0)
         # self.top_N = top_N
         self.n_per_vs_rmse = n_per_vs_rmse
@@ -175,11 +178,14 @@ class Property2Mol:
         print(property_range, decim)
         for value in inputs_[0]:
             if len(self.tokenizer) == 50028:
-                input = f'[{property.upper()} {value:.{decim}f}]{self.smiles_prefix}'
+                input = f'[{property.upper()} {value:.{decim}f}]'
             else:
-                input = f'[{property.upper()}]{value:.{decim}f}[/{property.upper()}]{self.smiles_prefix}'
+                input = f'[{property.upper()}]{value:.{decim}f}[/{property.upper()}]'
             if self.include_eos:
                 input = self.eos_string + input
+            if self.include_start_smiles:
+                input = input + self.smiles_prefix
+            # input = input + ']'
             inputs.append(input)
             if property == "similarity":
                 self.inp_smiles.append([self.property_smiles[1:][1:]])
@@ -313,8 +319,11 @@ class Property2Mol:
                     norm_log = [norm_logs]
                 out = []
                 for text in texts:
-                    try:    
-                        captured_text = re.match(self.regexp, text).group()
+                    try:
+                        if self.include_start_smiles:
+                            captured_text = re.match(self.regexp, text).group()
+                        else:
+                            captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
                         if captured_text not in self.molecules_set:
                             self.molecules_set.add(captured_text)
                     except:
@@ -339,7 +348,7 @@ class Property2Mol:
 
         # TODO: drop the hard coded index and adjust for multiple targets
 
-        calculated_properties = [property_fns[0](out, inp) for out, inp in zip(self.outputs, self.inp_smiles)]
+        calculated_properties = [property_fns[0](out, inp) for out, inp in zip_longest(self.outputs, self.inp_smiles)]
 
         return calculated_properties
 
@@ -411,7 +420,7 @@ class Property2Mol:
             mape = metrics.mean_absolute_percentage_error(target_clean, generated_clean)
             mape_c = metrics.mean_absolute_percentage_error(self.targets, corrected_calculated)
         else:
-            rmse = mape = 0
+            rmse = mape = rmse_c = mape_c = 0
         return target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c
 
     def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c):

@@ -26,7 +26,8 @@ def get_canonical(mols):
     return canonicals
 
 def get_sas(mols):
-    # print(mols)
+    if mols == []:
+        return [None]
     if not isinstance(mols, list):
         mols = [mols]
     scores = []
@@ -43,7 +44,9 @@ def get_sas(mols):
     return scores
 
 def get_qed(mols):
-    if not isinstance(mols, list):
+    if mols == []:
+        return [None]
+    if mols == []:
         mols = [mols]
     scores = []
     for mol in mols:
@@ -59,6 +62,8 @@ def get_qed(mols):
     return scores
 
 def get_clogp(mols):
+    if mols == []:
+        return [None]
     if not isinstance(mols, list):
         mols = [mols]
     scores = []
@@ -75,6 +80,8 @@ def get_clogp(mols):
     return scores
 
 def get_weight(mols):
+    if mols == []:
+        return [None]
     if not isinstance(mols, list):
         mols = [mols]
     scores = []

@@ -206,6 +206,10 @@ top_N = 100
 n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 
+model_125m_126k_f3fb = "/home/menuab/code/checkpoints/f3fbd012918247a388efa732/125m_126k_f3fb/"
+model_125m_126k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/"
+model_125m_124k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_124k_f2c6/"
+model_125m_108k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_108k_f2c6/"
 model_125m_43k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_43k_f2c6/"
 model_125m_63k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/"
 model_125m_313k_cf98 = "/home/menuab/code/checkpoints/cf982665b6c04c83a310b97d/125m_313k_cf98/"
@@ -234,7 +238,7 @@ evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_generation_config,
-    "model_checkpoint_path": model_125m_63k_f2c6,
+    "model_checkpoint_path": model_125m_126k_f3fb,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
@@ -242,10 +246,11 @@ evaluation_config = {
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
+    "include_start_smiles":  True,
     "check_for_novelty":     True,
     "track":                 True,
     "plot":                  True,
-    "description": f"125m_63k_f2c6_newformat",
+    "description": f"125m_126k_f3fb_greedy_noCoT",
 }
 
 # evaluation_config = {
