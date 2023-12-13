@@ -180,6 +180,7 @@ class Property2Mol:
             if len(self.tokenizer) == 50028:
                 input = f'[{property.upper()} {value:.{decim}f}]'
             else:
+                # input = f'[{property.upper()}]{value:.{decim}f}[/{property.upper()}]{self.smiles_prefix}'
                 input = f'[{property.upper()}]{value:.{decim}f}[/{property.upper()}]'
             if self.include_eos:
                 input = self.eos_string + input
@@ -258,26 +259,26 @@ class Property2Mol:
                         input_ids=input_id,
                         **self.generation_decoding_config   
                     )
-                    beams = output.get("beam_indices", None)
-                    scores = self.model.compute_transition_scores(
+                    # beams = output.get("beam_indices", None)
+                    # scores = self.model.compute_transition_scores(
+                    #             sequences=output.sequences,
+                    #             scores=output.scores,
+                    #             beam_indices=beams,
+                    #             normalize_logits=True
+                    #         ).cpu().detach()
+                    if self.generation_decoding_config["num_beams"] > 1 and self.generation_decoding_config["num_beam_groups"] == 1:
+                        scores = self.model.compute_transition_scores(
                                 sequences=output.sequences,
                                 scores=output.scores,
-                                beam_indices=beams,
+                                beam_indices=output.beam_indices,
                                 normalize_logits=True
                             ).cpu().detach()
-                    # if self.generation_decoding_config["num_beams"] > 1:
-                    #     scores = self.model.compute_transition_scores(
-                    #             sequences=output.sequences,
-                    #             scores=output.scores,
-                    #             beam_indices=output.beam_indices,
-                    #             normalize_logits=True
-                    #         ).cpu().detach()
-                    # else:
-                    #     scores = self.model.compute_transition_scores(
-                    #             sequences=output.sequences,
-                    #             scores=output.scores,
-                    #             normalize_logits=True
-                    #         ).cpu().detach()
+                    else:
+                        scores = self.model.compute_transition_scores(
+                                sequences=output.sequences,
+                                scores=output.scores,
+                                normalize_logits=True
+                            ).cpu().detach()
                 end_smiles = np.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
                 end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
                 perplexities_ = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
@@ -297,21 +298,23 @@ class Property2Mol:
                         perplexities.append(perplexity)
                         lengths.append(len_)
                 elif self.generation_decoding_config["do_sample"] == False and self.generation_decoding_config["num_beams"] > 1:
-                    if perplexities_:
-                        sorted_outputs = sorted(zip(perplexities_,
-                                                    norm_logs,
-                                                    output.sequences[end_smiles_indices[:, 0]],
-                                                    end_smiles_indices[:, 1] - context_length + 1),
-                                                    key=lambda x: x[0])[0]
-                        perplexity, n_log, output, len_ = sorted_outputs
-                        perplexities = perplexities_
-                        lengths = [len_]
-                        texts = [self.tokenizer.decode(output)]
-                        norm_log = [norm_logs]
-                    else:
+                    for seq, seq_score, per, n_log in zip_longest(output.sequences, output.sequences_scores, perplexities_, norm_logs):
+                        decoded = self.tokenizer.decode(seq)
+                        try:
+                            captured_text = decoded[decoded.find("[START_SMILES]")+len("[START_SMILES]"):decoded.find("[END_SMILES]")]
+                            if mol_util.is_valid_smiles(captured_text):
+                                texts = [self.tokenizer.decode(seq)]
+                                lengths = [len(seq)]
+                                norm_log = [n_log]
+                                perplexities = [per]
+                                break
+                        except:
+                            continue
+                    if texts == []:
+                        text =['']
                         lengths = [0]
-                        texts = [""]
                         norm_log = [0]
+                        perplexities = [0]
                 else:
                     perplexities = perplexities_
                     lengths = [output.sequences.shape[-1] - context_length]
@@ -319,11 +322,9 @@ class Property2Mol:
                     norm_log = [norm_logs]
                 out = []
                 for text in texts:
-                    try:
-                        if self.include_start_smiles:
-                            captured_text = re.match(self.regexp, text).group()
-                        else:
-                            captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
+                    try:    
+                        # captured_text = re.match(self.regexp, text).group()
+                        captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
                         if captured_text not in self.molecules_set:
                             self.molecules_set.add(captured_text)
                     except:
@@ -405,7 +406,7 @@ class Property2Mol:
         corrected_calculated = np.array(self.calculated_properties)
         corrected_calculated[corrected_calculated == None] = self.property_range[test_name]['mean']
         for target, c_props in zip(self.targets, self.calculated_properties):
-            target *= self.generation_decoding_config["num_return_sequences"]
+            # target *= self.generation_decoding_config["num_return_sequences"]
             for t, cp in zip(target, c_props):
                 if  cp != None:
                     target_clean.append(t)
@@ -597,6 +598,7 @@ class Property2Mol:
 if __name__ == "__main__":
     
     for evaluation_config in evaluation_configs:
+        # print(evaluation_configs)
         print(f"evaluating model: {evaluation_config['model_checkpoint_path'].split('/')[-2]} "\
             f"with {evaluation_config['generation_config']['name']} config")
         property_2_Mol = Property2Mol(**evaluation_config)

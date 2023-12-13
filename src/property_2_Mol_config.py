@@ -112,18 +112,27 @@ greedy_generation_config = {
 }
 
 greedy_beam_generation_config = {
-    "name": "greedy_beam=5",
+    "name": "greedy_beam=6",
     "multiple_rounds_generation": False,
     "config": {
         "eos_token_id": 20,
         "max_new_tokens": 300,
+        "length_penalty": -5,
+        "repetition_penalty": 1.5, 
+        "diversity_penalty": 1.0,
+        "num_beam_groups": 3,
         "do_sample": False,  
-        "num_return_sequences": 1,
-        "num_beams": 5,
-        "return_dict_in_generate":True,
-        "output_scores":True
+        "num_return_sequences": 6,
+        "num_beams": 6,
+        "return_dict_in_generate": True,
+        "output_scores": True,
+        "renormalize_logits": True
     }
 }
+# greedy_beam_generation_config["name"] = f'{greedy_beam_generation_config["config"]["num_beams"]=},'\
+#     f'{greedy_beam_generation_config["config"]["length_penalty"]=},{greedy_beam_generation_config["config"]["repetition_penalty"]=},'\
+#     f'{greedy_beam_generation_config["config"]["diversity_penalty"]=},{greedy_beam_generation_config["config"]["num_beam_groups"]=},'\
+#     f'{greedy_beam_generation_config["config"]["num_return_sequences"]=},{greedy_beam_generation_config["config"]["max_new_tokens"]=},'
 
 nongreedy_generation_config = {
     "name": "nongreedy_5of20",
@@ -202,10 +211,6 @@ contrastive_generation_config_fe31 = {
     }
 }
 
-top_N = 100
-n_per_vs_rmse = 4
-regexp = "^.*?(?=\\[END_SMILES])"
-
 model_125m_126k_f3fb = "/home/menuab/code/checkpoints/f3fbd012918247a388efa732/125m_126k_f3fb/"
 model_125m_126k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/"
 model_125m_124k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_124k_f2c6/"
@@ -222,9 +227,14 @@ model_125m_241k_ac79 = "/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/1
 model_1b_131k_d5c2   = "/home/menuab/code/checkpoints/d5c2c8db3c554447a27697bf/1.3b_131k_d5c2/"
 model_125m_73k_assay_87dc = "/home/menuab/code/checkpoints/87dc7180e49141deae4ded57/125m_73k_assay_87dc/"
 model_125m_73k_assay_c6af = "/home/menuab/code/checkpoints/c6af41c79f1244f698cc1153/125m_73k_assay_c6af"
+
 galactica_tokenizer_path =         "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/galactica-125m/"
 chemlactica_tokenizer_50028_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50028"
 chemlactica_tokenizer_50066_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
+
+top_N = 100
+n_per_vs_rmse = 4
+regexp = "^.*?(?=\\[END_SMILES])"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
 device = "cuda:1"
@@ -237,7 +247,7 @@ gen_configs = [nongreedy_calibration_generation_config]
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
-    "generation_config":     greedy_generation_config,
+    "generation_config":     greedy_beam_generation_config,
     "model_checkpoint_path": model_125m_126k_f3fb,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
@@ -246,41 +256,38 @@ evaluation_config = {
     "top_N":                 top_N,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
-    "include_start_smiles":  True,
+    "include_start_smiles":  False,
     "check_for_novelty":     True,
     "track":                 True,
     "plot":                  True,
     "description":           ""
 }
 evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"][-12:]},'\
-    f'{evaluation_config["generation_config"]["name"]},noCoT:{evaluation_config["include_start_smiles"]}'
-
-# evaluation_config = {
-#     "test_suite":            test_suite,
-#     "property_range":        property_range,
-#     "generation_config":     contrastive_generation_config,
-#     "model_checkpoint_path": model_125m_512k_fe31,
-#     "tokenizer_path":        chemlactica_tokenizer_50028_path,
-#     "torch_dtype":           torch_dtype,
-#     "device":                "cuda:0",
-#     "regexp":                regexp,
-#     "top_N":                 top_N,
-#     "n_per_vs_rmse":         n_per_vs_rmse,
-#     "include_eos":           True,
-#     "check_for_novelty":     True,
-#     "track":                 True,
-#     "plot":                  True,
-#     "description": f"CD-0d99-greedy",
-# }
-# evaluation_configs = []
-# for gen_config in gen_configs:
-#     for model in models:
-#     # model = model_1b_131k_d5c2
-#         conf = copy.copy(evaluation_config)
-#         # conf["tokenizer_path"] = galactica_tokenizer_path
-#         conf["model_checkpoint_path"] = model
-#         conf["generation_config"] = gen_config
-#         conf["description"] = f"{model.split('/')[-2]}_{gen_config['name']}"
-#         evaluation_configs.append(conf)
+    f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
 
 evaluation_configs = [evaluation_config]
+
+# num_beams = [2,3,4,5,6,7,8,9,10]
+# length_penalty = [-1,-3,-5,-7,-9] # only with num_beams>1
+# repetition_penalty = [1.0,1.2,1.4,1.6]
+# num_beam_groups = [1,2,3,4,5 ]
+# diversity_penalty = [0.0,0.5,1.0,1.5 ]# only for num_beam_groups > 1
+# renormalize_logits = True
+# evaluation_configs = []
+# for nb in num_beams:
+#     for lp in length_penalty:
+#         for rp in repetition_penalty:
+#             for nbg in num_beam_groups:
+#                 for dp in diversity_penalty:
+#                     conf = copy.deepcopy(evaluation_config)
+#                     conf["generation_config"]["config"]["num_beams"] = nb
+#                     conf["generation_config"]["config"]["num_return_sequences"] = nb
+#                     conf["generation_config"]["config"]["length_penalty"] = lp
+#                     conf["generation_config"]["config"]["repetition_penalty"] = rp
+#                     conf["generation_config"]["config"]["num_beam_groups"] = nbg
+#                     conf["generation_config"]["config"]["diversity_penalty"] = dp
+#                     conf["generation_config"]["description"] = f"{nb=},{lp=},{rp=},{nbg=},{dp=}"
+#                     evaluation_configs.append(conf)
+#                     del conf
+#                     # print(conf["generation_config"]["config"])
+
