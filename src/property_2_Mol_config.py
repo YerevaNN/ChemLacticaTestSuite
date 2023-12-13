@@ -250,8 +250,10 @@ evaluation_config = {
     "check_for_novelty":     True,
     "track":                 True,
     "plot":                  True,
-    "description": f"125m_126k_f3fb_greedy_noCoT",
+    "description":           ""
 }
+evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"][-12:]},'\
+    f'{evaluation_config["generation_config"]["name"]},noCoT:{evaluation_config["include_start_smiles"]}'
 
 # evaluation_config = {
 #     "test_suite":            test_suite,
