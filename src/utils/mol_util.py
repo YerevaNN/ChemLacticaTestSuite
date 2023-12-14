@@ -91,7 +91,7 @@ def get_clogp(mols):
 
 def get_weight(mols):
     if mols == []:
-        return None
+        return [None]
     if not isinstance(mols, list):
         mols = [mols]
     scores = []

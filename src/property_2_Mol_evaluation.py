@@ -184,9 +184,9 @@ class Property2Mol:
                 input = f'[{property.upper()}]{value:.{decim}f}[/{property.upper()}]'
             if self.include_eos:
                 input = self.eos_string + input
+            input = input + ']'
             if self.include_start_smiles:
                 input = input + self.smiles_prefix
-            # input = input + ']'
             inputs.append(input)
             if property == "similarity":
                 self.inp_smiles.append([self.property_smiles[1:][1:]])
@@ -322,9 +322,11 @@ class Property2Mol:
                     norm_log = [norm_logs]
                 out = []
                 for text in texts:
-                    try:    
-                        # captured_text = re.match(self.regexp, text).group()
-                        captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
+                    try:
+                        if self.include_start_smiles:
+                            captured_text = re.match(self.regexp, text).group()
+                        else:
+                            captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
                         if captured_text not in self.molecules_set:
                             self.molecules_set.add(captured_text)
                     except:

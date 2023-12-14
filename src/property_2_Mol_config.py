@@ -24,9 +24,9 @@ test_suite = {
 }
 
 mock_test_suite = {
-    "clogp": {
-        "input_properties": ["clogp"],
-        "target_properties": ["clogp"]
+    "weight": {
+        "input_properties": ["weight"],
+        "target_properties": ["weight"]
     }
 }
 
@@ -248,7 +248,7 @@ evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_beam_generation_config,
-    "model_checkpoint_path": model_125m_126k_f3fb,
+    "model_checkpoint_path": model_125m_126k_f2c6,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
@@ -262,8 +262,29 @@ evaluation_config = {
     "plot":                  True,
     "description":           ""
 }
-evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"][-12:]},'\
+evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"][-15:-1]},'\
     f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
+
+evaluation_config2 = {
+    "test_suite":            test_suite,
+    "property_range":        property_range,
+    "generation_config":     greedy_generation_config,
+    "model_checkpoint_path": model_125m_126k_f2c6,
+    "tokenizer_path":        chemlactica_tokenizer_50066_path,
+    "torch_dtype":           torch_dtype,
+    "device":                device,
+    "regexp":                regexp,
+    "top_N":                 top_N,
+    "n_per_vs_rmse":         n_per_vs_rmse,
+    "include_eos":           True,
+    "include_start_smiles":  True,
+    "check_for_novelty":     True,
+    "track":                 True,
+    "plot":                  True,
+    "description":           ""
+}
+evaluation_config2["description"] = f'{evaluation_config2["model_checkpoint_path"][-15:-1]},'\
+    f'{evaluation_config2["generation_config"]["name"]},CoT:{not evaluation_config2["include_start_smiles"]}'
 
 evaluation_configs = [evaluation_config]
 
