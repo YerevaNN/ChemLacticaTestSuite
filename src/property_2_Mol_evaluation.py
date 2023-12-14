@@ -184,7 +184,7 @@ class Property2Mol:
                 input = f'[{property.upper()}]{value:.{decim}f}[/{property.upper()}]'
             if self.include_eos:
                 input = self.eos_string + input
-            input = input + ']'
+            # input = input + ']'
             if self.include_start_smiles:
                 input = input + self.smiles_prefix
             inputs.append(input)

@@ -24,9 +24,9 @@ test_suite = {
 }
 
 mock_test_suite = {
-    "weight": {
-        "input_properties": ["weight"],
-        "target_properties": ["weight"]
+    "qed": {
+        "input_properties": ["qed"],
+        "target_properties": ["qed"]
     }
 }
 
@@ -245,10 +245,10 @@ models = [model_125m_253k_ac79, model_125m_512k_fe31, model_125m_256k_0d99]
 gen_configs = [nongreedy_calibration_generation_config]
 
 evaluation_config = {
-    "test_suite":            test_suite,
+    "test_suite":            mock_test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_beam_generation_config,
-    "model_checkpoint_path": model_125m_126k_f2c6,
+    "model_checkpoint_path": model_125m_126k_f3fb,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
@@ -288,27 +288,27 @@ evaluation_config2["description"] = f'{evaluation_config2["model_checkpoint_path
 
 evaluation_configs = [evaluation_config]
 
-# num_beams = [2,3,4,5,6,7,8,9,10]
-# length_penalty = [-1,-3,-5,-7,-9] # only with num_beams>1
-# repetition_penalty = [1.0,1.2,1.4,1.6]
-# num_beam_groups = [1,2,3,4,5 ]
-# diversity_penalty = [0.0,0.5,1.0,1.5 ]# only for num_beam_groups > 1
-# renormalize_logits = True
-# evaluation_configs = []
-# for nb in num_beams:
-#     for lp in length_penalty:
-#         for rp in repetition_penalty:
-#             for nbg in num_beam_groups:
-#                 for dp in diversity_penalty:
-#                     conf = copy.deepcopy(evaluation_config)
-#                     conf["generation_config"]["config"]["num_beams"] = nb
-#                     conf["generation_config"]["config"]["num_return_sequences"] = nb
-#                     conf["generation_config"]["config"]["length_penalty"] = lp
-#                     conf["generation_config"]["config"]["repetition_penalty"] = rp
-#                     conf["generation_config"]["config"]["num_beam_groups"] = nbg
-#                     conf["generation_config"]["config"]["diversity_penalty"] = dp
-#                     conf["generation_config"]["description"] = f"{nb=},{lp=},{rp=},{nbg=},{dp=}"
-#                     evaluation_configs.append(conf)
-#                     del conf
-#                     # print(conf["generation_config"]["config"])
-
+num_beams = [2,3,4,5,6,7,8,9,10]
+length_penalty = [-1,-3,-5,-7,-9] # only with num_beams>1
+repetition_penalty = [1.0,1.2,1.4,1.6]
+num_beam_groups = [2,3,4,5]
+diversity_penalty = [0.5,1.0,1.5 ]# only for num_beam_groups > 1
+renormalize_logits = True
+evaluation_configs = []
+for nb in num_beams:
+    for lp in length_penalty:
+        for rp in repetition_penalty:
+            for nbg in range(2, nb):
+                for dp in diversity_penalty:
+                    if nb % nbg == 0:
+                        conf = copy.deepcopy(evaluation_config)
+                        conf["generation_config"]["config"]["num_beams"] = nb
+                        conf["generation_config"]["config"]["num_return_sequences"] = nb
+                        conf["generation_config"]["config"]["length_penalty"] = lp
+                        conf["generation_config"]["config"]["repetition_penalty"] = rp
+                        conf["generation_config"]["config"]["num_beam_groups"] = nbg
+                        conf["generation_config"]["config"]["diversity_penalty"] = dp
+                        conf["generation_config"]["description"] = f"{nb=},{lp=},{rp=},{nbg=},{dp=}"
+                        evaluation_configs.append(conf)
+                        del conf
+                        # print(conf["generation_config"]["config"])
