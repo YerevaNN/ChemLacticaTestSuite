@@ -117,13 +117,13 @@ greedy_beam_generation_config = {
     "config": {
         "eos_token_id": 20,
         "max_new_tokens": 300,
-        "length_penalty": -5,
-        "repetition_penalty": 1.5, 
+        "length_penalty": -9,
+        "repetition_penalty": 1.0, 
         "diversity_penalty": 1.0,
-        "num_beam_groups": 3,
+        "num_beam_groups": 4,
         "do_sample": False,  
-        "num_return_sequences": 6,
-        "num_beams": 6,
+        "num_return_sequences": 8,
+        "num_beams": 8,
         "return_dict_in_generate": True,
         "output_scores": True,
         "renormalize_logits": True
@@ -245,7 +245,7 @@ models = [model_125m_253k_ac79, model_125m_512k_fe31, model_125m_256k_0d99]
 gen_configs = [nongreedy_calibration_generation_config]
 
 evaluation_config = {
-    "test_suite":            mock_test_suite,
+    "test_suite":            test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_beam_generation_config,
     "model_checkpoint_path": model_125m_126k_f3fb,
@@ -288,11 +288,11 @@ evaluation_config2["description"] = f'{evaluation_config2["model_checkpoint_path
 
 evaluation_configs = [evaluation_config]
 
-num_beams = [2,3,4,5,6,7,8,9,10]
-length_penalty = [-1,-3,-5,-7,-9] # only with num_beams>1
-repetition_penalty = [1.0,1.2,1.4,1.6]
-num_beam_groups = [2,3,4,5]
-diversity_penalty = [0.5,1.0,1.5 ]# only for num_beam_groups > 1
+num_beams = [6,8,10,12]
+length_penalty = [-7,-9,-11,-13,-20] # only with num_beams>1
+repetition_penalty = [1.0]
+num_beam_groups = [2,3,4,5,6]
+diversity_penalty = [0.5,0.8,1.0 ]# only for num_beam_groups > 1
 renormalize_logits = True
 evaluation_configs = []
 for nb in num_beams:

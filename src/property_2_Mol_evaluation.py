@@ -376,7 +376,8 @@ class Property2Mol:
             n_in_pubchem = sum(in_pubchem.values())
         else:
             n_in_pubchem = 0
-        n_total_gens = len(self.inputs) * self.generation_decoding_config['num_return_sequences']
+        n_total_gens = len(self.inputs) * self.generation_decoding_config['num_return_sequences'] \
+            if self.generation_decoding_config['do_sample'] == True else len(self.inputs)
         return errors, n_invalid_generations, n_uniques, n_in_pubchem, n_total_gens
 
     def write_to_file(self, test_name):
@@ -604,6 +605,9 @@ if __name__ == "__main__":
         print(f"evaluating model: {evaluation_config['model_checkpoint_path'].split('/')[-2]} "\
             f"with {evaluation_config['generation_config']['name']} config")
         property_2_Mol = Property2Mol(**evaluation_config)
-        property_2_Mol.run_property_2_Mol_test()
-        property_2_Mol.log_file.close()
-        del property_2_Mol
+        try:
+            property_2_Mol.run_property_2_Mol_test()
+            property_2_Mol.log_file.close()
+            del property_2_Mol
+        except:
+            continue
