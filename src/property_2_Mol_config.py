@@ -270,7 +270,7 @@ gen_configs = [greedy_beam_generation_config, greedy_generation_config,contrasti
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
-    "generation_config":     greedy_beam_generation_config,
+    "generation_config":     contrastive_generation_config_9075,
     "model_checkpoint_path": model_125m_63k_9075,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
@@ -286,14 +286,14 @@ evaluation_config = {
     "description":           ""
 }
 
-evaluation_configs = []
-for model in models:
-    for config in gen_configs:
-        conf = copy.deepcopy(evaluation_config)
-        conf['generation_config'] = config
-        conf["description"] = f'{evaluation_config["model_checkpoint_path"][-15:-1]},'\
-            f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
-        evaluation_configs.append
+# evaluation_configs = []
+# for model in models:
+#     for config in gen_configs:
+#         conf = copy.deepcopy(evaluation_config)
+#         conf['generation_config'] = config
+#         conf["description"] = f'{evaluation_config["model_checkpoint_path"][-15:-1]},'\
+#             f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
+#         evaluation_configs.append(conf)
 
 # evaluation_config2 = {
 #     "test_suite":            test_suite,
@@ -316,7 +316,7 @@ for model in models:
 # evaluation_config2["description"] = f'{evaluation_config2["model_checkpoint_path"][-15:-1]},'\
 #     f'{evaluation_config2["generation_config"]["name"]},CoT:{not evaluation_config2["include_start_smiles"]}'
 
-# evaluation_configs = [evaluation_config]
+evaluation_configs = [evaluation_config]
 
 # num_beams = [6,8,10,12]
 # length_penalty = [-7,-9,-11,-13,-20] # only with num_beams>1
