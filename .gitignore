@@ -2,5 +2,5 @@
 results/
 .aim/
 __pycache__
-
+*.csv
 utils/contrastive_decoding/contrastive_decodable_transformers/build
