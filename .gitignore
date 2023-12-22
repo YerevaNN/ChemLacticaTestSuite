@@ -3,4 +3,5 @@ results/
 .aim/
 __pycache__
 *.csv
+*.ipynb
 utils/contrastive_decoding/contrastive_decodable_transformers/build
