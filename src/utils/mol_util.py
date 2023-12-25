@@ -1,7 +1,6 @@
 from rdkit.Chem.Fingerprints import FingerprintMols
-from rdkit.Chem import RDConfig, QED
+from rdkit.Chem import RDConfig, QED, MACCSkeys
 from rdkit.Chem import Descriptors
-from rdkit.Chem import MACCSkeys
 from rdkit import DataStructs
 import rdkit.Chem as Chem
 import numpy as np
@@ -125,10 +124,17 @@ def get_similarity(out_sm, inp_smiles):
     # )
     # scores.append(np.round(similarity, decimals=3))
     # return scores
+    # def tanimoto_similarity(smiles_1, smiles_2):
+        # fgp1 = np.array(MACCSkeys.GenMACCSKeys(Chem.MolFromSmiles(smiles_1)))
+        # fgp2 = np.array(MACCSkeys.GenMACCSKeys(Chem.MolFromSmiles(smiles_2)))
+
+        # both = np.sum(fgp1 & fgp2)
+
+        # return both / (np.sum(fgp1) + np.sum(fgp2) - both)
     if not isinstance(out_sm, list):
         out_sm = [out_sm]
     scores = []
-
+    #TODO change fingerprint to 
     for sm, inp_sm in zip(out_sm, inp_smiles):
         try:
             mol_out = Chem.MolFromSmiles(sm)
