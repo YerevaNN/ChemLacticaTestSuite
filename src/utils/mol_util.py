@@ -11,7 +11,16 @@ import os
 sys.path.append(os.path.join(RDConfig.RDContribDir, 'SA_Score'))
 import sascorer
 
+def is_valid_smiles(mol):
+    mol = Chem.MolFromSmiles(mol)
+    if mol is not None:
+        return True
+    else:
+        return False
+
 def get_canonical(mols):
+    if mols == []:
+        return [None]
     if not isinstance(mols, list):
         mols = [mols]
     canonicals = []
@@ -26,6 +35,7 @@ def get_canonical(mols):
     return canonicals
 
 def get_sas(mols):
+    # print(mols)
     if mols == []:
         return [None]
     if not isinstance(mols, list):
@@ -46,7 +56,7 @@ def get_sas(mols):
 def get_qed(mols):
     if mols == []:
         return [None]
-    if mols == []:
+    if not isinstance(mols, list):
         mols = [mols]
     scores = []
     for mol in mols:

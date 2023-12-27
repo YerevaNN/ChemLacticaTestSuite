@@ -1,7 +1,7 @@
 from typing import Dict, Any, Tuple, Optional
 import torch
 from custom_modeling_opt import CustomOPTForCausalLM
-from utils.dataset_utils import get_tokenizer
+from dataset_utils import get_tokenizer
 from transformers.generation.utils import GreedySearchDecoderOnlyOutput, ModelOutput
 
 
@@ -195,7 +195,7 @@ def contrastive_generate(
 
 
 if __name__ == "__main__":
-    device = "cuda:1"
+    device = "cuda:0"
     student_path = "/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_120k_fe31"
     expert_path = "/home/menuab/code/checkpoints/cf982665b6c04c83a310b97d/125m_313k_cf98"
     expert_lm = CustomOPTForCausalLM.from_pretrained(expert_path, use_flash_attn=True, torch_dtype=torch.bfloat16).to(device)
