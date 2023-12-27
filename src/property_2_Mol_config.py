@@ -187,6 +187,7 @@ contrastive_generation_config_od99 = {
         "do_sample": False,
         "student_min_prob": 0.0,
         "contrastive_decoding": "student",
+        "use_cache": True,
     }
 }
 
@@ -208,6 +209,29 @@ contrastive_generation_config_fe31 = {
         "do_sample": False,
         "student_min_prob": 0.0,
         "contrastive_decoding": "student",
+        "use_cache": True,
+    }
+}
+
+contrastive_generation_config_f2c6 = {
+    "name": "contrastive_decoding_greedy",
+    "multiple_rounds_generation": False,
+    "student_model": "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/",
+    "expert_model": "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/",
+    "config": {
+        "eos_token_id": 20,
+        "max_length": 300,
+        "st_coef": .2,
+        "student_temperature": 1.,
+        "num_beams": 1,
+        "adaptability_constant": 1,
+        "return_dict_in_generate": True,
+        "output_scores": True,
+        "num_return_sequences": 1,
+        "do_sample": False,
+        "student_min_prob": 0.0,
+        "contrastive_decoding": "student",
+        "use_cache": True,
     }
 }
 
@@ -260,8 +284,8 @@ n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-# device = "cuda:1"
-device = "cuda:0"
+device = "cuda:1"
+# device = "cuda:0"
 # device = 'cpu'
 
 models = [model_125m_63k_9075]
@@ -270,7 +294,7 @@ gen_configs = [greedy_beam_generation_config, greedy_generation_config,contrasti
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
-    "generation_config":     contrastive_generation_config_9075,
+    "generation_config":     greedy_beam_generation_config,
     "model_checkpoint_path": model_125m_63k_9075,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
@@ -281,10 +305,12 @@ evaluation_config = {
     "include_eos":           True,
     "include_start_smiles":  False,
     "check_for_novelty":     True,
-    "track":                 True,
+    "track":                 False,
     "plot":                  True,
     "description":           ""
 }
+evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"][-12:]},'\
+    f'{evaluation_config["generation_config"]["name"]},noCoT:{evaluation_config["include_start_smiles"]}'
 
 # evaluation_configs = []
 # for model in models:

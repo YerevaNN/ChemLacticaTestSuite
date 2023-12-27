@@ -22,9 +22,10 @@ from utils import mol_util
 from custom_modeling_opt import CustomOPTForCausalLM
 from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
-from contrastive_decoding.generator import generate as generate_CD
-from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
-from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
+# from contrastive_decoding.generator import generate as generate_CD
+from contrastive_decoding.contrastive_decoding import contrastive_generate as generate_CD
+# from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
+# from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
 # from assert_tokenizer import assert_tokenizer
 
 parser = argparse.ArgumentParser(description='ChemLactica test evaluation')
@@ -139,8 +140,14 @@ class Property2Mol:
         if "1.3b" in self.model_checkpoint_path:
             model = OPTForCausalLM.from_pretrained(self.model_checkpoint_path)
         elif "contrastive" in self.generation_config_name:
-            model = load_CD_expert_model.from_pretrained(self.generation_config["expert_model"])
-            self.student_model = load_CD_student_model.from_pretrained(self.generation_config["student_model"])
+            # model = load_CD_expert_model.from_pretrained(self.generation_config["expert_model"])
+            # self.student_model = load_CD_student_model.from_pretrained(self.generation_config["student_model"])
+            model = CustomOPTForCausalLM.from_pretrained(self.generation_config["expert_model"],
+                                                         use_flash_attn=True,
+                                                         torch_dtype=torch.bfloat16)
+            self.student_model = CustomOPTForCausalLM.from_pretrained(self.generation_config["student_model"],
+                                                                use_flash_attn=True,
+                                                                torch_dtype=torch.bfloat16)
             self.student_model.eval()
             self.student_model.to(self.device)
             print(f'student model loaded with embedding size of: {self.student_model.model.decoder.embed_tokens.num_embeddings}, model dtype: {self.student_model.dtype}')
@@ -245,14 +252,13 @@ class Property2Mol:
                         student_lm=self.student_model,
                         **self.generation_decoding_config
                     )
-                    beams = output.get("beam_indices", torch.zeros_like(output.sequences))
-                    beams[:, -context_length:] = -1
+                    # beams = output.get("beam_indices", torch.zeros_like(output.sequences))
+                    # beams[:, -context_length:] = -1
                     # beam_indices = torch.arange(output.scores[0].shape[0]).view(-1, 1).to(self.device)
                     # beam_indices = beam_indices.expand(-1, len(output.scores))
-                    scores = self.model.compute_transition_beam_scores(
+                    scores = self.model.compute_transition_scores(
                             sequences=output.sequences,
                             scores=output.scores,
-                            beam_indices=beams,
                         ).cpu().detach()
                 else:
                     output = self.model.generate(
@@ -605,9 +611,14 @@ if __name__ == "__main__":
         print(f"evaluating model: {evaluation_config['model_checkpoint_path'].split('/')[-2]} "\
             f"with {evaluation_config['generation_config']['name']} config")
         property_2_Mol = Property2Mol(**evaluation_config)
-        try:
+        if len(evaluation_configs) == 1:
             property_2_Mol.run_property_2_Mol_test()
             property_2_Mol.log_file.close()
             del property_2_Mol
-        except:
-            continue
+        else:
+            try:
+                property_2_Mol.run_property_2_Mol_test()
+                property_2_Mol.log_file.close()
+                del property_2_Mol
+            except:
+                continue
