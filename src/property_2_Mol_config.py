@@ -284,8 +284,8 @@ n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-# device = "cuda:1"
-device = "cuda:0"
+device = "cuda:1"
+# device = "cuda:0"
 # device = 'cpu'
 
 models = [model_125m_63k_9075]
@@ -294,7 +294,7 @@ gen_configs = [greedy_beam_generation_config, greedy_generation_config,contrasti
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
-    "generation_config":     contrastive_generation_config_9075,
+    "generation_config":     greedy_beam_generation_config,
     "model_checkpoint_path": model_125m_63k_9075,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
@@ -305,7 +305,7 @@ evaluation_config = {
     "include_eos":           True,
     "include_start_smiles":  False,
     "check_for_novelty":     True,
-    "track":                 True,
+    "track":                 False,
     "plot":                  True,
     "description":           ""
 }

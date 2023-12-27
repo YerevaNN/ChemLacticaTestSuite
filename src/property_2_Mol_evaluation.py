@@ -24,8 +24,8 @@ from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
 # from contrastive_decoding.generator import generate as generate_CD
 from contrastive_decoding.contrastive_decoding import contrastive_generate as generate_CD
-from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
-from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
+# from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
+# from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
 # from assert_tokenizer import assert_tokenizer
 
 parser = argparse.ArgumentParser(description='ChemLactica test evaluation')
@@ -194,10 +194,6 @@ class Property2Mol:
             # input = input + ']'
             if self.include_start_smiles:
                 input = input + self.smiles_prefix
-<<<<<<< HEAD
-            input = input + ']'
-=======
->>>>>>> master
             inputs.append(input)
             if property == "similarity":
                 self.inp_smiles.append([self.property_smiles[1:][1:]])
@@ -242,16 +238,16 @@ class Property2Mol:
         return property_fns
 
     def generate_outputs(self):
-        input_ids = [self.tokenizer(input, return_tensors="pt").to(self.device) for input in self.inputs]
+        input_ids = [self.tokenizer(input, return_tensors="pt").to(self.device).input_ids for input in self.inputs]
         outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list, self.molecules_set = [], [], [], [], [], set()
         for input_id in input_ids:
-            context_length = input_id.input_ids.shape[1]
+            context_length = input_id.shape[1]
             perplexities, texts, lengths, norm_log, out = [], [], [], [], []
             range_ = self.generation_config["total_gen_range"] if self.generation_config["multiple_rounds_generation"] == True else 1
             for _ in range(range_):
                 if "contrastive" in self.generation_config_name:
                     output = generate_CD(
-                        input_ids=input_id.input_ids,
+                        input_ids=input_id,
                         expert_lm=self.model,
                         student_lm=self.student_model,
                         **self.generation_decoding_config
@@ -266,7 +262,7 @@ class Property2Mol:
                         ).cpu().detach()
                 else:
                     output = self.model.generate(
-                        input_ids=input_id.input_ids,
+                        input_ids=input_id,
                         **self.generation_decoding_config   
                     )
                     # beams = output.get("beam_indices", None)
@@ -615,9 +611,14 @@ if __name__ == "__main__":
         print(f"evaluating model: {evaluation_config['model_checkpoint_path'].split('/')[-2]} "\
             f"with {evaluation_config['generation_config']['name']} config")
         property_2_Mol = Property2Mol(**evaluation_config)
-        try:
+        if len(evaluation_configs) == 1:
             property_2_Mol.run_property_2_Mol_test()
             property_2_Mol.log_file.close()
             del property_2_Mol
-        except:
-            continue
+        else:
+            try:
+                property_2_Mol.run_property_2_Mol_test()
+                property_2_Mol.log_file.close()
+                del property_2_Mol
+            except:
+                continue
