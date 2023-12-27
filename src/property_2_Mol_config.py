@@ -1,26 +1,26 @@
 import copy
 
 test_suite = {
-    "sas": {
-        "input_properties": ["sas"],
-        "target_properties": ["sas"]
-    },
-    "qed": {
-        "input_properties": ["qed"],
-        "target_properties": ["qed"]
-    },
-    "weight": {
-        "input_properties": ["weight"],
-        "target_properties": ["weight"]
-    },
-    "clogp": {
-        "input_properties": ["clogp"],
-        "target_properties": ["clogp"]
-    },
-    # "similarity": {
-    #     "input_properties": ["similarity"],
-    #     "target_properties": ["similarity"]
-    # }
+    # "sas": {
+    #     "input_properties": ["sas"],
+    #     "target_properties": ["sas"]
+    # },
+    # "qed": {
+    #     "input_properties": ["qed"],
+    #     "target_properties": ["qed"]
+    # },
+    # "weight": {
+    #     "input_properties": ["weight"],
+    #     "target_properties": ["weight"]
+    # },
+    # "clogp": {
+    #     "input_properties": ["clogp"],
+    #     "target_properties": ["clogp"]
+    # },
+    "similarity": {
+        "input_properties": ["similarity"],
+        "target_properties": ["similarity"]
+    }
 }
 
 mock_test_suite = {
@@ -31,36 +31,36 @@ mock_test_suite = {
 }
 
 property_range = {
-    "sas": {
-        "range": (1.1, 10),
-        "step":  0.1,
-        "mean": 2.8,
-        "smiles": ""
-    },
-    "qed": {
-        "range": (0.01, 1),
-        "step":  0.01,
-        "mean": 0.75,
-        "smiles": ""
-    },
-    # "similarity": {
+    # "sas": {
+    #     "range": (1.1, 10),
+    #     "step":  0.1,
+    #     "mean": 2.8,
+    #     "smiles": ""
+    # },
+    # "qed": {
     #     "range": (0.01, 1),
     #     "step":  0.01,
-    #     "smiles": " CC(CN)O",
-    #     "mean": 0 # TODO need to update
+    #     "mean": 0.75,
+    #     "smiles": ""
     # },
-    "weight": {
-        "range": (100.1, 1000),
-        "step":  1,
-        "mean": 290,
-        "smiles": ""
+    "similarity": {
+        "range": (0.01, 1),
+        "step":  0.01,
+        "smiles": " C1=CC=C(C=C1)C2=NC(=CC3=CC=C(C=C3)[N+](=O)[O-])C(=O)O2",
+        "mean": 0.734 # TODO need to update
     },
-    "clogp": {
-        "range": (1.1, 10),
-        "step":  0.1,
-        "mean": 3,
-        "smiles": ""
-    },
+    # "weight": {
+    #     "range": (100.1, 1000),
+    #     "step":  1,
+    #     "mean": 290,
+    #     "smiles": ""
+    # },
+    # "clogp": {
+    #     "range": (1.1, 10),
+    #     "step":  0.1,
+    #     "mean": 3,
+    #     "smiles": ""
+    # },
 }  
 
 mock_property_range = {
