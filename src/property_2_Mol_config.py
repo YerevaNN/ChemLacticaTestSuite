@@ -256,6 +256,8 @@ contrastive_generation_config_9075 = {
     }
 }
 
+model_125m_4k_b8cb = "/home/menuab/code/checkpoints/b8cb3a81b61e40aa919e06bc/125m_4k_b8cb/"
+model_125m_9k_8073 = "/home/menuab/code/checkpoints/8073deb785f04fcd891e58db/125m_9k_8073/"
 model_125m_24k_9075 = "/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_24k_9075/"
 model_125m_63k_9075 = "/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_63k_9075/"
 model_125m_126k_f3fb = "/home/menuab/code/checkpoints/f3fbd012918247a388efa732/125m_126k_f3fb/"
@@ -288,14 +290,14 @@ device = "cuda:1"
 # device = "cuda:0"
 # device = 'cpu'
 
-models = [model_125m_63k_9075]
-gen_configs = [greedy_beam_generation_config, greedy_generation_config,contrastive_generation_config_9075 ]
+models = [model_125m_9k_8073]
+gen_configs = [greedy_beam_generation_config, greedy_generation_config]
 
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_beam_generation_config,
-    "model_checkpoint_path": model_125m_63k_9075,
+    "model_checkpoint_path": model_125m_4k_b8cb,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
@@ -305,21 +307,21 @@ evaluation_config = {
     "include_eos":           True,
     "include_start_smiles":  False,
     "check_for_novelty":     True,
-    "track":                 False,
+    "track":                 True,
     "plot":                  True,
     "description":           ""
 }
 evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"][-12:]},'\
     f'{evaluation_config["generation_config"]["name"]},noCoT:{evaluation_config["include_start_smiles"]}'
 
-# evaluation_configs = []
-# for model in models:
-#     for config in gen_configs:
-#         conf = copy.deepcopy(evaluation_config)
-#         conf['generation_config'] = config
-#         conf["description"] = f'{evaluation_config["model_checkpoint_path"][-15:-1]},'\
-#             f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
-#         evaluation_configs.append(conf)
+evaluation_configs = []
+for model in models:
+    for config in gen_configs:
+        conf = copy.deepcopy(evaluation_config)
+        conf['generation_config'] = config
+        conf["description"] = f'{evaluation_config["model_checkpoint_path"][-15:-1]},'\
+            f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
+        evaluation_configs.append(conf)
 
 # evaluation_config2 = {
 #     "test_suite":            test_suite,
