@@ -11,6 +11,7 @@ import argparse
 from tqdm import tqdm
 import numpy as np
 from scipy.stats import spearmanr
+from scipy.interpolate import interp1d
 from sklearn import metrics
 import matplotlib.pyplot as plt
 from aim import Run, Image
@@ -435,6 +436,7 @@ class Property2Mol:
 
     def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c):
         max_, min_, max_g = np.max(self.targets), np.min(self.targets), np.max(generated_clean)
+        diffs = np.abs(np.array(target_clean) - np.array(generated_clean))
         if len(self.property_smiles[1:])>0:
             sm = f", Smiles: {self.property_smiles[1:]}"
         else:
@@ -457,6 +459,7 @@ class Property2Mol:
         ax1.scatter(target_clean, generated_clean, c='b')
         ax1.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
         ax1.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
+        ax1.plot(target_clean, diffs, color='b')
         ax1.set_xlabel(f'target {test_name}')
         ax1.set_ylabel(f'generated {test_name}')
         plt.title(title)

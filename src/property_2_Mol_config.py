@@ -1,26 +1,26 @@
 import copy
 
 test_suite = {
-    # "sas": {
-    #     "input_properties": ["sas"],
-    #     "target_properties": ["sas"]
-    # },
-    # "qed": {
-    #     "input_properties": ["qed"],
-    #     "target_properties": ["qed"]
-    # },
-    # "weight": {
-    #     "input_properties": ["weight"],
-    #     "target_properties": ["weight"]
-    # },
-    # "clogp": {
-    #     "input_properties": ["clogp"],
-    #     "target_properties": ["clogp"]
-    # },
-    "similarity": {
-        "input_properties": ["similarity"],
-        "target_properties": ["similarity"]
-    }
+    "sas": {
+        "input_properties": ["sas"],
+        "target_properties": ["sas"]
+    },
+    "qed": {
+        "input_properties": ["qed"],
+        "target_properties": ["qed"]
+    },
+    "weight": {
+        "input_properties": ["weight"],
+        "target_properties": ["weight"]
+    },
+    "clogp": {
+        "input_properties": ["clogp"],
+        "target_properties": ["clogp"]
+    },
+    # "similarity": {
+    #     "input_properties": ["similarity"],
+    #     "target_properties": ["similarity"]
+    # }
 }
 
 mock_test_suite = {
@@ -31,36 +31,36 @@ mock_test_suite = {
 }
 
 property_range = {
-    # "sas": {
-    #     "range": (1.1, 10),
-    #     "step":  0.1,
-    #     "mean": 2.8,
-    #     "smiles": ""
-    # },
-    # "qed": {
-    #     "range": (0.01, 1),
-    #     "step":  0.01,
-    #     "mean": 0.75,
-    #     "smiles": ""
-    # },
+    "sas": {
+        "range": (1.1, 10),
+        "step":  0.1,
+        "mean": 2.8,
+        "smiles": ""
+    },
+    "qed": {
+        "range": (0.01, 1),
+        "step":  0.01,
+        "mean": 0.75,
+        "smiles": ""
+    },
     "similarity": {
         "range": (0.01, 1),
         "step":  0.01,
         "smiles": " C1=CC=C(C=C1)C2=NC(=CC3=CC=C(C=C3)[N+](=O)[O-])C(=O)O2",
         "mean": 0.734 # TODO need to update
     },
-    # "weight": {
-    #     "range": (100.1, 1000),
-    #     "step":  1,
-    #     "mean": 290,
-    #     "smiles": ""
-    # },
-    # "clogp": {
-    #     "range": (1.1, 10),
-    #     "step":  0.1,
-    #     "mean": 3,
-    #     "smiles": ""
-    # },
+    "weight": {
+        "range": (100.1, 1000),
+        "step":  1,
+        "mean": 290,
+        "smiles": ""
+    },
+    "clogp": {
+        "range": (1.1, 10),
+        "step":  0.1,
+        "mean": 3,
+        "smiles": ""
+    },
 }  
 
 mock_property_range = {
@@ -286,18 +286,18 @@ n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-device = "cuda:1"
-# device = "cuda:0"
+# device = "cuda:1"
+device = "cuda:0"
 # device = 'cpu'
 
 models = [model_125m_9k_8073]
 gen_configs = [greedy_beam_generation_config, greedy_generation_config]
 
 evaluation_config = {
-    "test_suite":            test_suite,
+    "test_suite":            mock_test_suite,
     "property_range":        property_range,
-    "generation_config":     greedy_beam_generation_config,
-    "model_checkpoint_path": model_125m_4k_b8cb,
+    "generation_config":     greedy_generation_config,
+    "model_checkpoint_path": model_125m_63k_9075,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
@@ -306,22 +306,22 @@ evaluation_config = {
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
     "include_start_smiles":  False,
-    "check_for_novelty":     True,
-    "track":                 True,
+    "check_for_novelty":     False,
+    "track":                 False,
     "plot":                  True,
     "description":           ""
 }
 evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"][-12:]},'\
     f'{evaluation_config["generation_config"]["name"]},noCoT:{evaluation_config["include_start_smiles"]}'
 
-evaluation_configs = []
-for model in models:
-    for config in gen_configs:
-        conf = copy.deepcopy(evaluation_config)
-        conf['generation_config'] = config
-        conf["description"] = f'{evaluation_config["model_checkpoint_path"][-15:-1]},'\
-            f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
-        evaluation_configs.append(conf)
+# evaluation_configs = []
+# for model in models:
+#     for config in gen_configs:
+#         conf = copy.deepcopy(evaluation_config)
+#         conf['generation_config'] = config
+#         conf["description"] = f'{evaluation_config["model_checkpoint_path"][-15:-1]},'\
+#             f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
+#         evaluation_configs.append(conf)
 
 # evaluation_config2 = {
 #     "test_suite":            test_suite,
