@@ -459,7 +459,7 @@ class Property2Mol:
         ax1.scatter(target_clean, generated_clean, c='b')
         ax1.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
         ax1.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
-        ax1.plot(target_clean, diffs, color='b')
+        ax1.plot(target_clean, np.convolve(np.pad(diffs, (2, 2), mode='edge'), np.ones(5)/5, mode='valid'), color='m', alpha=0.4)
         ax1.set_xlabel(f'target {test_name}')
         ax1.set_ylabel(f'generated {test_name}')
         plt.title(title)
@@ -623,5 +623,6 @@ if __name__ == "__main__":
                 property_2_Mol.run_property_2_Mol_test()
                 property_2_Mol.log_file.close()
                 del property_2_Mol
-            except:
+            except BaseException as e:
+                print(str(e))
                 continue
