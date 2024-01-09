@@ -329,14 +329,17 @@ class Property2Mol:
                     norm_log = [norm_logs]
                 out = []
                 for text in texts:
-                    try:
-                        if self.include_start_smiles:
-                            captured_text = re.match(self.regexp, text).group()
-                        else:
-                            captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
-                        if captured_text not in self.molecules_set:
-                            self.molecules_set.add(captured_text)
-                    except:
+                    if text.find("[END_SMILES]") != -1:
+                        try:
+                            if self.include_start_smiles:
+                                captured_text = re.match(self.regexp, text).group()
+                            else:
+                                captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
+                            if captured_text not in self.molecules_set:
+                                self.molecules_set.add(captured_text)
+                        except:
+                            captured_text = ''
+                    else:
                         captured_text = ''
                     out.append(captured_text)
             outputs.append(out)
@@ -459,11 +462,11 @@ class Property2Mol:
         ax1.scatter(target_clean, generated_clean, c='b')
         ax1.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
         ax1.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
-        ax1.plot(target_clean, np.convolve(np.pad(diffs, (2, 2), mode='edge'), np.ones(5)/5, mode='valid'), color='m', alpha=0.4)
+        ax1.plot(target_clean, np.convolve(np.pad(diffs, (2, 2), mode='edge'), np.ones(5)/5, mode='valid'), color='m', alpha=0.5)
         ax1.set_xlabel(f'target {test_name}')
         ax1.set_ylabel(f'generated {test_name}')
+        ax1.grid(True)
         plt.title(title)
-        plt.grid(True)
         plt.tight_layout()
         fig.savefig(self.results_path + test_name + '.png', dpi=300, format="png")
         fig.clf()

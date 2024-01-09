@@ -24,9 +24,9 @@ test_suite = {
 }
 
 mock_test_suite = {
-    "qed": {
-        "input_properties": ["qed"],
-        "target_properties": ["qed"]
+    "weight": {
+        "input_properties": ["weight"],
+        "target_properties": ["weight"]
     }
 }
 
@@ -84,7 +84,7 @@ mock_property_range = {
     },
     "weight": {
         "range": (104.1, 1000),
-        "step":  200,
+        "step":  20,
         "mean": 290,
         "smiles": ""
     },
@@ -332,14 +332,14 @@ torch_dtype = "bfloat16"
 device = "cuda:0"
 # device = 'cpu'
 
-models = [model_125m_118k_26d3]
+models = [model_125m_63k_9075]
 gen_configs = [greedy_beam_generation_config, greedy_generation_config, greedy_beam6_generation_config, contrastive_generation_config_26d3]
 
 evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_generation_config,
-    "model_checkpoint_path": model_125m_118k_26d3,
+    "model_checkpoint_path": model_125m_63k_9075,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
@@ -353,8 +353,8 @@ evaluation_config = {
     "plot":                  True,
     "description":           ""
 }
-evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"][-15:]},'\
-    f'{evaluation_config["generation_config"]["name"]},noCoT:{evaluation_config["include_start_smiles"]}'
+evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"].split("/")[-1]},'\
+    f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
 
 # evaluation_configs = [evaluation_config]
 
