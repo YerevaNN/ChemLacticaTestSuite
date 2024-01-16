@@ -24,9 +24,9 @@ test_suite = {
 }
 
 mock_test_suite = {
-    "weight": {
-        "input_properties": ["weight"],
-        "target_properties": ["weight"]
+    "qed": {
+        "input_properties": ["qed"],
+        "target_properties": ["qed"]
     }
 }
 
@@ -191,8 +191,8 @@ nongreedy_calibration_generation_config = {
 contrastive_generation_config_od99 = {
     "name": "contrastive_decoding_greedy",
     "multiple_rounds_generation": False,
-    "student_model": "/home/menuab/code/checkpoints/8c311987db124d9e87fc26da/125m_24k_8c31/",
-    "expert_model": "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_256k_0d99/",
+    "student_model": "/auto/home/menuab/code/checkpoints/8c311987db124d9e87fc26da/125m_24k_8c31/",
+    "expert_model": "/auto/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_256k_0d99/",
     "config": {
         "eos_token_id": 20,
         "max_length": 300,
@@ -213,8 +213,8 @@ contrastive_generation_config_od99 = {
 contrastive_generation_config_fe31 = {
     "name": "contrastive_decoding_greedy",
     "multiple_rounds_generation": False,
-    "student_model": "/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_120k_fe31/",
-    "expert_model": "/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_512k_fe31/",
+    "student_model": "/auto/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_120k_fe31/",
+    "expert_model": "/auto/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_512k_fe31/",
     "config": {
         "eos_token_id": 20,
         "max_length": 300,
@@ -235,8 +235,8 @@ contrastive_generation_config_fe31 = {
 contrastive_generation_config_f2c6 = {
     "name": "contrastive_decoding_greedy",
     "multiple_rounds_generation": False,
-    "student_model": "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/",
-    "expert_model": "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/",
+    "student_model": "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/",
+    "expert_model": "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/",
     "config": {
         "eos_token_id": 20,
         "max_length": 300,
@@ -257,8 +257,8 @@ contrastive_generation_config_f2c6 = {
 contrastive_generation_config_9075 = {
     "name": "contrastive_decoding_greedy",
     "multiple_rounds_generation": False,
-    "student_model": "/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_24k_9075/",
-    "expert_model": "/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_63k_9075/",
+    "student_model": "/auto/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_24k_9075/",
+    "expert_model": "/auto/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_63k_9075/",
     "config": {
         "eos_token_id": 20,
         "max_length": 300,
@@ -278,8 +278,8 @@ contrastive_generation_config_9075 = {
 contrastive_generation_config_26d3 = {
     "name": "contrastive_decoding_greedy",
     "multiple_rounds_generation": False,
-    "student_model": "/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_69k_26d3/",
-    "expert_model": "/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_118k_26d3/",
+    "student_model": "/auto/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_69k_26d3/",
+    "expert_model": "/auto/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_118k_26d3/",
     "config": {
         "eos_token_id": 20,
         "max_length": 300,
@@ -296,32 +296,32 @@ contrastive_generation_config_26d3 = {
     }
 }
 
-model_125m_69k_26d3 = "/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_69k_26d3/"
-model_125m_118k_26d3 = "/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_118k_26d3/"
-model_125m_4k_b8cb = "/home/menuab/code/checkpoints/b8cb3a81b61e40aa919e06bc/125m_4k_b8cb/"
-model_125m_9k_8073 = "/home/menuab/code/checkpoints/8073deb785f04fcd891e58db/125m_9k_8073/"
-model_125m_24k_9075 = "/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_24k_9075/"
-model_125m_63k_9075 = "/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_63k_9075/"
-model_125m_126k_f3fb = "/home/menuab/code/checkpoints/f3fbd012918247a388efa732/125m_126k_f3fb/"
-model_125m_126k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/"
-model_125m_124k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_124k_f2c6/"
-model_125m_108k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_108k_f2c6/"
-model_125m_43k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_43k_f2c6/"
-model_125m_63k_f2c6 = "/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/"
-model_125m_313k_cf98 = "/home/menuab/code/checkpoints/cf982665b6c04c83a310b97d/125m_313k_cf98/"
-model_125m_512k_fe31 = "/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_512k_fe31/"
-model_125m_249k_0d99 = "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_249k_0d99/"
-model_125m_253k_0d99 = "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_253k_0d99/"
-model_125m_256k_0d99 = "/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_256k_0d99/"
-model_125m_253k_ac79 = "/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/125m_253k_ac79/"
-model_125m_241k_ac79 = "/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/125m_241k_ac79/"
-model_1b_131k_d5c2   = "/home/menuab/code/checkpoints/d5c2c8db3c554447a27697bf/1.3b_131k_d5c2/"
-model_125m_73k_assay_87dc = "/home/menuab/code/checkpoints/87dc7180e49141deae4ded57/125m_73k_assay_87dc/"
-model_125m_73k_assay_c6af = "/home/menuab/code/checkpoints/c6af41c79f1244f698cc1153/125m_73k_assay_c6af"
+model_125m_69k_26d3 = "/auto/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_69k_26d3/"
+model_125m_118k_26d3 = "/auto/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_118k_26d3/"
+model_125m_4k_b8cb = "/auto/home/menuab/code/checkpoints/b8cb3a81b61e40aa919e06bc/125m_4k_b8cb/"
+model_125m_9k_8073 = "/auto/home/menuab/code/checkpoints/8073deb785f04fcd891e58db/125m_9k_8073/"
+model_125m_24k_9075 = "/auto/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_24k_9075/"
+model_125m_63k_9075 = "/auto/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_63k_9075/"
+model_125m_126k_f3fb = "/auto/home/menuab/code/checkpoints/f3fbd012918247a388efa732/125m_126k_f3fb/"
+model_125m_126k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/"
+model_125m_124k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_124k_f2c6/"
+model_125m_108k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_108k_f2c6/"
+model_125m_43k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_43k_f2c6/"
+model_125m_63k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/"
+model_125m_313k_cf98 = "/auto/home/menuab/code/checkpoints/cf982665b6c04c83a310b97d/125m_313k_cf98/"
+model_125m_512k_fe31 = "/auto/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_512k_fe31/"
+model_125m_249k_0d99 = "/auto/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_249k_0d99/"
+model_125m_253k_0d99 = "/auto/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_253k_0d99/"
+model_125m_256k_0d99 = "/auto/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_256k_0d99/"
+model_125m_253k_ac79 = "/auto/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/125m_253k_ac79/"
+model_125m_241k_ac79 = "/auto/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/125m_241k_ac79/"
+model_1b_131k_d5c2   = "/auto/home/menuab/code/checkpoints/d5c2c8db3c554447a27697bf/1.3b_131k_d5c2/"
+model_125m_73k_assay_87dc = "/auto/home/menuab/code/checkpoints/87dc7180e49141deae4ded57/125m_73k_assay_87dc/"
+model_125m_73k_assay_c6af = "/auto/home/menuab/code/checkpoints/c6af41c79f1244f698cc1153/125m_73k_assay_c6af"
 
-galactica_tokenizer_path =         "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/galactica-125m/"
-chemlactica_tokenizer_50028_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50028"
-chemlactica_tokenizer_50066_path = "/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
+galactica_tokenizer_path =         "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/galactica-125m/"
+chemlactica_tokenizer_50028_path = "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50028"
+chemlactica_tokenizer_50066_path = "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
 
 top_N = 100
 n_per_vs_rmse = 4
@@ -336,7 +336,7 @@ models = [model_125m_63k_9075]
 gen_configs = [greedy_beam_generation_config, greedy_generation_config, greedy_beam6_generation_config, contrastive_generation_config_26d3]
 
 evaluation_config = {
-    "test_suite":            test_suite,
+    "test_suite":            mock_test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_generation_config,
     "model_checkpoint_path": model_125m_63k_9075,
@@ -348,8 +348,8 @@ evaluation_config = {
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
     "include_start_smiles":  False,
-    "check_for_novelty":     True,
-    "track":                 True,
+    "check_for_novelty":     False,
+    "track":                 False,
     "plot":                  True,
     "description":           ""
 }

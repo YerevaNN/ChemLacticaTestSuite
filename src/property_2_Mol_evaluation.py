@@ -32,7 +32,7 @@ from contrastive_decoding.contrastive_decoding import contrastive_generate as ge
 parser = argparse.ArgumentParser(description='ChemLactica test evaluation')
 
 parser.add_argument('--result-path', type=str,
-                    default="/home/menuab/code/ChemLacticaTestSuite/results/")
+                    default="/auto/home/menuab/code/ChemLacticaTestSuite/results/")
 
 
 args = parser.parse_args()
