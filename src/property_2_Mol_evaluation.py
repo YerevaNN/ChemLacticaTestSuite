@@ -59,6 +59,7 @@ class Property2Mol:
             torch_dtype,
             device,
             top_N,
+            target_dist,
             n_per_vs_rmse,
             include_eos,
             include_start_smiles,
@@ -87,6 +88,7 @@ class Property2Mol:
         self.include_start_smiles = include_start_smiles
         self.top_N = generation_config.get("top_N", 0)
         # self.top_N = top_N
+        self.target_dist = target_dist
         self.n_per_vs_rmse = n_per_vs_rmse
 
         self.molecules_set = set()
@@ -171,53 +173,35 @@ class Property2Mol:
         return tokenizer
 
     def get_inputs(self, properties):
-        inputs_ = []
-        for property in properties:
-            property_range = self.property_range[property]["range"]
-            property_step = self.property_range[property]["step"]
-            self.property_smiles = self.property_range[property]["smiles"]
-            inputs_.append(np.round(np.arange(property_range[0],
-                                              property_range[1] + property_step,
-                                              property_step), 3))
+        # inputs_ = []
+        # for property in properties:
+        #     property_range = self.property_range[property]["range"]
+        #     property_step = self.property_range[property]["step"]
+        #     self.property_smiles = self.property_range[property]["smiles"]
+        #     inputs_.append(np.round(np.arange(property_range[0],
+        #                                       property_range[1] + property_step,
+        #                                       property_step), 3))
         
         inputs = []
         # decim = len(str(property_step).split('.')[-1])
         decim = 2
-        print(property_range, decim)
-        for value in inputs_[0]:
+        # print(property_range, decim)
+        for value in self.targets:
             if len(self.tokenizer) == 50028:
-                input = f'[{property.upper()} {value:.{decim}f}]'
+                input = f'[{properties[0].upper()} {value[0]:.{decim}f}]'
             else:
                 # input = f'[{property.upper()}]{value:.{decim}f}[/{property.upper()}]{self.smiles_prefix}'
-                input = f'[{property.upper()}]{value:.{decim}f}[/{property.upper()}]'
+                input = f'[{properties[0].upper()}]{value[0]:.{decim}f}[/{properties[0].upper()}]'
             if self.include_eos:
                 input = self.eos_string + input
             # input = input + ']'
             if self.include_start_smiles:
                 input = input + self.smiles_prefix
             inputs.append(input)
-            if property == "similarity":
+            if properties[0] == "similarity":
                 self.inp_smiles.append([self.property_smiles[1:][1:]])
 
         return inputs
-        # for value in inputs_[0]:
-        #     if len(self.tokenizer) == 50028:
-        #         if property != "similarity":
-        #             input = f'[{property.upper()}]{self.smiles_prefix}'
-        #         else:
-        #             input =  
-        #     else:
-        #         if property != "similarity":
-        #             input = f'[{property.upper()}]{value}[/{property.upper()}]{self.smiles_prefix}'
-        #         else:
-        #             input = f'[SIMILAR] {value}'
-        #     if self.include_eos:
-        #         input = self.eos_string + input
-        #     inputs.append(input)
-        #     self.inp_smiles.append([self.property_smiles[1:]])
-
-
-        # return inputs
 
     def get_targets(self, properties):
         targets = []
@@ -225,9 +209,22 @@ class Property2Mol:
 
             property_range = self.property_range[property]["range"]
             property_step = self.property_range[property]["step"]
-            targets = [[t] for t in np.round(np.arange(property_range[0],
-                                                        property_range[1] + property_step,
-                                                        property_step), 3)]
+            if self.target_dist == "uniform":
+                values_range = np.arange(property_range[0], property_range[1] + property_step, property_step)
+                targets = [[t] for t in values_range]
+            elif self.target_dist == "prior":
+                n_samples = int((property_range[1] + property_step - property_range[0]) / property_step)
+                noise =  np.random.uniform(-0.0045, 0.0045, n_samples) * property_range[1]
+                values_range = np.linspace(property_range[0], property_range[1], 100)
+                frequency_data = self.pubchem_stats[property.upper()]
+                frequency_data /= frequency_data.sum()
+                targets = np.random.choice(values_range, size=n_samples, p=frequency_data) + noise
+                if property.lower() == "weight":
+                    targets = np.around(targets) + 0.1
+                elif property.lower() == "sas" or property.lower() == "clogp":
+                    targets = np.around(targets, 1)
+                targets = np.around(np.clip(targets, property_range[0], property_range[1]), 2)
+                targets = sorted([[round(t, 2)] for t in targets])
         # targets_ = np.meshgrid(targets_) TODO:develop later for multiple targets
 
         return targets
@@ -440,10 +437,11 @@ class Property2Mol:
     def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c):
         max_, min_, max_g = np.max(self.targets), np.min(self.targets), np.max(generated_clean)
         diffs = np.abs(np.array(target_clean) - np.array(generated_clean))
-        if len(self.property_smiles[1:])>0:
-            sm = f", Smiles: {self.property_smiles[1:]}"
-        else:
-            sm = ""
+        # if len(self.property_smiles[1:])>0:
+        #     sm = f", Smiles: {self.property_smiles[1:]}"
+        # else:
+        #     sm = ""
+        sm = ""
         title = f'{self.generation_config_name} generation of {test_name} with {self.model_checkpoint_path.split("/")[-2]}\n'\
                 f'rmse {rmse:.3f} mape {mape:.3f} rmse_c {rmse_c:.3f} mape_c {mape_c:.3f}\n'\
                 f'corr: {correlation:.3f} corr_c: {correlation_c:.3f} corr_s: {correlation*(1-(self.n_invalid_generations/self.n_total_gens)):.3f}\n'\

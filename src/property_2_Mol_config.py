@@ -24,9 +24,9 @@ test_suite = {
 }
 
 mock_test_suite = {
-    "qed": {
-        "input_properties": ["qed"],
-        "target_properties": ["qed"]
+    "weight": {
+        "input_properties": ["weight"],
+        "target_properties": ["weight"]
     }
 }
 
@@ -157,6 +157,7 @@ nongreedy_generation_config = {
     "name": "nongreedy_5of20",
     "top_N": 5,
     "multiple_rounds_generation": False,
+    "target_dist": "prior",
     "config": {
         "eos_token_id": 20,
         "max_new_tokens": 300,
@@ -328,23 +329,26 @@ n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-# device = "cuda:1"
-device = "cuda:0"
+device = "cuda:1"
+# device = "cuda:0"
 # device = 'cpu'
+target_dist = "prior"
+# target_dist = "uniform"
 
-models = [model_125m_63k_9075]
-gen_configs = [greedy_beam_generation_config, greedy_generation_config, greedy_beam6_generation_config, contrastive_generation_config_26d3]
+models = [model_125m_118k_26d3]
+gen_configs = [greedy_generation_config, greedy_beam6_generation_config, contrastive_generation_config_26d3, greedy_beam_generation_config]
 
 evaluation_config = {
-    "test_suite":            mock_test_suite,
+    "test_suite":            test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_generation_config,
-    "model_checkpoint_path": model_125m_63k_9075,
+    "model_checkpoint_path": model_125m_118k_26d3,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
     "regexp":                regexp,
     "top_N":                 top_N,
+    "target_dist":           target_dist,
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
     "include_start_smiles":  False,
@@ -356,16 +360,18 @@ evaluation_config = {
 evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"].split("/")[-1]},'\
     f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
 
-# evaluation_configs = [evaluation_config]
+evaluation_configs = [evaluation_config]
 
-evaluation_configs = []
-for model in models:
-    for config in gen_configs:
-        conf = copy.deepcopy(evaluation_config)
-        conf['generation_config'] = config
-        conf["description"] = f'{evaluation_config["model_checkpoint_path"][-15:-1]},'\
-            f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
-        evaluation_configs.append(conf)
+# evaluation_configs = []
+# for model in models:
+#     for config in gen_configs:
+#         # for dist in ['prior', 'uniform']: 
+#         conf = copy.deepcopy(evaluation_config)
+#         conf['generation_config'] = config
+#             # conf['generation_config']['target_dist'] = dist
+#         conf["description"] = f'{conf["model_checkpoint_path"][-15:-1]},{conf["generation_config"]["target_dist"]},'\
+#             f'{conf["generation_config"]["name"]},CoT:{not conf["include_start_smiles"]}'
+#         evaluation_configs.append(conf)
 
 # evaluation_config2 = {
 #     "test_suite":            test_suite,
