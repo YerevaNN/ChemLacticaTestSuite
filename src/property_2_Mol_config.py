@@ -305,20 +305,16 @@ model_125m_24k_9075 = "/auto/home/menuab/code/checkpoints/90758da0b8564bae8a14bb
 model_125m_63k_9075 = "/auto/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_63k_9075/"
 model_125m_126k_f3fb = "/auto/home/menuab/code/checkpoints/f3fbd012918247a388efa732/125m_126k_f3fb/"
 model_125m_126k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/"
-model_125m_124k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_124k_f2c6/"
-model_125m_108k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_108k_f2c6/"
-model_125m_43k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_43k_f2c6/"
 model_125m_63k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/"
 model_125m_313k_cf98 = "/auto/home/menuab/code/checkpoints/cf982665b6c04c83a310b97d/125m_313k_cf98/"
 model_125m_512k_fe31 = "/auto/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_512k_fe31/"
-model_125m_249k_0d99 = "/auto/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_249k_0d99/"
-model_125m_253k_0d99 = "/auto/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_253k_0d99/"
 model_125m_256k_0d99 = "/auto/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_256k_0d99/"
 model_125m_253k_ac79 = "/auto/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/125m_253k_ac79/"
 model_125m_241k_ac79 = "/auto/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/125m_241k_ac79/"
 model_1b_131k_d5c2   = "/auto/home/menuab/code/checkpoints/d5c2c8db3c554447a27697bf/1.3b_131k_d5c2/"
 model_125m_73k_assay_87dc = "/auto/home/menuab/code/checkpoints/87dc7180e49141deae4ded57/125m_73k_assay_87dc/"
 model_125m_73k_assay_c6af = "/auto/home/menuab/code/checkpoints/c6af41c79f1244f698cc1153/125m_73k_assay_c6af"
+model_125m_18k_a37d = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/a37d0362e15c4c969307aef8/checkpoint-18432"
 
 galactica_tokenizer_path =         "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/galactica-125m/"
 chemlactica_tokenizer_50028_path = "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50028"
@@ -342,7 +338,7 @@ evaluation_config = {
     "test_suite":            test_suite,
     "property_range":        property_range,
     "generation_config":     greedy_generation_config,
-    "model_checkpoint_path": model_125m_118k_26d3,
+    "model_checkpoint_path": model_125m_18k_a37d,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
     "torch_dtype":           torch_dtype,
     "device":                device,
@@ -352,26 +348,24 @@ evaluation_config = {
     "n_per_vs_rmse":         n_per_vs_rmse,
     "include_eos":           True,
     "include_start_smiles":  False,
-    "check_for_novelty":     False,
-    "track":                 False,
+    "check_for_novelty":     True,
+    "track":                 True,
     "plot":                  True,
     "description":           ""
 }
 evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"].split("/")[-1]},'\
     f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
 
-evaluation_configs = [evaluation_config]
+# evaluation_configs = [evaluation_config]
 
-# evaluation_configs = []
-# for model in models:
-#     for config in gen_configs:
-#         # for dist in ['prior', 'uniform']: 
-#         conf = copy.deepcopy(evaluation_config)
-#         conf['generation_config'] = config
-#             # conf['generation_config']['target_dist'] = dist
-#         conf["description"] = f'{conf["model_checkpoint_path"][-15:-1]},{conf["generation_config"]["target_dist"]},'\
-#             f'{conf["generation_config"]["name"]},CoT:{not conf["include_start_smiles"]}'
-#         evaluation_configs.append(conf)
+evaluation_configs = []
+for model in models:
+    for config in gen_configs:
+        conf = copy.deepcopy(evaluation_config)
+        conf['generation_config'] = config
+        conf["description"] = f'{conf["model_checkpoint_path"][-15:-1]},{conf["target_dist"]},'\
+            f'{conf["generation_config"]["name"]},CoT:{not conf["include_start_smiles"]}'
+        evaluation_configs.append(conf)
 
 # evaluation_config2 = {
 #     "test_suite":            test_suite,

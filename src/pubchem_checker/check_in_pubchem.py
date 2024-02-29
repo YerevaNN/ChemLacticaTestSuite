@@ -7,7 +7,7 @@ from pprint import pprint
 
 RDLogger.DisableLog('rdApp.*')
 
-sorted_inchi_str = Str(File('/mnt/sxtn/chem/pubchem_inchi/sorted_inchi_mols'))
+sorted_inchi_str = Str(File('/nfs/dgx/raid/chem/pubchem_inchi/sorted_inchi_mols'))
 sorted_inchi_molecules = sorted_inchi_str.split(separator='\n')
 
 

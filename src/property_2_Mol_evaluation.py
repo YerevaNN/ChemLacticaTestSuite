@@ -105,7 +105,7 @@ class Property2Mol:
         
     @staticmethod
     def get_pubchem_stats():
-        pubchem_stats_file = open("src/stats_data/pubchem_stats.pkl", 'rb')
+        pubchem_stats_file = open("/auto/home/menuab/code/ChemLacticaTestSuite/src/stats_data/pubchem_stats.pkl", 'rb')
         pubchem_stats = pickle.load(pubchem_stats_file)
         pubchem_stats_file.close()
         return pubchem_stats
