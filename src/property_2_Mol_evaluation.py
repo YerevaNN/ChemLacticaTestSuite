@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 import os
 import glob
 import time
@@ -25,6 +26,7 @@ from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
 # from contrastive_decoding.generator import generate as generate_CD
 from contrastive_decoding.contrastive_decoding import contrastive_generate as generate_CD
+from plot_utils import clean_outputs, calculate_metrics, get_scatter_title
 # from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
 # from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
 # from assert_tokenizer import assert_tokenizer
@@ -46,6 +48,8 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed_all(seed_value)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+
 
 class Property2Mol:
     def __init__(
@@ -411,65 +415,25 @@ class Property2Mol:
                                     f'token length: {l}, char length: {len(o)}\n')
             self.log_file.write('***********\n')
 
-    def clean_outputs(self, test_name):
-        target_clean, generated_clean, nones = [], [], []
-        corrected_calculated = np.array(self.calculated_properties)
-        corrected_calculated[corrected_calculated == None] = self.property_range[test_name]['mean']
-        for target, c_props in zip(self.targets, self.calculated_properties):
-            # target *= self.generation_decoding_config["num_return_sequences"]
-            for t, cp in zip(target, c_props):
-                if  cp != None:
-                    target_clean.append(t)
-                    generated_clean.append(cp)
-                else:
-                    nones.append(t)
-        correlation, pvalue = spearmanr(target_clean, generated_clean)
-        correlation_c, pvalue = spearmanr(self.targets, corrected_calculated)
-        if target_clean:
-            rmse = metrics.mean_squared_error(target_clean, generated_clean, squared=False)
-            rmse_c = metrics.mean_squared_error(self.targets, corrected_calculated, squared=False)
-            mape = metrics.mean_absolute_percentage_error(target_clean, generated_clean)
-            mape_c = metrics.mean_absolute_percentage_error(self.targets, corrected_calculated)
-        else:
-            rmse = mape = rmse_c = mape_c = 0
-        return target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c
-
     def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c):
-        max_, min_, max_g = np.max(self.targets), np.min(self.targets), np.max(generated_clean)
+        max_, min_, max_g = get_scatter_plot_bounds(self.targets,generated_clean):
         diffs = np.abs(np.array(target_clean) - np.array(generated_clean))
         # if len(self.property_smiles[1:])>0:
         #     sm = f", Smiles: {self.property_smiles[1:]}"
         # else:
         #     sm = ""
         sm = ""
-        title = f'{self.generation_config_name} generation of {test_name} with {self.model_checkpoint_path.split("/")[-2]}\n'\
-                f'rmse {rmse:.3f} mape {mape:.3f} rmse_c {rmse_c:.3f} mape_c {mape_c:.3f}\n'\
-                f'corr: {correlation:.3f} corr_c: {correlation_c:.3f} corr_s: {correlation*(1-(self.n_invalid_generations/self.n_total_gens)):.3f}\n'\
-                f'N invalid: {self.n_invalid_generations}, N total: {self.n_total_gens} N Unique: {self.n_unique}, N in PubChem: {self.n_in_pubchem}{sm}'
-        
-        fig, ax1 = plt.subplots()
-        fig.set_figheight(6)
-        fig.set_figwidth(8)
-        fig.set_linewidth(4)
-        ax2 = ax1.twinx()
+        title = get_scatter_title(self.generation_config_name,test_name,self.model_checkpoint_path,rmse,mape,rmse_c,mape_c,correlation,correlation_c,self.n_invalid_generations,self.n_total_gens,self.n_unique,self.n_in_pubchem,sm)
+
         stats = self.pubchem_stats[test_name.upper()]
         property_range = self.property_range[test_name]["range"]
         stats_width = (property_range[1] - property_range[0]) / 100
-        ax2.bar([interval.mid for interval in stats.index], stats, width=stats_width, alpha=0.3) 
-        
-        ax1.scatter(target_clean, generated_clean, c='b')
-        ax1.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
-        ax1.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
-        ax1.plot(target_clean, np.convolve(np.pad(diffs, (2, 2), mode='edge'), np.ones(5)/5, mode='valid'), color='m', alpha=0.5)
-        ax1.set_xlabel(f'target {test_name}')
-        ax1.set_ylabel(f'generated {test_name}')
-        ax1.grid(True)
-        plt.title(title)
-        plt.tight_layout()
+
+        fig = paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,nones,min_,max_,diffs)
         fig.savefig(self.results_path + test_name + '.png', dpi=300, format="png")
         fig.clf()
         plt.close()
-
+        
     def generate_length_calibration_plots(self, x_axis_name, test_name, log_norms, lengths, errors, target):
 
         path = self.results_path + "per_vs_rmse/calibration/"
@@ -589,8 +553,22 @@ class Property2Mol:
             else:
                 self.calculated_properties = self.calculate_similarity(property_fns)
             self.errors, self.n_invalid_generations, self.n_unique, self.n_in_pubchem, self.n_total_gens = self.get_stats()
-            target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape,\
-            self.correlation_c, self.rmse_c, self.mape_c = self.clean_outputs(test_name)
+
+            target_clean, generated_clean, nones, corrected_calculated = clean_outputs(test_name,self.targets,self.property_range,self.calculated_properties)
+            if target_clean:
+                # _c metrics apply default values to invalid generations
+                rmse, mape, correlation = calculate_metrics(target_clean, generated_clean)
+                rmse_c, mape_c, correlation_c = calculate_metrics(self.targets,corrected_calculated)
+            else:
+                rmse = mape = rmse_c = mape_c = 0
+
+            self.rmse = rmse
+            self.mape = mape
+            self.rmse_c = rmse_c
+            self.mape_c = mape_c
+            self.correlation = correlation
+            self.correlation_c = correlation_c
+
             self.write_to_file(test_name)
             if self.plot:
                 self.generate_plot(test_name, target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape, \
