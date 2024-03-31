@@ -19,7 +19,7 @@ import torch
 from torch import bfloat16, float32
 from transformers import AutoTokenizer, AutoModelForCausalLM, OPTForCausalLM
 
-from utils import mol_util
+from utils import mol_util,logit_utils
 from custom_modeling_opt import CustomOPTForCausalLM
 from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
@@ -261,6 +261,7 @@ class Property2Mol:
                 else:
                     output = self.model.generate(
                         input_ids=input_id,
+                        logit_processor = logit_utils.get_logits_processors(),
                         **self.generation_decoding_config   
                     )
                     # beams = output.get("beam_indices", None)
