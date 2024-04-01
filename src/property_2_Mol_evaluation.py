@@ -263,7 +263,7 @@ class Property2Mol:
                 else:
                     output = self.model.generate(
                         input_ids=input_id,
-                        logit_processor = self.logits_processors,
+                        logits_processor = self.logits_processors,
                         **self.generation_decoding_config   
                     )
                     # beams = output.get("beam_indices", None)
