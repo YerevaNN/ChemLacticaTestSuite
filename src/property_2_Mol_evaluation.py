@@ -67,6 +67,7 @@ class Property2Mol:
             track,
             plot,
             description,
+            logits_processors_config_path = None,
             ) -> None:
         
         self.test_suite=test_suite
@@ -81,6 +82,7 @@ class Property2Mol:
         self.device = device
         self.track = track
         self.plot = plot
+        self.logits_processors = get_logits_processors(logits_processors_config_path)
         
         self.smiles_prefix = "[START_SMILES]"
         self.eos_string = "</s>"
@@ -261,7 +263,7 @@ class Property2Mol:
                 else:
                     output = self.model.generate(
                         input_ids=input_id,
-                        logit_processor = logit_utils.get_logits_processors(),
+                        logit_processor = self.logits_processors,
                         **self.generation_decoding_config   
                     )
                     # beams = output.get("beam_indices", None)
