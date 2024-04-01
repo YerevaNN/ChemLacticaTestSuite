@@ -26,7 +26,7 @@ from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
 # from contrastive_decoding.generator import generate as generate_CD
 from contrastive_decoding.contrastive_decoding import contrastive_generate as generate_CD
-from plot_utils import clean_outputs, calculate_metrics, get_scatter_title
+from utils.plot_utils import clean_outputs, calculate_metrics, get_scatter_title,get_scatter_plot_bounds, paint_plot
 # from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
 # from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
 # from assert_tokenizer import assert_tokenizer
@@ -416,7 +416,7 @@ class Property2Mol:
             self.log_file.write('***********\n')
 
     def generate_plot(self, test_name, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c):
-        max_, min_, max_g = get_scatter_plot_bounds(self.targets,generated_clean):
+        max_, min_, max_g = get_scatter_plot_bounds(self.targets,generated_clean)
         diffs = np.abs(np.array(target_clean) - np.array(generated_clean))
         # if len(self.property_smiles[1:])>0:
         #     sm = f", Smiles: {self.property_smiles[1:]}"
@@ -430,6 +430,7 @@ class Property2Mol:
         stats_width = (property_range[1] - property_range[0]) / 100
 
         fig = paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,nones,min_,max_,diffs)
+        print("saving to", self.results_path + test_name + '.png')
         fig.savefig(self.results_path + test_name + '.png', dpi=300, format="png")
         fig.clf()
         plt.close()

@@ -1,4 +1,7 @@
 from sklearn import metrics
+import matplotlib.pyplot as plt
+from scipy.stats import spearmanr
+import numpy as np
 
 def get_scatter_title(config_name,test_name,model_checkpoint_path,rmse,mape,rmse_c,mape_c,correlation,correlation_c,n_invalid,n_total,n_unique=None,n_in_pubchem=None,sm=""):
 
@@ -16,8 +19,8 @@ def get_scatter_title(config_name,test_name,model_checkpoint_path,rmse,mape,rmse
 
 
 def get_scatter_plot_bounds(targets,generated_clean):
-    max_, min_ = np.max(targets), np.min(targets), np.max(generated_clean)
-    return max_, min_, max_
+    max_, min_, max_g = np.max(targets), np.min(targets), np.max(generated_clean)
+    return max_, min_, max_g
 
 
 def clean_outputs(test_name, targets, property_range, calculated_properties):
@@ -40,8 +43,6 @@ def calculate_metrics(target,generated):
     correlation, pvalue = spearmanr(target, generated)
     return rmse, mape, correlation
 
-
-
 def paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,nones,min_,max_,diffs):
     fig, ax1 = plt.subplots()
     fig.set_figheight(6)
@@ -59,6 +60,7 @@ def paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,no
     ax1.grid(True)
     plt.title(title)
     plt.tight_layout()
+    return fig
 
 
 
@@ -75,8 +77,8 @@ def make_plot(test_name, stats, property_range, targets, target_clean, generated
             rmse_c,
             mape_c,
             correlation,
-            correlation_c,n
-            _invalid,
+            correlation_c,
+            n_invalid,
             n_total)
 
     stats_width = (property_range[1] - property_range[0]) / 100
