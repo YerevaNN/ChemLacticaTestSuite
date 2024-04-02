@@ -1,14 +1,18 @@
 logits_processors:
   - class_name: TunableExponentialDecayLengthPenalty
-    module: logit_processors
+    module: logits_processors
+    is_local: true
+    path: ./logits_processors.py
     kwargs: 
       exponential_decay_factors: [1.0007,1.005]
       regulation_starts: [0,100]
       decay_token_ids: [19,20]
       input_ids_seq_length: 5
-  - class_name: SuppressTokensLogitsProcessor
-    module: transformers.generation.logits_process
-    kwargs:
+  - class_name: OneOccurenceLogitsProcessor
+    module: logits_processors
+    is_local: true
+    path: ./logits_processors.py
+    kwargs: 
       suppress_tokens: [19]
 name: gal_cot
 
