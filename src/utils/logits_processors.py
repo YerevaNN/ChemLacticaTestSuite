@@ -2,6 +2,17 @@ from transformers import LogitsProcessor
 import torch
 from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
+
+class OneOccurenceLogitsProcessor(LogitsProcessor):
+    def __init__(self, suppress_tokens):
+        self.suppress_tokens = list(suppress_tokens)
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        for token_id in self.suppress_tokens:
+            if token_id in input_ids:
+                scores[:, token_id] = -float("inf")
+        return scores
+
+
 class TunableExponentialDecayLengthPenalty(LogitsProcessor):
     def __init__(
         self,
