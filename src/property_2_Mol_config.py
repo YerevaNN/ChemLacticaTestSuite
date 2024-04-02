@@ -1,4 +1,15 @@
 import copy
+from utils import logits_utils
+import os
+from dataclasses import asdict
+
+LOGIT_CONFIGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),"utils", "logit_configs")
+selected_logit_config_path = os.path.join(LOGIT_CONFIGS_PATH, "gal_cot.yaml")
+logits_processors_configs = logits_utils.load_processor_config(selected_logit_config_path)
+logits_processors_configs = [asdict(obj) for obj in logits_processors_configs]
+#logits_processors_configs = None
+
+
 
 test_suite = {
     "sas": {
@@ -107,7 +118,8 @@ greedy_generation_config = {
         "num_return_sequences": 1,
         "num_beams": 1,
         "return_dict_in_generate":True,
-        "output_scores":True
+        "output_scores":True,
+        "renormalize_logits": True,
     }
 }
 
@@ -325,7 +337,7 @@ n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-device = "cuda:1"
+device = "cuda:0"
 # device = "cuda:0"
 # device = 'cpu'
 target_dist = "prior"
@@ -335,8 +347,8 @@ models = [model_125m_118k_26d3]
 gen_configs = [greedy_generation_config, greedy_beam6_generation_config, contrastive_generation_config_26d3, greedy_beam_generation_config]
 
 evaluation_config = {
-    "test_suite":            test_suite,
-    "property_range":        property_range,
+    "test_suite":            mock_test_suite,
+    "property_range":        mock_property_range,
     "generation_config":     greedy_generation_config,
     "model_checkpoint_path": model_125m_18k_a37d,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
@@ -351,21 +363,22 @@ evaluation_config = {
     "check_for_novelty":     True,
     "track":                 True,
     "plot":                  True,
-    "description":           ""
+    "description":           "",
+    "logits_processors_configs": logits_processors_configs,
 }
 evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"].split("/")[-1]},'\
     f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
 
-# evaluation_configs = [evaluation_config]
+evaluation_configs = [evaluation_config]
 
-evaluation_configs = []
-for model in models:
-    for config in gen_configs:
-        conf = copy.deepcopy(evaluation_config)
-        conf['generation_config'] = config
-        conf["description"] = f'{conf["model_checkpoint_path"][-15:-1]},{conf["target_dist"]},'\
-            f'{conf["generation_config"]["name"]},CoT:{not conf["include_start_smiles"]}'
-        evaluation_configs.append(conf)
+# evaluation_configs = []
+# for model in models:
+#     for config in gen_configs:
+#         conf = copy.deepcopy(evaluation_config)
+#         conf['generation_config'] = config
+#         conf["description"] = f'{conf["model_checkpoint_path"][-15:-1]},{conf["target_dist"]},'\
+#             f'{conf["generation_config"]["name"]},CoT:{not conf["include_start_smiles"]}'
+#         evaluation_configs.append(conf)
 
 # evaluation_config2 = {
 #     "test_suite":            test_suite,
