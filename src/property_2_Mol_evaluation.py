@@ -60,6 +60,7 @@ class Property2Mol:
             regexp,
             model_checkpoint_path,
             tokenizer_path,
+            std_var,
             torch_dtype,
             device,
             top_N,
@@ -93,6 +94,7 @@ class Property2Mol:
         self.top_N = generation_config.get("top_N", 0)
         # self.top_N = top_N
         self.target_dist = target_dist
+        self.std_var = std_var
         self.n_per_vs_rmse = n_per_vs_rmse
 
         self.molecules_set = set()
@@ -105,6 +107,8 @@ class Property2Mol:
         self.start_log_file()
         # assert_model_tokenizer()
         self.pubchem_stats = self.get_pubchem_stats()
+        if self.target_dist == "prior":
+            self.prior_dist = self.get_prior_dist_samples()        
         self.check_for_novelty = check_for_novelty
         
     @staticmethod
@@ -113,6 +117,13 @@ class Property2Mol:
         pubchem_stats = pickle.load(pubchem_stats_file)
         pubchem_stats_file.close()
         return pubchem_stats
+
+    @staticmethod
+    def get_prior_dist_samples():
+        prior_dist_file = open("/auto/home/menuab/code/ChemLacticaTestSuite/src/stats_data/prior_distribution_samples.pkl", 'rb')
+        prior_dist_samples = pickle.load(prior_dist_file)
+        prior_dist_file.close()
+        return prior_dist_samples
 
     def start_aim_tracking(self, description):
         self.aim_run = Run(experiment=description) if self.track else None
@@ -158,12 +169,28 @@ class Property2Mol:
             self.student_model.eval()
             self.student_model.to(self.device)
             print(f'student model loaded with embedding size of: {self.student_model.model.decoder.embed_tokens.num_embeddings}, model dtype: {self.student_model.dtype}')
-        else:
+        elif "26d3" in self.model_checkpoint_path:
             model = CustomOPTForCausalLM.from_pretrained(
                 self.model_checkpoint_path,
                 use_flash_attn=True,
                 torch_dtype=getattr(torch, self.torch_dtype)
                 )
+        elif "9954" in self.model_checkpoint_path:
+            class LinearFloat32(torch.nn.Linear):
+                def forward(self, _input) -> torch.Tensor:
+                    return super().forward(_input).to(torch.float32)
+            def cast_lm_head_to_fp32_init(func):
+                def inner_func(self, config, *args, **kwargs):
+                    func(self, config, *args, **kwargs)
+                    self.lm_head = LinearFloat32(
+                        config.word_embed_proj_dim, config.vocab_size, bias=False
+                    )
+
+                return inner_func
+            OPTForCausalLM.__init__ = cast_lm_head_to_fp32_init(OPTForCausalLM.__init__)
+            model = OPTForCausalLM.from_pretrained(
+                self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype), attn_implementation="flash_attention_2"
+            )
         model.eval()
         model.to(self.device)
         print(f'model loaded with embedding size of : {model.model.decoder.embed_tokens.num_embeddings}, model dtype: {model.dtype}')
@@ -215,20 +242,23 @@ class Property2Mol:
             property_step = self.property_range[property]["step"]
             if self.target_dist == "uniform":
                 values_range = np.arange(property_range[0], property_range[1] + property_step, property_step)
-                targets = [[t] for t in values_range]
+                targets = [[round(t, 2)] for t in values_range]
             elif self.target_dist == "prior":
-                n_samples = int((property_range[1] + property_step - property_range[0]) / property_step)
-                noise =  np.random.uniform(-0.0045, 0.0045, n_samples) * property_range[1]
-                values_range = np.linspace(property_range[0], property_range[1], 100)
-                frequency_data = self.pubchem_stats[property.upper()]
-                frequency_data /= frequency_data.sum()
-                targets = np.random.choice(values_range, size=n_samples, p=frequency_data) + noise
-                if property.lower() == "weight":
-                    targets = np.around(targets) + 0.1
-                elif property.lower() == "sas" or property.lower() == "clogp":
-                    targets = np.around(targets, 1)
-                targets = np.around(np.clip(targets, property_range[0], property_range[1]), 2)
-                targets = sorted([[round(t, 2)] for t in targets])
+                # self.std_var = -1 * self.std_var if property.lower() == "qed" else self.std_var
+                delta = self.std_var * self.property_range[property]["std"]
+                targets = sorted([[round(min(max(t + delta, property_range[0]), property_range[1]), 2)] for t in self.prior_dist[property.upper()]], key=lambda x:x[0])
+                # n_samples = int((property_range[1] + property_step - property_range[0]) / property_step)
+                # noise =  np.random.uniform(-0.0045, 0.0045, n_samples) * property_range[1]
+                # values_range = np.linspace(property_range[0], property_range[1], 100)
+                # frequency_data = self.pubchem_stats[property.upper()]
+                # frequency_data /= frequency_data.sum()
+                # targets = np.random.choice(values_range, size=n_samples, p=frequency_data) + noise
+                # if property.lower() == "weight":
+                #     targets = np.around(targets) + 0.1
+                # elif property.lower() == "sas" or property.lower() == "clogp":
+                #     targets = np.around(targets, 1)
+                # targets = np.around(np.clip(targets, property_range[0], property_range[1]), 2)
+                # targets = sorted([[round(t, 2)] for t in targets])
         # targets_ = np.meshgrid(targets_) TODO:develop later for multiple targets
 
         return targets
@@ -424,7 +454,6 @@ class Property2Mol:
         #     sm = ""
         sm = ""
         title = get_scatter_title(self.generation_config_name,test_name,self.model_checkpoint_path,rmse,mape,rmse_c,mape_c,correlation,correlation_c,self.n_invalid_generations,self.n_total_gens,self.n_unique,self.n_in_pubchem,sm)
-
         stats = self.pubchem_stats[test_name.upper()]
         property_range = self.property_range[test_name]["range"]
         stats_width = (property_range[1] - property_range[0]) / 100
