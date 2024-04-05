@@ -4,6 +4,7 @@ from rdkit.Chem import Descriptors
 from rdkit.Chem import MACCSkeys
 from rdkit import DataStructs
 import rdkit.Chem as Chem
+from rdkit.Chem import AllChem
 import numpy as np
 import sys
 import os
@@ -33,6 +34,26 @@ def get_canonical(mols):
             except:
                 pass        
     return canonicals
+
+def get_tpsa(mols):
+    # print(mols)
+    if mols == []:
+        return [None]
+    if not isinstance(mols, list):
+        mols = [mols]
+    scores = []
+    for mol in mols:
+        if mol != '':
+            try:
+                mol_source = Chem.MolFromSmiles(mol)
+                tpsa_score = AllChem.CalcTPSA(mol_source)
+                tpsa_score = round(tpsa_score, 3)
+            except:
+                tpsa_score = None
+        else:
+           tpsa_score = None
+        scores.append(tpsa_score)
+    return scores
 
 def get_sas(mols):
     # print(mols)
