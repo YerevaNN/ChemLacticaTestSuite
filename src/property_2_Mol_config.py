@@ -1,21 +1,25 @@
 import copy
 
 test_suite = {
-    "sas": {
-        "input_properties": ["sas"],
-        "target_properties": ["sas"]
-    },
-    "qed": {
-        "input_properties": ["qed"],
-        "target_properties": ["qed"]
-    },
+    # "sas": {
+    #     "input_properties": ["sas"],
+    #     "target_properties": ["sas"]
+    # },
+    # "qed": {
+    #     "input_properties": ["qed"],
+    #     "target_properties": ["qed"]
+    # },
     "weight": {
         "input_properties": ["weight"],
         "target_properties": ["weight"]
     },
-    "clogp": {
-        "input_properties": ["clogp"],
-        "target_properties": ["clogp"]
+    # "clogp": {
+    #     "input_properties": ["clogp"],
+    #     "target_properties": ["clogp"]
+    # },
+    "tpsa": {
+        "input_properties": ["tpsa"],
+        "target_properties": ["tpsa"]
     },
     # "similarity": {
     #     "input_properties": ["similarity"],
@@ -24,9 +28,9 @@ test_suite = {
 }
 
 mock_test_suite = {
-    "weight": {
-        "input_properties": ["weight"],
-        "target_properties": ["weight"]
+    "clogp": {
+        "input_properties": ["clogp"],
+        "target_properties": ["clogp"]
     }
 }
 
@@ -34,13 +38,15 @@ property_range = {
     "sas": {
         "range": (1.1, 10),
         "step":  0.1,
-        "mean": 2.8,
+        "mean": 2.94,
+        "std": 0.82,
         "smiles": ""
     },
     "qed": {
         "range": (0.01, 1),
         "step":  0.01,
-        "mean": 0.75,
+        "mean": 0.60,
+        "std": 0.22,
         "smiles": ""
     },
     "similarity": {
@@ -50,15 +56,24 @@ property_range = {
         "mean": 0.734 # TODO need to update
     },
     "weight": {
-        "range": (100.1, 1000),
+        "range": (100.1, 1000.1),
         "step":  1,
-        "mean": 290,
+        "mean": 366,
+        "std": 166,
         "smiles": ""
     },
     "clogp": {
         "range": (1.1, 10),
         "step":  0.1,
-        "mean": 3,
+        "mean": 3.49,
+        "std": 1.53,
+        "smiles": ""
+    },
+    "tpsa": {
+        "range": (0, 100.5),
+        "step":  0.5,
+        "mean": 57.42,
+        "std": 23.24,
         "smiles": ""
     },
 }  
@@ -83,9 +98,16 @@ mock_property_range = {
         "smiles": ""
     },
     "weight": {
-        "range": (104.1, 1000),
-        "step":  20,
+        "range": (250, 350),
+        "step":  .1,
         "mean": 290,
+        "smiles": ""
+    },
+    "tpsa": {
+        "range": (50.1, 70),
+        "step":  0.1,
+        "mean": 57.42,
+        "std": 23.24,
         "smiles": ""
     },
     # "similarity":
@@ -297,24 +319,22 @@ contrastive_generation_config_26d3 = {
     }
 }
 
-model_125m_69k_26d3 = "/auto/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_69k_26d3/"
+model_125m_122k_9954 = "/auto/home/menuab/code/checkpoints/9954e52e400b43d18d3a40f6/125m_122k_9954"
 model_125m_118k_26d3 = "/auto/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_118k_26d3/"
 model_125m_4k_b8cb = "/auto/home/menuab/code/checkpoints/b8cb3a81b61e40aa919e06bc/125m_4k_b8cb/"
 model_125m_9k_8073 = "/auto/home/menuab/code/checkpoints/8073deb785f04fcd891e58db/125m_9k_8073/"
-model_125m_24k_9075 = "/auto/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_24k_9075/"
-model_125m_63k_9075 = "/auto/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_63k_9075/"
 model_125m_126k_f3fb = "/auto/home/menuab/code/checkpoints/f3fbd012918247a388efa732/125m_126k_f3fb/"
 model_125m_126k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/"
 model_125m_63k_f2c6 = "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/"
 model_125m_313k_cf98 = "/auto/home/menuab/code/checkpoints/cf982665b6c04c83a310b97d/125m_313k_cf98/"
 model_125m_512k_fe31 = "/auto/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_512k_fe31/"
 model_125m_256k_0d99 = "/auto/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_256k_0d99/"
-model_125m_253k_ac79 = "/auto/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/125m_253k_ac79/"
-model_125m_241k_ac79 = "/auto/home/menuab/code/checkpoints/ac7915df73b24ee3a4e172d6/125m_241k_ac79/"
 model_1b_131k_d5c2   = "/auto/home/menuab/code/checkpoints/d5c2c8db3c554447a27697bf/1.3b_131k_d5c2/"
 model_125m_73k_assay_87dc = "/auto/home/menuab/code/checkpoints/87dc7180e49141deae4ded57/125m_73k_assay_87dc/"
 model_125m_73k_assay_c6af = "/auto/home/menuab/code/checkpoints/c6af41c79f1244f698cc1153/125m_73k_assay_c6af"
 model_125m_18k_a37d = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/a37d0362e15c4c969307aef8/checkpoint-18432"
+model_125m_20k_6913 = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/6913ba7695b040c597741e76/checkpoint-20480"
+model_2b_11k_5292 = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/52924785fbfc4c2e839d7e43/2b_11k_5292"
 
 galactica_tokenizer_path =         "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/galactica-125m/"
 chemlactica_tokenizer_50028_path = "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50028"
@@ -325,21 +345,24 @@ n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-device = "cuda:1"
-# device = "cuda:0"
+# device = "cuda:1"
+device = "cuda:0"
 # device = 'cpu'
-target_dist = "prior"
-# target_dist = "uniform"
+# target_dist = "prior"
+target_dist = "uniform"
+std_var = 1
 
+target_dists = ["prior", "uniform"]
 models = [model_125m_118k_26d3]
 gen_configs = [greedy_generation_config, greedy_beam6_generation_config, contrastive_generation_config_26d3, greedy_beam_generation_config]
 
 evaluation_config = {
     "test_suite":            test_suite,
-    "property_range":        property_range,
+    "property_range":        mock_property_range,
     "generation_config":     greedy_generation_config,
-    "model_checkpoint_path": model_125m_18k_a37d,
+    "model_checkpoint_path": model_125m_122k_9954,
     "tokenizer_path":        chemlactica_tokenizer_50066_path,
+    "std_var":               0,
     "torch_dtype":           torch_dtype,
     "device":                device,
     "regexp":                regexp,
@@ -355,17 +378,19 @@ evaluation_config = {
 }
 evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"].split("/")[-1]},'\
     f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
+evaluation_configs = [evaluation_config]
 
-# evaluation_configs = [evaluation_config]
 
-evaluation_configs = []
-for model in models:
-    for config in gen_configs:
-        conf = copy.deepcopy(evaluation_config)
-        conf['generation_config'] = config
-        conf["description"] = f'{conf["model_checkpoint_path"][-15:-1]},{conf["target_dist"]},'\
-            f'{conf["generation_config"]["name"]},CoT:{not conf["include_start_smiles"]}'
-        evaluation_configs.append(conf)
+# evaluation_configs = []
+# # # for model in models:
+# # #     for config in gen_configs:
+# for var in [2]:
+#     conf = copy.deepcopy(evaluation_config)
+#     # conf['generation_config'] = configconfig
+#     conf['std_var'] = var
+#     conf["description"] = f'{conf["model_checkpoint_path"][-15:-1]},{conf["target_dist"]},'\
+#         f'{conf["generation_config"]["name"]},std_var:{not conf["std_var"]}'
+#     evaluation_configs.append(conf)
 
 # evaluation_config2 = {
 #     "test_suite":            test_suite,
