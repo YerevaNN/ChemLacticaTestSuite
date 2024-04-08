@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
 import numpy as np
 
+PUBCHEM_STATS_PATH = "/auto/home/menuab/code/ChemLacticaTestSuite/src/stats_data/pubchem_stats.pkl"
+
 def get_scatter_title(config_name,test_name,model_checkpoint_path,rmse,mape,rmse_c,mape_c,correlation,correlation_c,n_invalid,n_total,n_unique=None,n_in_pubchem=None,sm=""):
 
     title = f'{config_name} generation of {test_name} with {model_checkpoint_path.split("/")[-2]}\n'\

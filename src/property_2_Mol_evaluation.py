@@ -26,7 +26,7 @@ from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
 # from contrastive_decoding.generator import generate as generate_CD
 from contrastive_decoding.contrastive_decoding import contrastive_generate as generate_CD
-from utils.plot_utils import clean_outputs, calculate_metrics, get_scatter_title,get_scatter_plot_bounds, paint_plot
+from utils.plot_utils import clean_outputs, calculate_metrics, get_scatter_title,get_scatter_plot_bounds, paint_plot, PUBCHEM_STATS_PATH
 # from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
 # from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
 # from assert_tokenizer import assert_tokenizer
@@ -50,7 +50,6 @@ if torch.cuda.is_available():
     torch.backends.cudnn.benchmark = False
 
 
-PUBCHEM_STATS_PATH = "/auto/home/menuab/code/ChemLacticaTestSuite/src/stats_data/pubchem_stats.pkl"
 
 class Property2Mol:
     def __init__(
