@@ -65,7 +65,7 @@ def paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,no
 
 
 
-def make_plot(test_name, stats, property_range, targets, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c):
+def make_plot(test_name, stats, property_range, targets, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c,config_name,model_checkpoint_path,n_invalid,n_total):
     max_, min_, max_g = get_scatter_plot_bounds(targets, generated_clean)
     diffs = np.abs(np.array(target_clean) - np.array(generated_clean))
     title = get_scatter_title(
@@ -82,7 +82,8 @@ def make_plot(test_name, stats, property_range, targets, target_clean, generated
             n_total)
 
     stats_width = (property_range[1] - property_range[0]) / 100
-    paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,nones,min_,max_,diffs)
+    fig = paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,nones,min_,max_,diffs)
+    return fig
 
 def full_workflow(test_name,stats,targets,generated,calculated_properties):
     property_range = [0, 1]
