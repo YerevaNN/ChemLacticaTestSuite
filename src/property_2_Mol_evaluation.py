@@ -50,6 +50,7 @@ if torch.cuda.is_available():
     torch.backends.cudnn.benchmark = False
 
 
+PUBCHEM_STATS_PATH = "/auto/home/menuab/code/ChemLacticaTestSuite/src/stats_data/pubchem_stats.pkl"
 
 class Property2Mol:
     def __init__(
@@ -113,7 +114,7 @@ class Property2Mol:
         
     @staticmethod
     def get_pubchem_stats():
-        pubchem_stats_file = open("/auto/home/menuab/code/ChemLacticaTestSuite/src/stats_data/pubchem_stats.pkl", 'rb')
+        pubchem_stats_file = open(PUBCHEM_STATS_PATH, 'rb')
         pubchem_stats = pickle.load(pubchem_stats_file)
         pubchem_stats_file.close()
         return pubchem_stats
