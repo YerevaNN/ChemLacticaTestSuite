@@ -1,0 +1,3 @@
+[submodule "src/oracle_server/augmented_memory"]
+	path = src/oracle_server/augmented_memory
+	url = https://github.com/schwallergroup/augmented_memory.git
