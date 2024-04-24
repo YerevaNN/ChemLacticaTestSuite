@@ -1,22 +1,22 @@
 import copy
 
 test_suite = {
-    # "sas": {
-    #     "input_properties": ["sas"],
-    #     "target_properties": ["sas"]
-    # },
-    # "qed": {
-    #     "input_properties": ["qed"],
-    #     "target_properties": ["qed"]
-    # },
+    "sas": {
+        "input_properties": ["sas"],
+        "target_properties": ["sas"]
+    },
+    "qed": {
+        "input_properties": ["qed"],
+        "target_properties": ["qed"]
+    },
     "weight": {
         "input_properties": ["weight"],
         "target_properties": ["weight"]
     },
-    # "clogp": {
-    #     "input_properties": ["clogp"],
-    #     "target_properties": ["clogp"]
-    # },
+    "clogp": {
+        "input_properties": ["clogp"],
+        "target_properties": ["clogp"]
+    },
     "tpsa": {
         "input_properties": ["tpsa"],
         "target_properties": ["tpsa"]
@@ -335,7 +335,9 @@ model_125m_73k_assay_c6af = "/auto/home/menuab/code/checkpoints/c6af41c79f1244f6
 model_125m_18k_a37d = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/a37d0362e15c4c969307aef8/checkpoint-18432"
 model_125m_20k_6913 = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/6913ba7695b040c597741e76/checkpoint-20480"
 model_2b_11k_5292 = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/52924785fbfc4c2e839d7e43/2b_11k_5292"
-
+model_2b_12k_5292 = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/52924785fbfc4c2e839d7e43/2b_12k_5292"
+model_2b_20k_c60e = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/c60eb72c819147acb8a45cee/2b_20k_c60e/"
+gemma_tokenizer_path = "/auto/home/menuab/code/ChemLactica/chemlactica/tokenizer/GemmaTokenizer"
 galactica_tokenizer_path =         "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/galactica-125m/"
 chemlactica_tokenizer_50028_path = "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50028"
 chemlactica_tokenizer_50066_path = "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
@@ -345,8 +347,8 @@ n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
 # torch_dtype = "float32"
 torch_dtype = "bfloat16"
-# device = "cuda:1"
-device = "cuda:0"
+device = "cuda:1"
+# device = "cuda:0"
 # device = 'cpu'
 # target_dist = "prior"
 target_dist = "uniform"
@@ -358,10 +360,10 @@ gen_configs = [greedy_generation_config, greedy_beam6_generation_config, contras
 
 evaluation_config = {
     "test_suite":            test_suite,
-    "property_range":        mock_property_range,
+    "property_range":        property_range,
     "generation_config":     greedy_generation_config,
-    "model_checkpoint_path": model_125m_122k_9954,
-    "tokenizer_path":        chemlactica_tokenizer_50066_path,
+    "model_checkpoint_path": model_2b_20k_c60e,
+    "tokenizer_path":        gemma_tokenizer_path,
     "std_var":               0,
     "torch_dtype":           torch_dtype,
     "device":                device,

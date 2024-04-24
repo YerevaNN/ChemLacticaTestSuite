@@ -84,7 +84,7 @@ class Property2Mol:
         self.plot = plot
         
         self.smiles_prefix = "[START_SMILES]"
-        self.eos_string = "</s>"
+        self.eos_string = "</s>" if "2b" not in self.model_checkpoint_path else "<bos>"
         self.include_eos = include_eos
         self.include_start_smiles = include_start_smiles
         self.top_N = generation_config.get("top_N", 0)
@@ -187,9 +187,11 @@ class Property2Mol:
             model = OPTForCausalLM.from_pretrained(
                 self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype), attn_implementation="flash_attention_2"
             )
+        elif "2b" in self.model_checkpoint_path:
+            model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path)
         model.eval()
         model.to(self.device)
-        print(f'model loaded with embedding size of : {model.model.decoder.embed_tokens.num_embeddings}, model dtype: {model.dtype}')
+        # print(f'model loaded with embedding size of : {model.model.decoder.embed_tokens.num_embeddings}, model dtype: {model.dtype}')
 
         return model
 
