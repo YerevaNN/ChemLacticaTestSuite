@@ -1,4 +1,15 @@
 import copy
+from utils import logits_utils
+import os
+from dataclasses import asdict
+
+LOGIT_CONFIGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),"utils", "logit_configs")
+selected_logit_config_path = os.path.join(LOGIT_CONFIGS_PATH, "gal_cot.yaml")
+logits_processors_configs = logits_utils.load_processor_config(selected_logit_config_path)
+logits_processors_configs = [asdict(obj) for obj in logits_processors_configs]
+#logits_processors_configs = None
+
+
 
 test_suite = {
     # "sas": {
@@ -129,7 +140,8 @@ greedy_generation_config = {
         "num_return_sequences": 1,
         "num_beams": 1,
         "return_dict_in_generate":True,
-        "output_scores":True
+        "output_scores":True,
+        "renormalize_logits": True,
     }
 }
 
@@ -374,7 +386,8 @@ evaluation_config = {
     "check_for_novelty":     True,
     "track":                 True,
     "plot":                  True,
-    "description":           ""
+    "description":           "",
+    "logits_processors_configs": logits_processors_configs,
 }
 evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"].split("/")[-1]},'\
     f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
