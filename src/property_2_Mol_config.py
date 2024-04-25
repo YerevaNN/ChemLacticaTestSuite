@@ -12,22 +12,22 @@ logits_processors_configs = [asdict(obj) for obj in logits_processors_configs]
 
 
 test_suite = {
-    # "sas": {
-    #     "input_properties": ["sas"],
-    #     "target_properties": ["sas"]
-    # },
-    # "qed": {
-    #     "input_properties": ["qed"],
-    #     "target_properties": ["qed"]
-    # },
+    "sas": {
+        "input_properties": ["sas"],
+        "target_properties": ["sas"]
+    },
+    "qed": {
+        "input_properties": ["qed"],
+        "target_properties": ["qed"]
+    },
     "weight": {
         "input_properties": ["weight"],
         "target_properties": ["weight"]
     },
-    # "clogp": {
-    #     "input_properties": ["clogp"],
-    #     "target_properties": ["clogp"]
-    # },
+    "clogp": {
+        "input_properties": ["clogp"],
+        "target_properties": ["clogp"]
+    },
     "tpsa": {
         "input_properties": ["tpsa"],
         "target_properties": ["tpsa"]
@@ -347,7 +347,13 @@ model_125m_73k_assay_c6af = "/auto/home/menuab/code/checkpoints/c6af41c79f1244f6
 model_125m_18k_a37d = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/a37d0362e15c4c969307aef8/checkpoint-18432"
 model_125m_20k_6913 = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/6913ba7695b040c597741e76/checkpoint-20480"
 model_2b_11k_5292 = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/52924785fbfc4c2e839d7e43/2b_11k_5292"
+model_2b_12k_5292 = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/52924785fbfc4c2e839d7e43/2b_12k_5292"
+model_2b_20k_c60e = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/c60eb72c819147acb8a45cee/2b_20k_c60e/"
+model_2b_20k_869e = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/869e097219da4a4fbbadcc11/checkpoint-20000"
+model_2b_20k_dbf4 = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/dbf4eca0f4234b97b2894278/checkpoint-20000"
+model_2b_20k_9283 = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/92831d9b0ba24115ad3d2b1e/checkpoint-40000"
 
+gemma_tokenizer_path = "/auto/home/menuab/code/ChemLactica/chemlactica/tokenizer/GemmaTokenizer"
 galactica_tokenizer_path =         "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/galactica-125m/"
 chemlactica_tokenizer_50028_path = "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50028"
 chemlactica_tokenizer_50066_path = "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
@@ -365,15 +371,15 @@ target_dist = "uniform"
 std_var = 1
 
 target_dists = ["prior", "uniform"]
-models = [model_125m_118k_26d3]
+models = [model_2b_11k_5292, model_2b_12k_5292, model_2b_20k_dbf4]
 gen_configs = [greedy_generation_config, greedy_beam6_generation_config, contrastive_generation_config_26d3, greedy_beam_generation_config]
 
 evaluation_config = {
     "test_suite":            test_suite,
-    "property_range":        mock_property_range,
+    "property_range":        property_range,
     "generation_config":     greedy_generation_config,
-    "model_checkpoint_path": model_125m_122k_9954,
-    "tokenizer_path":        chemlactica_tokenizer_50066_path,
+    "model_checkpoint_path": model_2b_20k_869e,
+    "tokenizer_path":        gemma_tokenizer_path,
     "std_var":               0,
     "torch_dtype":           torch_dtype,
     "device":                device,
@@ -389,20 +395,21 @@ evaluation_config = {
     "description":           "",
     "logits_processors_configs": logits_processors_configs,
 }
+if 'gemma' in evaluation_config['model_checkpoint_path']:
+    evaluation_config['generation_config']['config']['eos_token_id'] = 8
+
 evaluation_config["description"] = f'{evaluation_config["model_checkpoint_path"].split("/")[-1]},'\
     f'{evaluation_config["generation_config"]["name"]},CoT:{not evaluation_config["include_start_smiles"]}'
 evaluation_configs = [evaluation_config]
 
 
 # evaluation_configs = []
-# # # for model in models:
-# # #     for config in gen_configs:
-# for var in [2]:
+# for model in models:
 #     conf = copy.deepcopy(evaluation_config)
-#     # conf['generation_config'] = configconfig
-#     conf['std_var'] = var
+#     conf['model_checkpoint_path'] = model
+#     conf['generation_config']['config']['eos_token_id'] = 8
 #     conf["description"] = f'{conf["model_checkpoint_path"][-15:-1]},{conf["target_dist"]},'\
-#         f'{conf["generation_config"]["name"]},std_var:{not conf["std_var"]}'
+#         f'{conf["generation_config"]["name"]}'
 #     evaluation_configs.append(conf)
 
 # evaluation_config2 = {
