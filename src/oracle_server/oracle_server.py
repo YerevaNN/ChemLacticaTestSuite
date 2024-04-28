@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify,Blueprint
 from vina_scoring import get_vina_score
+
 from dataclasses import dataclass, asdict
 from rd_pdbqt import MolToPDBQTBlock
 from rdkit import Chem
@@ -12,6 +13,7 @@ from tdc import Oracle
 from enum import Enum
 
 app = Flask(__name__)
+VINA_PATH = None
 
 oracle_blueprint = Blueprint('oracles', __name__)
 
@@ -69,6 +71,13 @@ def get_oracle_score(oracle_type,oracle_name):
 
 app.register_blueprint(oracle_blueprint, url_prefix='/oracles')
 
-if __name__ == '__main__':
-    # Start the Flask app
+def main(vina_binary_path):
+    global VINA_PATH
+    VINA_PATH = vina_path
     app.run(port=5006,debug=False,host='0.0.0.0')
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Oracle server")
+    parser.add_argument("--vina-path", required=True, help="Path to the AutoDock Vina binary")
+    args = parser.parse_args()
+    main(args.vina_path)
