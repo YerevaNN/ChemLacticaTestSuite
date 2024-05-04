@@ -73,7 +73,7 @@ def main(args):
         with open(eval_text_file_path, 'r') as f:
              eval_text = f.readlines()
         eval_text = [x.strip() for x in eval_text]
-        for test_text in eval_text[:10]:
+        for test_text in eval_text:
             sample_result_dict = {}
             sample_result_dict["text"] = test_text
             ppl = get_model_perp_on_text(model,tokenizer,test_text)
