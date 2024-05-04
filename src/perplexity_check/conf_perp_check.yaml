@@ -1,0 +1,10 @@
+runs:
+  - name: "gal125m_best_qed_perps"
+    model_path: /nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/9954e52e400b43d18d3a40f6/checkpoint-20480/
+    tokenizer_path: /mnt/sxtn/phil/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066/
+    eval_text_file_path: /mnt/sxtn/phil/prompt_format_gal.txt
+  - name: "Gemma2b_best_qed_perps"
+    model_path: /nfs/dgx/raid/chem/checkpoints/google/gemma-2b/4b407bb850c744a6a2bbaac5/checkpoint-10000/
+    tokenizer_path: /mnt/sxtn/phil/ChemLactica/chemlactica/tokenizer/GemmaTokenizer/
+    eval_text_file_path: /mnt/sxtn/phil/prompt_format_gemma.txt
+results_path: results
