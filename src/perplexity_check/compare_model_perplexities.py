@@ -10,8 +10,8 @@ from chemlactica.utils.model_utils import load_model
 
 
 def get_model_perp_on_text(model,tokenizer,text):
-    device = "cuda"
 
+    device = "cuda"
     encodings = tokenizer(
             text,
             add_special_tokens=False,
@@ -21,6 +21,7 @@ def get_model_perp_on_text(model,tokenizer,text):
             return_tensors="pt",
             return_attention_mask=True,
         ).to(device)
+    num_tokens_in_text = len(encodings["input_ids"][0])
     encoded_texts = encodings["input_ids"].to(device)
     attn_masks = encodings["attention_mask"]
     loss_fct = CrossEntropyLoss(reduction="none")
@@ -45,7 +46,7 @@ def get_model_perp_on_text(model,tokenizer,text):
         ppl = perplexity_batch[0]
     else: 
         assert False
-    return ppl
+    return ppl,num_tokens_in_text
 
 
 
@@ -76,9 +77,10 @@ def main(args):
         for test_text in eval_text:
             sample_result_dict = {}
             sample_result_dict["text"] = test_text
-            ppl = get_model_perp_on_text(model,tokenizer,test_text)
+            ppl,num_tokens_in_text = get_model_perp_on_text(model,tokenizer, test_text)
             sample_result_dict["text"] = test_text
             sample_result_dict["ppl"] = ppl
+            sample_result_dict["num_tokens"] = num_tokens_in_text
             with open(curr_run_log_path, 'a+') as f:
                 f.write(json.dumps(sample_result_dict) + '\n')
 
