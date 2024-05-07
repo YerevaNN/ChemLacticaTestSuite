@@ -1,0 +1,38 @@
+checkpoint_path: /nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/9954e52e400b43d18d3a40f6/checkpoint-20480
+tokenizer_path: /auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLacticaTokenizer66
+molecule_pool_size: 50
+max_similars_in_prompt: 10
+num_gens_per_iter: 200
+device: cuda:0
+sim_range: [0.8, 0.95]
+sas_range: [0.2, 2.99]
+num_processes: 4
+
+generation_config:
+  temperature: 1.5
+  repetition_penalty: 1.0
+  max_new_tokens: 100
+  do_sample: true
+  eos_token_id: 20
+
+strategy: [pool-dump]
+pool_dump_config:
+  dump_perc: 0.25
+
+rej_sample_config:
+  checkpoints_dir: ./
+  max_learning_rate: 0.0001
+  num_samples_per_round: 100
+  rej_perc: 0.05
+  train_batch_size: 2
+  gradient_accumulation_steps: 8
+  weight_decay: 0.1
+  adam_beta1: 0.9
+  adam_beta2: 0.99
+  warmup_steps: 0
+  global_gradient_norm: 1.0
+  dataloader_num_workers: 1
+  max_seq_length: 2048
+  num_train_epochs: 1
+  response_template: [START_SMILES]
+  packing: false
