@@ -12,10 +12,13 @@ class BaseOptimizationOracle(ABC):
     def __call__(self, mol_entry):
         # This function represents logic which is agnostic to the oracle scoring, steps are as follows
         # 1. Check if the molecule has been seen before, in that case just return the prior calculated score
-        # 2. Calculate the score, this requires a custom implementation for each oracle
+        # 2. Calculate the score, NOTE: this requires a custom implementation for each oracle
         # Note, if any error is encountered, we just return a 0 score
         # 3. Update the molecule buffer with the calculated score
         # 4. Log intermediate results if logging conditon met (logging functionality is user defined)
+        # 5. return the value
+
+
         if self.mol_buffer.get(mol_entry.smiles):
             return self.mol_buffer[mol_entry.smiles][0]
         try:
@@ -33,6 +36,9 @@ class BaseOptimizationOracle(ABC):
         return oracle_score
     
     def reset(self):
+        # If you want to ensure an identical configuration for multiple optimizations this can be called between optimizations.
+        # This can be useful for e.g. metric tracking, the needed data can be implemented via _store_custom_data.
+
         self.mol_buffer = {}
         self.num_oracle_calls = 0
         self._store_custom_data()
