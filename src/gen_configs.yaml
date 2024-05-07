@@ -1,0 +1,194 @@
+greedy_generation_config : 
+    name: "greedy"
+    multiple_rounds_generation: false
+    config: 
+        eos_token_id: 20
+        max_new_tokens: 300
+        do_sample: false
+        num_return_sequences: 1
+        num_beams: 1
+        return_dict_in_generate: true
+        output_scores: true
+        renormalize_logits: false
+
+# greedy_beam_generation_config : {
+#     "name": "greedy_beam=12",
+#     "multiple_rounds_generation": False,
+#     "config": {
+#         "eos_token_id": 20,
+#         "max_new_tokens": 300,
+#         "length_penalty": -7,
+#         "repetition_penalty": 1.0, 
+#         "diversity_penalty": 1.0,
+#         "num_beam_groups": 6,
+#         "do_sample": False,  
+#         "num_return_sequences": 12,
+#         "num_beams": 12,
+#         "return_dict_in_generate": True,
+#         "output_scores": True,
+#         "renormalize_logits": True
+#     }
+# }
+
+# greedy_beam6_generation_config = {
+#     "name": "greedy_beam=6",
+#     "multiple_rounds_generation": False,
+#     "config": {
+#         "eos_token_id": 20,
+#         "max_new_tokens": 300,
+#         "length_penalty": -7,
+#         "repetition_penalty": 1.0, 
+#         "diversity_penalty": 1.0,
+#         "num_beam_groups": 3,
+#         "do_sample": False,  
+#         "num_return_sequences": 6,
+#         "num_beams": 6,
+#         "return_dict_in_generate": True,
+#         "output_scores": True,
+#         "renormalize_logits": True
+#     }
+# }
+
+# nongreedy_generation_config = {
+#     "name": "nongreedy_5of20",
+#     "top_N": 5,
+#     "multiple_rounds_generation": False,
+#     "target_dist": "prior",
+#     "config": {
+#         "eos_token_id": 20,
+#         "max_new_tokens": 300,
+#         "top_k": None,
+#         "top_p": 1.0,
+#         "do_sample": True,  
+#         "num_return_sequences": 20,
+#         "num_beams": 1,
+#         "return_dict_in_generate":True,
+#         "output_scores":True
+#     }
+# }
+
+# nongreedy_calibration_generation_config = {
+#     "name": "nongreedy_calibration_1k",
+#     "top_N": 1000,
+#     "total_gen_range": 10,
+#     "multiple_rounds_generation": True,
+#     "config": {
+#         "eos_token_id": 20,
+#         "max_new_tokens": 300,
+#         "top_k": None,
+#         "top_p": 1.0,
+#         "do_sample": True,  
+#         "num_return_sequences": 100,
+#         "num_beams": 1,
+#         "return_dict_in_generate":True,
+#         "output_scores":True
+#     }
+# }
+
+# contrastive_generation_config_od99 = {
+#     "name": "contrastive_decoding_greedy",
+#     "multiple_rounds_generation": False,
+#     "student_model": "/auto/home/menuab/code/checkpoints/8c311987db124d9e87fc26da/125m_24k_8c31/",
+#     "expert_model": "/auto/home/menuab/code/checkpoints/0d992caa5ec443d9aefc289c/125m_256k_0d99/",
+#     "config": {
+#         "eos_token_id": 20,
+#         "max_length": 300,
+#         "st_coef": .2,
+#         "student_temperature": 1.,
+#         "num_beams": 1,
+#         "adaptability_constant": 1,
+#         "return_dict_in_generate": True,
+#         "output_scores": True,
+#         "num_return_sequences": 1,
+#         "do_sample": False,
+#         "student_min_prob": 0.0,
+#         "contrastive_decoding": "student",
+#         "use_cache": True,
+#     }
+# }
+
+# contrastive_generation_config_fe31 = {
+#     "name": "contrastive_decoding_greedy",
+#     "multiple_rounds_generation": False,
+#     "student_model": "/auto/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_120k_fe31/",
+#     "expert_model": "/auto/home/menuab/code/checkpoints/fe31d8c5edfd4b93b72f1b60/125m_512k_fe31/",
+#     "config": {
+#         "eos_token_id": 20,
+#         "max_length": 300,
+#         "st_coef": .2,
+#         "student_temperature": 1.,
+#         "num_beams": 1,
+#         "adaptability_constant": 1,
+#         "return_dict_in_generate": True,
+#         "output_scores": True,
+#         "num_return_sequences": 1,
+#         "do_sample": False,
+#         "student_min_prob": 0.0,
+#         "contrastive_decoding": "student",
+#         "use_cache": True,
+#     }
+# }
+
+# contrastive_generation_config_f2c6 = {
+#     "name": "contrastive_decoding_greedy",
+#     "multiple_rounds_generation": False,
+#     "student_model": "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_126k_f2c6/",
+#     "expert_model": "/auto/home/menuab/code/checkpoints/f2c6ebb289994595a478f513/125m_63k_f2c6/",
+#     "config": {
+#         "eos_token_id": 20,
+#         "max_length": 300,
+#         "st_coef": .2,
+#         "student_temperature": 1.,
+#         "num_beams": 1,
+#         "adaptability_constant": 1,
+#         "return_dict_in_generate": True,
+#         "output_scores": True,
+#         "num_return_sequences": 1,
+#         "do_sample": False,
+#         "student_min_prob": 0.0,
+#         "contrastive_decoding": "student",
+#         "use_cache": True,
+#     }
+# }
+
+# contrastive_generation_config_9075 = {
+#     "name": "contrastive_decoding_greedy",
+#     "multiple_rounds_generation": False,
+#     "student_model": "/auto/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_24k_9075/",
+#     "expert_model": "/auto/home/menuab/code/checkpoints/90758da0b8564bae8a14bbef/125m_63k_9075/",
+#     "config": {
+#         "eos_token_id": 20,
+#         "max_length": 300,
+#         "st_coef": .2,
+#         "student_temperature": 1.,
+#         "num_beams": 1,
+#         "adaptability_constant": 1,
+#         "return_dict_in_generate": True,
+#         "output_scores": True,
+#         "num_return_sequences": 1,
+#         "do_sample": False,
+#         "student_min_prob": 0.0,
+#         "contrastive_decoding": "student",
+#     }
+# }
+
+# contrastive_generation_config_26d3 = {
+#     "name": "contrastive_decoding_greedy",
+#     "multiple_rounds_generation": False,
+#     "student_model": "/auto/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_69k_26d3/",
+#     "expert_model": "/auto/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_118k_26d3/",
+#     "config": {
+#         "eos_token_id": 20,
+#         "max_length": 300,
+#         "st_coef": .2,
+#         "student_temperature": 1.,
+#         "num_beams": 1,
+#         "adaptability_constant": 1,
+#         "return_dict_in_generate": True,
+#         "output_scores": True,
+#         "num_return_sequences": 1,
+#         "do_sample": False,
+#         "student_min_prob": 0.0,
+#         "contrastive_decoding": "student",
+#     }
+# }
