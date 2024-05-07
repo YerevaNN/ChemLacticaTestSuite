@@ -6,13 +6,13 @@ logits_processors:
     kwargs: 
       exponential_decay_factors: [1.0007,1.005]
       regulation_starts: [0,100]
-      decay_token_ids: [19,20]
-      input_ids_seq_length: 9
+      decay_token_ids: [7,8]
+      input_ids_seq_length: 5
   - class_name: OneOccurenceLogitsProcessor
     module: logits_processors
     is_local: true
     path: ./logits_processors.py
     kwargs: 
-      suppress_tokens: [19]
+      suppress_tokens: [7]
 name: gal_cot
 

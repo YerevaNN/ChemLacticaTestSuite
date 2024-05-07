@@ -5,14 +5,15 @@ import numpy as np
 
 def get_scatter_title(config_name,test_name,model_checkpoint_path,rmse,mape,rmse_c,mape_c,correlation,correlation_c,n_invalid,n_total,n_unique=None,n_in_pubchem=None,sm=""):
 
-    title = f'{config_name} generation of {test_name} with {model_checkpoint_path.split("/")[-2]}\n'\
+    title = f'{config_name} generation of {test_name} with {model_checkpoint_path.split("/")[-4]}-'\
+            f'{model_checkpoint_path.split("/")[-3][:4]}-{model_checkpoint_path.split("/")[-2][11:]}\n'\
             f'rmse {rmse:.3f} mape {mape:.3f} rmse_c {rmse_c:.3f} mape_c {mape_c:.3f}\n'\
             f'corr: {correlation:.3f} corr_c: {correlation_c:.3f} corr_s: {correlation*(1-(n_invalid/n_total)):.3f}\n'\
             f'N invalid: {n_invalid}, N total: {n_total}'
 
     for info in [n_unique,n_in_pubchem]: # If we include this information, include it in the title
         if info is not None:
-            title += f", {info}"
+            title += f", {info=}"
     title+=sm
 
     return title
