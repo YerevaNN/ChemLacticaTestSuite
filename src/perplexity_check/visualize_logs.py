@@ -6,12 +6,14 @@ import json
 
 
 
-def main():
+def main(args):
     # with open(args.config, 'r') as f:
     #     config = yaml.safe_load(f)
     plot_dict = {}
+    log_file_paths = args.log_files
 
-    for file_path in ["./results/Gemma2b_best_qed_perps/Gemma2b_best_qed_perps.log","./results/gal125m_best_qed_perps/gal125m_best_qed_perps.log"]:
+
+    for file_path in log_file_paths:
         norm_perps = []
         with open(file_path, 'r') as f:
             lines = f.readlines()
@@ -32,13 +34,13 @@ def main():
     plt.xlabel('Normalized Perplexity')
     plt.ylabel('Density')
     plt.title('Histogram of perplexities for 100 correct QED->SMILES samples')
-    plt.savefig('perplexities_hist.png')
+    plt.savefig('wrong_perplexities_hist.png')
 
 
 
 
 if __name__ == '__main__':
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("--config", type=str, required=True)
-    # args = parser.parse_args()
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--log_files", type=str, required=True, nargs='+',help = "list of log file paths to plot together")
+    args = parser.parse_args()
+    main(args)
