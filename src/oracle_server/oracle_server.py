@@ -73,7 +73,7 @@ app.register_blueprint(oracle_blueprint, url_prefix='/oracles')
 
 def main(vina_binary_path):
     global VINA_PATH
-    VINA_PATH = vina_path
+    VINA_PATH = vina_binary_path
     app.run(port=5006,debug=False,host='0.0.0.0')
 
 if __name__ == '__main__':
