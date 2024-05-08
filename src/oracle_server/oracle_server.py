@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify,Blueprint
+import argparse
 from vina_scoring import get_vina_score
 
 from dataclasses import dataclass, asdict
@@ -14,6 +15,8 @@ from enum import Enum
 
 app = Flask(__name__)
 VINA_PATH = None
+NUM_CPU = None # None defaults to automatic allocation of all available CPU cores if possible
+
 
 oracle_blueprint = Blueprint('oracles', __name__)
 
@@ -36,7 +39,7 @@ def validate_input_string(input_string):
 def get_oracle(oracle_type,oracle_name):
     match oracle_type:
         case 'vina':
-            oracle_params = {"vina_params":getattr(VinaConfigEnum, oracle_name.upper()).value}
+            oracle_params = {"vina_params":getattr(VinaConfigEnum, oracle_name.upper()).value,"vina_binary_path":VINA_PATH,"num_cpu":NUM_CPU}
             scoring_function = get_vina_score
         case 'tdc': # these endpoint allow for the use of any TDC oracle by name, see list at below url:
             # https://github.com/mims-harvard/TDC/blob/0469d9af0d4124490f3f8d922d6207b4e6dacabe/tdc/metadata.py#L894 
@@ -71,13 +74,17 @@ def get_oracle_score(oracle_type,oracle_name):
 
 app.register_blueprint(oracle_blueprint, url_prefix='/oracles')
 
-def main(vina_binary_path):
+def main(args):
     global VINA_PATH
-    VINA_PATH = vina_binary_path
+    global NUM_CPU
+
+    VINA_PATH = args.vina_path
+    NUM_CPU = args.num_cpu
     app.run(port=5006,debug=False,host='0.0.0.0')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Oracle server")
-    parser.add_argument("--vina-path", required=True, help="Path to the AutoDock Vina binary")
+    parser.add_argument("--vina_path", type=str, required=True, help="Path to the AutoDock Vina binary")
+    parser.add_argument("--num_cpu", type=int, required=False, help="Number of CPUs to use for Vina docking",default = None)
     args = parser.parse_args()
-    main(args.vina_path)
+    main(args)

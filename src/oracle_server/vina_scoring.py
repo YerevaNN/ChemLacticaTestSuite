@@ -20,7 +20,7 @@ VINA_SEED = 42
 MAXIMUM_ITERATIONS = 600
 
 
-def get_vina_score(vina_binary_path, smiles_to_score: Union[str, List], vina_params:VinaConfig):
+def get_vina_score(smiles_to_score: Union[str, List], vina_binary_path, vina_params:VinaConfig, num_cpu:int):
     random.seed(42)
     scores = []
 
@@ -34,7 +34,11 @@ def get_vina_score(vina_binary_path, smiles_to_score: Union[str, List], vina_par
             temp_file.write(ligand_mol_pdbqt)
             ligand_mem_path = temp_file.name
             temp_file.seek(0) # move the file cursor back to the start or vina will not read the file and break
-            vina_command = f"{vina_binary_path} --center_x {vina_params.centers[0]} --center_y {vina_params.centers[1]} --center_z {vina_params.centers[2]} --size_x {vina_params.box_size[0]} --size_y {vina_params.box_size[1]} --size_z {vina_params.box_size[2]} --ligand {str(ligand_mem_path)} --receptor {vina_params.receptor} --seed {VINA_SEED} --exhaustiveness {VINA_EXHAUSTIVENESS}"
+            if num_cpu is not None:
+                cpu_command_component = f"--cpu {num_cpu}"
+            else: 
+                cpu_command_component = ""
+            vina_command = f"{vina_binary_path} --center_x {vina_params.centers[0]} --center_y {vina_params.centers[1]} --center_z {vina_params.centers[2]} --size_x {vina_params.box_size[0]} --size_y {vina_params.box_size[1]} --size_z {vina_params.box_size[2]} --ligand {str(ligand_mem_path)} --receptor {vina_params.receptor} --seed {VINA_SEED} --exhaustiveness {VINA_EXHAUSTIVENESS} {cpu_command_component}"
             vina_result = subprocess.run(vina_command, shell=True, capture_output = True)
 
         pattern = r"\s+\d+\s+(-?\d+\.\d+)\s+\d+\.\d+\s+\d+\.\d+" # don't ask

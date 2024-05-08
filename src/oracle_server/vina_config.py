@@ -26,6 +26,7 @@ class VinaConfig:
     centers : List[float]
     box_size : List[float]
     experiment: str
+    transform_sigmoid_low: int
     seed: int = VINA_SEED
     num_poses: int = NUM_POSES
     exhaustiveness: int = VINA_EXHAUSTIVENESS # please see https://github.com/MolecularAI/DockStream/blob/c62e6abd919b5b54d144f5f792d40663c9a43a5b/dockstream/utils/enums/AutodockVina_enums.py#L74 # noqa
@@ -34,6 +35,6 @@ class VinaConfig:
         self.receptor = get_receptor_file_path(self.experiment)
 
 class VinaConfigEnum(Enum):
-    DRD2 = VinaConfig(centers=[9.93, 5.85, -9.58], box_size=[15, 15, 15],experiment="drd2")
-    ACHE = VinaConfig(centers=[2.78, 64.38, 67.97], box_size=[15, 15, 15],experiment="ache")
-    MK2 = VinaConfig(centers=[-61.62, 30.31, -21.9], box_size=[15, 15, 15],experiment = "mk2")
+    DRD2 = VinaConfig(centers=[9.93, 5.85, -9.58], box_size=[15, 15, 15],experiment="drd2", transform_sigmoid_low = -16)
+    ACHE = VinaConfig(centers=[2.78, 64.38, 67.97], box_size=[15, 15, 15],experiment="ache", transform_sigmoid_low = -18)
+    MK2 = VinaConfig(centers=[-61.62, 30.31, -21.9], box_size=[15, 15, 15],experiment = "mk2", transform_sigmoid_low = -16)
