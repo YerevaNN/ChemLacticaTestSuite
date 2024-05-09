@@ -1,6 +1,6 @@
-from vina_oracle import VinaOracle
+from oracles.vina_oracle import VinaOracle
+from oracles.oracle_utils import vina_prompts_post_processor
 from chemlactica.mol_opt.utils import MoleculeEntry
-from oracle_utils import vina_prompts_post_processor
 
 import pandas as pd
 from transformers import OPTForCausalLM, AutoTokenizer
@@ -17,7 +17,7 @@ import yaml
 import random
 from typing import List
 from tqdm import tqdm
-from sas_sim_oracle import InheritedLeadOptimizationSASOracle
+#from sas_sim_oracle import InheritedLeadOptimizationSASOracle
 from rdkit import Chem
 import multiprocessing
 from functools import partial
@@ -44,11 +44,6 @@ def main():
     model = OPTForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
     tokenizer = AutoTokenizer.from_pretrained(config["tokenizer_path"], padding_side="left")
 
-    if args.input_mols_csv_path is not None:
-        molecules_df = pd.read_csv(args.input_mols_csv_path)
-        lead_molecules = molecules_df.smiles.to_list()
-    else:
-        lead_molecules = ["CCCCO","CCCCCC","CCCC(C)C1=CC=CC=C1C(=O)O"]
     
     formatted_date_time = datetime.datetime.now().strftime("%Y-%m-%d")
     base = f"results/{formatted_date_time}"
@@ -60,6 +55,14 @@ def main():
     output_dir = os.path.join(base, f"{name}-{v}")
     os.makedirs(output_dir, exist_ok=True)
 
+
+
+    if args.input_mols_csv_path is not None:
+        molecules_df = pd.read_csv(args.input_mols_csv_path)
+        lead_molecules = molecules_df.smiles.to_list()
+    else:
+        lead_molecules = ["CCCCO","CCCCCC","CCCC(C)C1=CC=CC=C1C(=O)O"]
+
     seeds = [2, 9, 31]
     acc_success_rate = 0
     acc_max_sim_sum = 0
@@ -68,7 +71,7 @@ def main():
         max_sim_sum = 0
         num_optimized = 0
 
-        oracle_url =  'http://ap.yerevann.com:5006/oracles/vina/drd2'
+        oracle_url = 'http://172.26.26.101:5006/oracles/vina/drd2'
         oracle = VinaOracle(url = oracle_url, max_oracle_calls=6)
 
         for i in tqdm(range(len(lead_molecules))):

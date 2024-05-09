@@ -1,8 +1,8 @@
-from oracle_base import BaseOptimizationOracle
+from .oracle_base import BaseOptimizationOracle
 import requests
 import json
 import numpy as np
-from oracle_utils import generative_yield, oracle_burden
+from .oracle_utils import generative_yield, oracle_burden
 
 class VinaOracle(BaseOptimizationOracle):
 
