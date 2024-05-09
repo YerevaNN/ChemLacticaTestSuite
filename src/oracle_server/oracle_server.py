@@ -67,6 +67,7 @@ def get_oracle_score(oracle_type,oracle_name):
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 501
+
     try:
         result = scoring_function(input_data,**oracle_params)
     except Exception as e:
@@ -83,30 +84,9 @@ def run_oracle_server(args):
     NUM_CPU = args.num_cpu
     app.run(port=5006,debug=False,host='0.0.0.0')
 
-def my_random_function(args):
-    print("my_random_function works")
-    print(args.num_cpu)
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Oracle server")
     parser.add_argument("--vina_path", type=str, required=True, help="Path to the AutoDock Vina binary")
     parser.add_argument("--num_cpu", type=int, required=False, help="Number of CPUs to use for Vina docking",default = None)
     args = parser.parse_args()
-
-    slurm_params = {
-        "slurm_job_name": "running_oracle_server",
-        "timeout_min": 3,
-        "nodes": 1,
-        "tasks_per_node": 1,
-        "cpus_per_task":1,
-        "mem_gb": 0.5,
-        "stderr_to_stdout": True,
-    }
-
-    executor = submitit.AutoExecutor(folder="/mnt/sxtn2/chem/oracle_server_logs/")
-    executor.update_parameters(**slurm_params)
-    print('before submit')
-    job = executor.submit(my_random_function,args)
-    print(job.result())
-
-    #run_oracle_server(args)
+    run_oracle_server(args)
