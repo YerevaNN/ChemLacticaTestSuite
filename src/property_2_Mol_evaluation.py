@@ -1,4 +1,5 @@
 import re
+from transformers.generation import LogitsProcessor,LogitsProcessorList
 from dataclasses import dataclass
 import os
 import glob
@@ -20,7 +21,7 @@ import torch
 from torch import bfloat16, float32
 from transformers import AutoTokenizer, AutoModelForCausalLM, OPTForCausalLM
 
-from utils import mol_util
+from utils import mol_util,logits_utils
 from custom_modeling_opt import CustomOPTForCausalLM
 from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
@@ -72,6 +73,7 @@ class Property2Mol:
             track,
             plot,
             description,
+            logits_processors_configs,
             ) -> None:
         
         self.test_suite=test_suite
@@ -86,6 +88,7 @@ class Property2Mol:
         self.device = device
         self.track = track
         self.plot = plot
+        self.logits_processors = LogitsProcessorList(logits_utils.instantiate_processors([logits_utils.LogitsProcessorConfig(**logits_processors_config) for logits_processors_config in logits_processors_configs])) if logits_processors_configs else None
         
         self.smiles_prefix = "[START_SMILES]"
         self.eos_string = "</s>"
@@ -295,6 +298,7 @@ class Property2Mol:
                 else:
                     output = self.model.generate(
                         input_ids=input_id,
+                        logits_processor = self.logits_processors,
                         **self.generation_decoding_config   
                     )
                     # beams = output.get("beam_indices", None)
