@@ -49,7 +49,7 @@ def main():
     base = f"results/{formatted_date_time}"
     os.makedirs(base, exist_ok=True)
     v = 0
-    name = "+".join(config["strategy"])
+    name = "+".join(config["strategy"]) + args.run_name
     while os.path.exists(os.path.join(base, f"{name}-{v}")):
         v += 1
     output_dir = os.path.join(base, f"{name}-{v}")
