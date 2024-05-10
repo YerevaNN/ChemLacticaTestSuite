@@ -49,7 +49,7 @@ def main():
     base = f"results/{formatted_date_time}"
     os.makedirs(base, exist_ok=True)
     v = 0
-    name = "+".join(config["strategy"]) + args.run_name
+    name = args.run_name + "+".join(config["strategy"])
     while os.path.exists(os.path.join(base, f"{name}-{v}")):
         v += 1
     output_dir = os.path.join(base, f"{name}-{v}")
@@ -62,6 +62,7 @@ def main():
         lead_molecules = molecules_df.smiles.to_list()
     else:
         lead_molecules = ["CCCCO","CCCCCC","CCCC(C)C1=CC=CC=C1C(=O)O"]
+    lead_molecules = ["CCCC"]
 
     seeds = [2, 9, 31]
     acc_success_rate = 0
@@ -72,7 +73,7 @@ def main():
         num_optimized = 0
 
         oracle_url = 'http://172.26.26.101:5006/oracles/vina/drd2'
-        oracle = VinaOracle(url = oracle_url, max_oracle_calls=6)
+        oracle = VinaOracle(url = oracle_url, max_oracle_calls=5000)
 
         for i in tqdm(range(len(lead_molecules))):
             oracle.reset()
