@@ -17,7 +17,7 @@ class VinaOracle(BaseOptimizationOracle):
 
     @property
     def should_log(self):
-        return self.num_oracle_calls % 2 == 0
+        return self.num_oracle_calls % 5 == 0
 
     def set_lead_entry(self, lead_entry):
         self.lead_entry = lead_entry
