@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from chemlactica.mol_opt.utils import MoleculeEntry
+from typing import Union, List
 
 class BaseOptimizationOracle(ABC):
     def __init__(self,max_oracle_calls: int,takes_entry=False):
@@ -9,7 +10,7 @@ class BaseOptimizationOracle(ABC):
         self.num_oracle_calls = 0
         self.metrics_dict = {}
 
-    def __call__(self, mol_entry):
+    def __call__(self, mol_entries: Union[MoleculeEntry, List[MoleculeEntry]]):
         # This function represents logic which is agnostic to the oracle scoring, steps are as follows
         # 1. Check if the molecule has been seen before, in that case just return the prior calculated score
         # 2. Calculate the score, NOTE: this requires a custom implementation for each oracle
@@ -18,22 +19,34 @@ class BaseOptimizationOracle(ABC):
         # 4. Log intermediate results if logging conditon met (logging functionality is user defined)
         # 5. return the value
 
+        if not isinstance(mol_entries, List):
+            mol_entries = [mol_entries]
 
-        if self.mol_buffer.get(mol_entry.smiles):
-            return self.mol_buffer[mol_entry.smiles][0]
-        try:
-            oracle_score = self._calculate_score(mol_entry)
-        except Exception as e:
-            print(e)
-            oracle_score = 0
-
-        self.mol_buffer[mol_entry.smiles] = [oracle_score, len(self.mol_buffer) + 1]
-        self.num_oracle_calls += 1
+        scores = self.retrieve_scores_from_buffer(mol_entries)
+        scores = self.merge_stored_and_calculated_scores(mol_entries, scores)
 
         if self.should_log:
             self._log_intermediate()
 
         return oracle_score
+
+    def merge_stored_and_calculated_scores(self, mol_entries, scores):
+        mol_entries_to_score = [mol_entry for mol_entry, score in zip(mol_entries, scores) if score is None]
+
+        if mol_entries_to_score:
+            oracle_scores = self._calculate_score(mol_entries_to_score) # NOTE _calculate_score has to support lists
+            for mol_entry, oracle_score in zip(mol_entries_to_score, oracle_scores):
+                # add result to current batch of scores, update buffer and increment oracle calls
+                scores[mol_entries.index(mol_entry)] = oracle_score
+                self.mol_buffer[mol_entry.smiles] = [oracle_score, len(self.mol_buffer) + 1]
+                self.num_oracle_calls += 1
+
+        return scores
+
+    def retrieve_scores_from_buffer(self, mol_entries):
+        scores = [self.mol_buffer.get(input_string, None) for mol_entry in mol_entries]
+        return scores
+
     
     def reset(self):
         # If you want to ensure an identical configuration for multiple optimizations this can be called between optimizations.
