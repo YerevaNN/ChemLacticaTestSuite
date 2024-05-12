@@ -22,7 +22,7 @@ from rdkit import Chem
 import multiprocessing
 from functools import partial
 
-from chemlactica.mol_opt.optimization import optimize
+from chemlactica.mol_opt.optimization import optimize, create_molecule_entry
 from chemlactica.mol_opt.utils import set_seed, generate_random_number, MoleculeEntry
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
@@ -42,6 +42,7 @@ def main():
     print(config)
     
     model = OPTForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
+    model = model.eval()
     tokenizer = AutoTokenizer.from_pretrained(config["tokenizer_path"], padding_side="left")
 
     
@@ -61,8 +62,13 @@ def main():
         molecules_df = pd.read_csv(args.input_mols_csv_path)
         lead_molecules = molecules_df.smiles.to_list()
     else:
-        lead_molecules = ["CCCCO","CCCCCC","CCCC(C)C1=CC=CC=C1C(=O)O"]
-    lead_molecules = ["CCCC"]
+        # if we don't start with molecules to optimize, we generate a random SMILES with no conditioning
+        inputs = "</s>"
+        inputs = tokenizer(input, return_tensors="pt").to(config["device"])
+        output = model.generate(inputs = input, **config["generation_config"])
+        lead_molecule_output_text = tokenizer.decode(output[i], skip_special_tokens=False) for i in range(len(output))
+        lead_molecules = [create_molecule_entry(lead_molecule_output_text)]
+
 
     seeds = [2, 9, 31]
     acc_success_rate = 0
@@ -78,7 +84,9 @@ def main():
         for i in tqdm(range(len(lead_molecules))):
             oracle.reset()
             lead = lead_molecules[i]
-            lead_mol = MoleculeEntry(lead)
+            if isinstance(lead, str):
+                lead_mol = MoleculeEntry(lead)
+
             oracle.set_lead_entry(lead_mol)
             config["prompts_post_processor"] = vina_prompts_post_processor
             print(f"Optimizing {lead}")
