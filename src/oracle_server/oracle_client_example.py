@@ -5,7 +5,7 @@ import json
 def score_with_oracle(input_strings,oracle_url):
     input_data_json = json.dumps(input_strings)
     response = requests.post(oracle_url, data=input_data_json)
-    return dict(response.json())
+    return float((dict(response.json()))["result"][0])
 
 if __name__ == '__main__':
     oracle_url = 'http://172.26.26.101:5006/oracles/vina/drd2'
