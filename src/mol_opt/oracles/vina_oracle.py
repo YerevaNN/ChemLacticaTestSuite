@@ -45,9 +45,18 @@ class VinaOracle(BaseOptimizationOracle):
         })
 
     def _calculate_score(self, mol_entry):
-        input_data_json = json.dumps([mol_entry.smiles])
-        response = requests.post(self.url, data=input_data_json)
-        oracle_score = float(dict(response.json())["result"][0])
+        if isinstance(mol_entry, list):
+            mol_entry = mol_entry[0]
+        try:
+            input_data_json = json.dumps([mol_entry.smiles])
+            response = requests.post(self.url, data=input_data_json)
+            oracle_score = float((dict(response.json()))["result"][0])
+        except Exception as e:
+            print(e)
+            oracle_score = float(0)
+
+        if not isinstance(oracle_score, list):
+            oracle_score = [oracle_score]
         return oracle_score
     
     def _calculate_metrics(self):
