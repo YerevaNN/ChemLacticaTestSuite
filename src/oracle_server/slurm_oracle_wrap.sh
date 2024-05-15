@@ -2,8 +2,8 @@
 
 #SBATCH --job-name=oracle_server  # Job name
 #SBATCH --cpus-per-task=8          # Number of CPU cores
-#SBATCH --mem=16G                   # Memory pool for all cores (see also --mem-per-cpu)
-#SBATCH --time=24:00:00             # Time limit hrs:min:sec
+#SBATCH --mem=8G                   # Memory pool for all cores (see also --mem-per-cpu)
+#SBATCH --time=48:00:00             # Time limit hrs:min:sec
 #SBATCH --output=/nfs/ap/mnt/sxtn2/oracle_server_logs/server_run%j.log   # Standard output and error log (%j expands to jobId)
 
 
