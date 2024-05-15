@@ -33,13 +33,16 @@ def parse_arguments():
     parser.add_argument("--input_mols_csv_path", type=str, required=False)
     parser.add_argument("--config_default", type=str, required=False, default="hparams_default.yaml")
     parser.add_argument("--n_runs", type=int, required=False, default=1)
+    parser.add_argument("--oracle_url_endpoint", type=str, required=True)
     args = parser.parse_args()
     return args
 
 def main():
     args = parse_arguments()
     config = yaml.safe_load(open(args.config_default))
+    print("-----------------config--------------------")
     print(config)
+    print("-------------------------------------------")
     
     model = OPTForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
     model = model.eval()
@@ -63,12 +66,14 @@ def main():
         lead_molecules = molecules_df.smiles.to_list()
     else:
         # if we don't start with molecules to optimize, we generate a random SMILES with no conditioning
-        inputs = "</s>"
-        inputs = tokenizer(input, return_tensors="pt").to(config["device"])
-        output = model.generate(inputs = input, **config["generation_config"])
-        lead_molecule_output_text = tokenizer.decode(output[i], skip_special_tokens=False) for i in range(len(output))
+        print("generating an initial molecule randomly")
+        inputs = "</s>[START_SMILES]"
+        inputs = tokenizer.encode(inputs, return_tensors="pt").to(config["device"])
+        output = model.generate(inputs = inputs, **config["generation_config"])[0]
+        lead_molecule_output_text = tokenizer.decode(output, skip_special_tokens=False)
         lead_molecules = [create_molecule_entry(lead_molecule_output_text)]
-
+    print(output)
+    print(lead_molecules)
 
     seeds = [2, 9, 31]
     acc_success_rate = 0
@@ -78,16 +83,15 @@ def main():
         max_sim_sum = 0
         num_optimized = 0
 
-        oracle_url = 'http://172.26.26.101:5006/oracles/vina/drd2'
-        oracle = VinaOracle(url = oracle_url, max_oracle_calls=5000)
+        oracle = VinaOracle(url = args.oracle_url_endpoint, max_oracle_calls=5000)
 
         for i in tqdm(range(len(lead_molecules))):
             oracle.reset()
             lead = lead_molecules[i]
             if isinstance(lead, str):
-                lead_mol = MoleculeEntry(lead)
+                lead = MoleculeEntry(lead)
 
-            oracle.set_lead_entry(lead_mol)
+            oracle.set_lead_entry(lead)
             config["prompts_post_processor"] = vina_prompts_post_processor
             print(f"Optimizing {lead}")
             config["log_dir"] = os.path.join(output_dir, f'mol-{i}-{seed}.log')
