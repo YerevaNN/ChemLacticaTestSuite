@@ -15,9 +15,9 @@ generation_config:
   do_sample: true
   eos_token_id: 20
 
-strategy: [pool-dump]
+strategy: [pool-dump, rej-sample]
 pool_dump_config:
-  dump_perc: 0.25
+  dump_perc: 0.50
 
 rej_sample_config:
   checkpoints_dir: ./

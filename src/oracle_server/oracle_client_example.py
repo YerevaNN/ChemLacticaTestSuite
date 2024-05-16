@@ -5,12 +5,12 @@ import json
 def score_with_oracle(input_strings,oracle_url):
     input_data_json = json.dumps(input_strings)
     response = requests.post(oracle_url, data=input_data_json)
-    return float((dict(response.json()))["result"][0])
+    return (dict(response.json()))["result"]
 
 if __name__ == '__main__':
     oracle_url = 'http://172.26.26.101:5006/oracles/vina/drd2'
     #oracle_url =  'http://ap.yerevann.com:5006/oracles/vina/drd2'
-    input_strings = ["CCO"]
+    input_strings = ["zodjfia","CCCCCCC","aidfai"]
     print(score_with_oracle(input_strings,oracle_url))
     # oracle_url =  'http://ap.yerevann.com:5006/oracles/vina/ache'
     # print(score_with_oracle(input_strings,oracle_url))
