@@ -44,16 +44,16 @@ class VinaOracle(BaseOptimizationOracle):
             "n_oracle": self.num_oracle_calls,
         })
 
-    def _calculate_score(self, mol_entry):
-        if isinstance(mol_entry, list):
-            mol_entry = mol_entry[0]
+    def _calculate_score(self, mol_entries):
+        list_smiles_for_vina_scoring = [mol_entry.smiles for mol_entry in mol_entries if not isinstance(mol_entry, str)]
+
         try:
-            input_data_json = json.dumps([mol_entry.smiles])
+            input_data_json = json.dumps(list_smiles_for_vina_scoring)
             response = requests.post(self.url, data=input_data_json)
-            oracle_score = float((dict(response.json()))["result"][0])
+            oracle_scores = [float(oracle_score) for oracle_score in oracle_scores]
         except Exception as e:
             print(e)
-            oracle_score = float(0)
+            oracle_score = float(-1)
 
         if not isinstance(oracle_score, list):
             oracle_score = [oracle_score]

@@ -21,16 +21,13 @@ class BaseOptimizationOracle(ABC):
 
         if not isinstance(mol_entries, List):
             mol_entries = [mol_entries]
-        if self.num_oracle_calls==465:
-            print("hey")
-
         oracle_scores = self.retrieve_scores_from_buffer(mol_entries)
         oracle_scores = self.merge_stored_and_calculated_scores(mol_entries, oracle_scores)
 
         if self.should_log:
             self._log_intermediate()
 
-        return oracle_scores[0]
+        return oracle_scores
 
     def merge_stored_and_calculated_scores(self, mol_entries, scores):
 
@@ -51,7 +48,6 @@ class BaseOptimizationOracle(ABC):
         for mol_entry in mol_entries:
             buffer_retrieval= self.mol_buffer.get(mol_entry.smiles)
             if buffer_retrieval is not None:
-                print("wait")
                 score = buffer_retrieval[0]
             else:
                 score = None
