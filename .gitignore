@@ -6,3 +6,4 @@ __pycache__
 *.ipynb
 *.png
 utils/contrastive_decoding/contrastive_decodable_transformers/build
+*optconf.yml # names of optimization configurations
