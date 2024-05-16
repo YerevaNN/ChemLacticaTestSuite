@@ -1,4 +1,5 @@
 from rdkit import Chem
+import traceback
 import argparse
 import rdkit
 from rdkit.Chem import AllChem
@@ -28,39 +29,44 @@ def get_vina_score(smiles_to_score: Union[str, List], vina_binary_path, vina_par
         smiles_to_score = [smiles_to_score]
 
     for smiles in smiles_to_score:
-        mol = smiles_to_reasonable_conformer(smiles)
-        ligand_mol_pdbqt = obabel_mol_to_pdbqt_string(mol)
-        with tempfile.NamedTemporaryFile(mode="w", delete=True) as temp_file:
-            temp_file.write(ligand_mol_pdbqt)
-            ligand_mem_path = temp_file.name
-            temp_file.seek(0) # move the file cursor back to the start or vina will not read the file and break
-            if num_cpu is not None:
-                cpu_command_component = f"--cpu {num_cpu}"
-            else: 
-                cpu_command_component = ""
-            vina_command = f"{vina_binary_path} --center_x {vina_params.centers[0]} --center_y {vina_params.centers[1]} --center_z {vina_params.centers[2]} --size_x {vina_params.box_size[0]} --size_y {vina_params.box_size[1]} --size_z {vina_params.box_size[2]} --ligand {str(ligand_mem_path)} --receptor {vina_params.receptor} --seed {VINA_SEED} --exhaustiveness {VINA_EXHAUSTIVENESS} {cpu_command_component}"
-            vina_result = subprocess.run(vina_command, shell=True, capture_output = True)
+        try:
+            mol = smiles_to_reasonable_conformer(smiles)
+            ligand_mol_pdbqt = obabel_mol_to_pdbqt_string(mol)
+            with tempfile.NamedTemporaryFile(mode="w", delete=True) as temp_file:
+                temp_file.write(ligand_mol_pdbqt)
+                ligand_mem_path = temp_file.name
+                temp_file.seek(0) # move the file cursor back to the start or vina will not read the file and break
+                if num_cpu is not None:
+                    cpu_command_component = f"--cpu {num_cpu}"
+                else: 
+                    cpu_command_component = ""
+                vina_command = f"{vina_binary_path} --center_x {vina_params.centers[0]} --center_y {vina_params.centers[1]} --center_z {vina_params.centers[2]} --size_x {vina_params.box_size[0]} --size_y {vina_params.box_size[1]} --size_z {vina_params.box_size[2]} --ligand {str(ligand_mem_path)} --receptor {vina_params.receptor} --seed {VINA_SEED} --exhaustiveness {VINA_EXHAUSTIVENESS} {cpu_command_component}"
+                vina_result = subprocess.run(vina_command, shell=True, capture_output = True)
 
-        pattern = r"\s+\d+\s+(-?\d+\.\d+)\s+\d+\.\d+\s+\d+\.\d+" # don't ask
-        weights = [1,1,1]
+            pattern = r"\s+\d+\s+(-?\d+\.\d+)\s+\d+\.\d+\s+\d+\.\d+" # don't ask
+            weights = [1,1,1]
 
-        # Search for the pattern in the stdout
-        stdout = re.findall(pattern, vina_result.stdout.decode())
+            # Search for the pattern in the stdout
+            stdout = re.findall(pattern, vina_result.stdout.decode())
 
-        vina = float(stdout[0])
-        qed = Chem.QED.qed(mol)
-        weight = Chem.Descriptors.MolWt(mol)
-        print("raw vina:",vina,"raw qed:",qed,"raw weight:",weight)
+            vina = float(stdout[0])
+            qed = Chem.QED.qed(mol)
+            weight = Chem.Descriptors.MolWt(mol)
+            print("raw vina:",vina,"raw qed:",qed,"raw weight:",weight)
 
-        vina_result = reverse_sigmoid_transformation(vina_params.transform_sigmoid_low,[vina])[0]
-        weight_result = double_sigmoid([10.])
-        qed_result = qed # no transformation
-        print("transformed vina:",vina_result,"transformed qed:",qed_result,"transformed weight:",weight_result)
+            vina_result = reverse_sigmoid_transformation(vina_params.transform_sigmoid_low,[vina])[0]
+            weight_result = double_sigmoid([10.])
+            qed_result = qed # no transformation
+            print("transformed vina:",vina_result,"transformed qed:",qed_result,"transformed weight:",weight_result)
 
-        individual_score_values = [[qed_result],[vina_result],[weight_result]]
-        total_oracle_result = compute_non_penalty_components(weights,individual_score_values,[smiles])
-        print("total score",total_oracle_result)
-        scores.append(float(total_oracle_result))
+            individual_score_values = [[qed_result],[vina_result],[weight_result]]
+            total_oracle_result = compute_non_penalty_components(weights,individual_score_values,[smiles])
+            print("total score",total_oracle_result)
+            scores.append(float(total_oracle_result))
+        except Exception as e:
+            print(e)
+            print(traceback.format_exc())
+            scores.append(float(0))
     return scores
 
 def smiles_to_reasonable_conformer(smiles: str) -> str:
