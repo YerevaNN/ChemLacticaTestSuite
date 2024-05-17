@@ -1,4 +1,5 @@
 from .oracle_base import BaseOptimizationOracle
+import traceback
 import requests
 import json
 import numpy as np
@@ -50,14 +51,15 @@ class VinaOracle(BaseOptimizationOracle):
         try:
             input_data_json = json.dumps(list_smiles_for_vina_scoring)
             response = requests.post(self.url, data=input_data_json)
+            oracle_scores = (dict(response.json()))["result"]
             oracle_scores = [float(oracle_score) for oracle_score in oracle_scores]
         except Exception as e:
-            print(e)
-            oracle_score = float(-1)
+            print(traceback.format_exc())
+            oracle_scores = float(-1)
 
-        if not isinstance(oracle_score, list):
-            oracle_score = [oracle_score]
-        return oracle_score
+        if not isinstance(oracle_scores, list):
+            oracle_scores = [oracle_scores]
+        return oracle_scores
     
     def _calculate_metrics(self):
         metrics_dict = {}

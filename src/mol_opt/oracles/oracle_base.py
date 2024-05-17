@@ -30,16 +30,26 @@ class BaseOptimizationOracle(ABC):
         return oracle_scores
 
     def merge_stored_and_calculated_scores(self, mol_entries, scores):
+        entry_index_map = {}
+        for i, mol_entry in enumerate(mol_entries):
+            if scores[i] is None:
+                if mol_entry not in entry_index_map:
+                    entry_index_map[mol_entry] = i
 
-        mol_entries_to_score = [mol_entry for mol_entry, score in zip(mol_entries, scores) if score is None]
+        entries_to_score = list(entry_index_map.keys())
+        new_scores = self._calculate_score(entries_to_score)
 
-        if mol_entries_to_score:
-            oracle_scores = self._calculate_score(mol_entries_to_score) # NOTE _calculate_score has to support lists and return lists
-            for mol_entry, oracle_score in zip(mol_entries_to_score, oracle_scores):
-                # add result to current batch of scores, update buffer and increment oracle calls
-                scores[mol_entries.index(mol_entry)] = oracle_score
-                self.mol_buffer[mol_entry.smiles] = [oracle_score, len(self.mol_buffer) + 1]
-                self.num_oracle_calls += 1
+        for entry, new_score in zip(entries_to_score,new_scores):
+            index = entry_index_map[entry]
+            scores[index] = new_score
+
+            for i in range(index + 1, len(mol_entries)):
+                if mol_entries[i] == entry and scores[i] is None:
+                    scores[i] = new_score
+
+            self.num_oracle_calls += 1
+            self.mol_buffer[mol_entry.smiles] = (new_score, self.num_oracle_calls)
+
 
         return scores
 
