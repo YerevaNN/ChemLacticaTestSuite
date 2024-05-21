@@ -29,6 +29,18 @@ from chemlactica.mol_opt.utils import set_seed, generate_random_number, Molecule
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
+def tolerance_train_condition(num_iter, tol_level, prev_train_iter):
+    return num_iter - prev_train_iter >= 3 and tol_level > 3
+
+def default_train_condition(num_iter, tol_level, prev_train_iter):
+    return num_iter - prev_train_iter >= 3
+
+def choose_train_condition(name):
+    return {
+        "default" : default_train_condition,
+        "tolerance": tolerance_train_condition
+    }[name]
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--run_name", type=str, required=True)
@@ -42,6 +54,7 @@ def parse_arguments():
 def main():
     args = parse_arguments()
     config = yaml.safe_load(open(args.config_default))
+    config["should_train"] = choose_train_condition(config["rej_sample_config"]["train_condition"])
     print("-----------------config--------------------")
     print(config)
     print("-------------------------------------------")
@@ -51,13 +64,13 @@ def main():
             "end_tag": "[/QED]",
             "infer_value": lambda entry: f"{generate_random_number(config['qed_range'][0], config['qed_range'][1]):.2f}",
             "calculate_value": lambda entry: f"{qed(entry.mol):.2f}"
-        }
+        },
         "weight" : {
             "start_tag": "[WEIGHT]",
             "end_tag": "[/WEIGHT]",
             "infer_value": lambda entry: f"{generate_random_number(config['weight_range'][0], config['weight_range'][1]):.2f}",
             "calculate_value": lambda entry: f"{MolWt(entry.mol):.2f}"
-        }
+        },
     }
     
     model = OPTForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
@@ -111,6 +124,7 @@ def main():
             config["prompts_post_processor"] = vina_prompts_post_processor
             print(f"Optimizing {lead}")
             config["log_dir"] = os.path.join(output_dir, f'mol-{i}-{seed}.log')
+            config["debug"] = os.path.join(output_dir, f'debug_mol-{i}-{seed}.log')
             optimize(model, tokenizer, oracle, config)
 
         print(oracle._calculate_metrics())
