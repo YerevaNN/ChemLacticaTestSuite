@@ -1,0 +1,55 @@
+checkpoint_path: /nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/1f289ff103034364bd27e1c3/checkpoint-18000
+# checkpoint_path: /nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/13fa27da6d174d53adfe4c2f/checkpoint-20000
+tokenizer_path: /auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLacticaTokenizer66
+pool_size: 50
+num_mols: 10
+num_similars: 5
+num_gens_per_iter: 64
+device: cuda:0
+sim_range: [0.8, 0.9]
+qed_range: [0.8, 0.9]
+weight_range: [200, 500]
+num_processes: 8
+generation_batch_size: 64
+eos_token: "</s>"
+validation_perc: 0.2
+max_possible_oracle_score: 0.90
+
+generation_config:
+  temperature: 1.5
+  repetition_penalty: 1.0
+  max_new_tokens: 100
+  do_sample: true
+  eos_token_id: 20
+  # num_beams: 6
+  # num_beam_groups: 3
+  #diversity_penalty : 0.2
+  #eta_cutoff: 3e-4
+  #renormalize_logits: true
+    #length_penalty: -0.5
+
+
+
+strategy: [rej-sample-v2]
+
+pool_dump_config:
+  dump_perc: 0.25
+
+rej_sample_config:
+  train_condition: tolerance
+  checkpoints_dir: ./
+  max_learning_rate: 0.00001
+  num_samples_per_round: 100
+  rej_perc: 0.15
+  train_batch_size: 2
+  gradient_accumulation_steps: 8
+  weight_decay: 0.1
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  warmup_steps: 0
+  global_gradient_norm: 1.0
+  dataloader_num_workers: 1
+  max_seq_length: 2048
+  num_train_epochs: 3
+  response_template: "[START_SMILES]"
+  packing: false
