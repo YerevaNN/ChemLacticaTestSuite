@@ -1,11 +1,13 @@
 from oracles.vina_oracle import VinaOracle
 from oracles.oracle_utils import vina_prompts_post_processor
 from chemlactica.mol_opt.utils import MoleculeEntry
+from rdkit.Chem.Descriptors import MolWt
 
 import pandas as pd
 from transformers import OPTForCausalLM, AutoTokenizer
 import torch
 import numpy as np
+from rdkit.Chem.QED import qed
 import logging
 import datetime
 import argparse
@@ -43,6 +45,20 @@ def main():
     print("-----------------config--------------------")
     print(config)
     print("-------------------------------------------")
+    additional_properties = {
+        "qed" : {
+            "start_tag": "[QED]",
+            "end_tag": "[/QED]",
+            "infer_value": lambda entry: f"{generate_random_number(config['qed_range'][0], config['qed_range'][1]):.2f}",
+            "calculate_value": lambda entry: f"{qed(entry.mol):.2f}"
+        }
+        "weight" : {
+            "start_tag": "[WEIGHT]",
+            "end_tag": "[/WEIGHT]",
+            "infer_value": lambda entry: f"{generate_random_number(config['weight_range'][0], config['weight_range'][1]):.2f}",
+            "calculate_value": lambda entry: f"{MolWt(entry.mol):.2f}"
+        }
+    }
     
     model = OPTForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
     model = model.eval()
