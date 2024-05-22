@@ -4,7 +4,7 @@ from chemlactica.mol_opt.utils import MoleculeEntry
 from rdkit.Chem.Descriptors import MolWt
 
 import pandas as pd
-from transformers import OPTForCausalLM, AutoTokenizer
+from transformers import OPTForCausalLM, AutoTokenizer,AutoModelForCausalLM
 import torch
 import numpy as np
 from rdkit.Chem.QED import qed
@@ -54,7 +54,7 @@ def parse_arguments():
 def main():
     args = parse_arguments()
     config = yaml.safe_load(open(args.config_default))
-    config["should_train"] = choose_train_condition(config["rej_sample_config"]["train_condition"])
+    config["rej_sample_config"]["should_train"] = choose_train_condition(config["rej_sample_config"]["train_condition"])
     print("-----------------config--------------------")
     print(config)
     print("-------------------------------------------")
@@ -73,7 +73,7 @@ def main():
         },
     }
     
-    model = OPTForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
+    model = AutoModelForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16,attn_implementation="flash_attention_2").to(config["device"])
     model = model.eval()
     tokenizer = AutoTokenizer.from_pretrained(config["tokenizer_path"], padding_side="left")
 
