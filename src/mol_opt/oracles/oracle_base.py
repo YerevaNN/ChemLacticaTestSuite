@@ -39,16 +39,16 @@ class BaseOptimizationOracle(ABC):
         entries_to_score = list(entry_index_map.keys())
         new_scores = self._calculate_score(entries_to_score)
 
-        for entry, new_score in zip(entries_to_score,new_scores):
-            index = entry_index_map[entry]
+        for new_entry, new_score in zip(entries_to_score,new_scores):
+            index = entry_index_map[new_entry]
             scores[index] = new_score
 
             for i in range(index + 1, len(mol_entries)):
-                if mol_entries[i] == entry and scores[i] is None:
+                if mol_entries[i] == new_entry and scores[i] is None:
                     scores[i] = new_score
 
             self.num_oracle_calls += 1
-            self.mol_buffer[mol_entry.smiles] = (new_score, self.num_oracle_calls)
+            self.mol_buffer[new_entry.smiles] = (new_score, self.num_oracle_calls)
 
 
         return scores
