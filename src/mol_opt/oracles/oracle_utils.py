@@ -5,22 +5,22 @@ from rdkit.Chem.QED import qed
 
 def generative_yield(mol_buffer,threshold):
     num_satisfactory_mols = 0
-    for molecule_entry in mol_buffer:
-        score = mol_buffer[mol_entry.smiles][0]
-        if molecule_entry.score > threshold:
+    for smiles_entry in mol_buffer:
+        score = mol_buffer[smiles_entry][0]
+        if score > threshold:
             num_satisfactory_mols += 1
     return num_satisfactory_mols
 
 def oracle_burden(mol_buffer,n_molecules_needed,current_num_oracle_calls,threshold):
     num_satisfactory_mols = 0
-    for molecule_entry in mol_buffer:
-        score = mol_buffer[mol_entry.smiles][0]
-        if molecule_entry.score > threshold:
+    for smiles_entry in mol_buffer:
+        score = mol_buffer[smiles_entry][0]
+        if score > threshold:
             num_satisfactory_mols += 1
     if num_satisfactory_mols >= n_molecules_needed:
         return current_num_oracle_calls
     else:
-        return 0
+        return -1
 
 def vina_prompts_post_processor(prompt):
     # the prompt starts with having the similar molecules in int

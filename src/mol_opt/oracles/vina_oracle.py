@@ -44,6 +44,9 @@ class VinaOracle(BaseOptimizationOracle):
             "avg_top100": avg_top100,
             "n_oracle": self.num_oracle_calls,
         })
+        curr_step_metrics = self._calculate_metrics()
+        print(curr_step_metrics)
+
 
     def _calculate_score(self, mol_entries):
         list_smiles_for_vina_scoring = [mol_entry.smiles for mol_entry in mol_entries if not isinstance(mol_entry, str)]
