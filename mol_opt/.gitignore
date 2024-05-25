@@ -4,8 +4,6 @@ main/dog_gen/scripts/dog_gen/chkpts/doggen_weights.pth.pick
 main/gflownet/data/docked_mols.h5
 main/chemlactica/results
 runs/*
-oracle
-data
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -142,8 +140,8 @@ dmypy.json
 wandb
 data/*
 oracle
-*.slurm
-slurm*
+# *.slurm
+# slurm*
 result*.yaml
 *.out
 production_*.sh
