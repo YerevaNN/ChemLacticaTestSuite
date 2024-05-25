@@ -1,5 +1,5 @@
 ./main/chemlactica/results
-./runs/*
+./runs
 ./oracle
 ./data
 
