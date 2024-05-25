@@ -1,0 +1,44 @@
+# checkpoint_path: /nfs/dgx/raid/chem/checkpoints/google/gemma-2b/452a723110524d27a5dfc438/checkpoint-8000
+# checkpoint_path: /nfs/dgx/raid/chem/checkpoints/google/gemma-2b/d6e6a76e91814ad68d5fa264/checkpoint-11000
+checkpoint_path: /nfs/dgx/raid/chem/checkpoints/h100/google/gemma-2b/0717d445bcf44e31b2887892/checkpoint-12000
+tokenizer_path: /auto/home/menuab/code/ChemLactica/chemlactica/tokenizer/GemmaTokenizer
+pool_size: 50
+validation_perc: 0.2
+num_mols: 10
+num_similars: 0
+num_gens_per_iter: 200
+device: cuda:0
+sim_range: [0.8, 0.95]
+num_processes: 8
+generation_batch_size: 16
+eos_token: "<bos>"
+
+generation_config:
+  temperature: 1.5
+  repetition_penalty: 1.0
+  max_new_tokens: 100
+  do_sample: true
+  eos_token_id: 8
+
+strategy: [default]
+
+pool_dump_config:
+  dump_perc: 0.5
+
+rej_sample_config:
+  train_condition: tolerance
+  checkpoints_dir: ./
+  max_learning_rate: 0.0001
+  num_samples_per_round: 100
+  rej_perc: 0.1
+  train_batch_size: 1
+  gradient_accumulation_steps: 16
+  weight_decay: 0.1
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  warmup_steps: 0
+  global_gradient_norm: 1.0
+  dataloader_num_workers: 1
+  max_seq_length: 2048
+  num_train_epochs: 3
+  packing: false

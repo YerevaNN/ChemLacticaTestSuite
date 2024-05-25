@@ -1,0 +1,13 @@
+name: chemlactica
+method: grid
+metric:
+  goal: maximize
+  name: avg_auc
+parameters:
+  strategy: [[rej-sample-v2]]
+
+  num_mols: [0, 1, 5, 10]
+  num_similars: [0, 1, 5, 10]
+
+  rej_sample_config:
+    max_learning_rate: [0.0001, 0.00001, 0.000001]
