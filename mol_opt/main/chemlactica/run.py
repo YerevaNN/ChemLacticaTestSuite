@@ -75,12 +75,12 @@ class APIOracle(tdc.Oracle):
 #         return None
 
 
-def default_train_condition(num_iter, tol_level, prev_train_iter):
+def default_train_condition(num_iter, tol_level, prev_train_iter, train_cond_config):
     return num_iter - prev_train_iter >= 3
 
 
-def tolerance_train_condition(num_iter, tol_level, prev_train_iter):
-    return num_iter - prev_train_iter >= 3 and tol_level > 3
+def tolerance_train_condition(cur_tol_level, train_tol_level):
+    return cur_tol_level >= train_tol_level
 
 
 def choose_train_condition(name):
@@ -118,7 +118,7 @@ class ChemLactica_Optimizer(BaseOptimizer):
         model = AutoModelForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
         tokenizer = AutoTokenizer.from_pretrained(config["tokenizer_path"], padding_side="left")
         config["log_dir"] = os.path.join(self.oracle.args.output_dir, 'results_' + self.oracle.task_label + '.log')
-        config["rej_sample_config"]["should_train"] = choose_train_condition(config["rej_sample_config"]["train_condition"])
+        config["rej_sample_config"]["should_train"] = choose_train_condition("tolerance")
         config["max_possible_oracle_score"] = 1.0
         optimize(
             model=model, tokenizer=tokenizer,

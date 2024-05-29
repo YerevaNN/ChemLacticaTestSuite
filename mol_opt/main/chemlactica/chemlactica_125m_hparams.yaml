@@ -4,7 +4,7 @@ checkpoint_path: /nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/1f289ff1
 tokenizer_path: /auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLacticaTokenizer66
 pool_size: 50
 validation_perc: 0.2
-num_mols: 1
+num_mols: 0
 num_similars: 1
 num_gens_per_iter: 200
 device: cuda:0
@@ -21,10 +21,10 @@ generation_config:
   do_sample: true
   eos_token_id: 20
 
-strategy: [rej-sample-v2]
+strategy: [default]
 
 rej_sample_config:
-  train_condition: tolerance
+  train_tol_level: 3
   checkpoints_dir: ./
   max_learning_rate: 0.00001
   train_batch_size: 2

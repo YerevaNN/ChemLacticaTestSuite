@@ -82,15 +82,15 @@ def get_hparam_tunning_tasks():
 
 
 if __name__ == "__main__":
-    # task_names = get_hparam_tunning_tasks()
+    task_names = get_hparam_tunning_tasks()
     # task_names = get_ablation_tasks()
-    task_names = get_all_tasks()
+    # task_names = get_all_tasks()
     n_runs = 5
 
     config_file_path = "main/chemlactica/chemlactica_125m_hparams.yaml"
     # config_file_path = "main/chemlactica/chemma_2b_hparams.yaml"
-    # hparam_configs = create_hparam_configs(config_file_path)
-    infer_config = [yaml.safe_load(open(config_file_path))]
+    hparam_configs = create_hparam_configs(config_file_path)
+    # infer_config = [yaml.safe_load(open(config_file_path))]
     model_name = "-".join(config_file_path.split("/")[-1].split("_")[:2])
 
     executor = submitit.AutoExecutor(folder="/auto/home/tigranfahradyan/slurm_jobs/PMO/job_%j")
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     )
     jobs = []
     with executor.batch():
-        for config in infer_config:
+        for config in hparam_configs:
             formatted_date_time = datetime.datetime.now().strftime("%Y-%m-%d")
             base = f"main/chemlactica/results/{formatted_date_time}"
             os.makedirs(base, exist_ok=True)
