@@ -10,12 +10,15 @@ def random_text(length):
 
 
 if __name__ == "__main__":
-    gen_batch_size = 200
+    gen_batch_size = 100
     device = "cuda:0"
-    checkpoint_path = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/9954e52e400b43d18d3a40f6/checkpoint-20480"
-    tokenizer_path = "/auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLacticaTokenizer66"
+    # checkpoint_path = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/9954e52e400b43d18d3a40f6/checkpoint-20480"
+    # tokenizer_path = "/auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLacticaTokenizer66"
     # checkpoint_path = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/869e097219da4a4fbbadcc11/checkpoint-20000"
     # tokenizer_path = "/auto/home/menuab/code/ChemLactica/chemlactica/tokenizer/GemmaTokenizer"
+
+    checkpoint_path = "/home/admin/checkpoints/facebook/galactica-1.3b/6d68b252d53647a99cf2fa8b/last"
+    tokenizer_path = "/home/admin/tigran/ChemLactica/chemlactica/tokenizer/ChemLacticaTokenizer66"
     model = AutoModelForCausalLM.from_pretrained(checkpoint_path, torch_dtype=torch.bfloat16).to(device)
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, padding_side="left")
     # print(tokenizer)
@@ -33,4 +36,5 @@ if __name__ == "__main__":
         do_sample=True,
         max_new_tokens=100
     )
-    print(outputs)
+    print(outputs.shape)
+    print(f"{torch.cuda.max_memory_allocated() / 1e9:.4f}Gb")

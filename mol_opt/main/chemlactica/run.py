@@ -44,7 +44,7 @@ class APIOracle(tdc.Oracle):
     def assign_evaluator(self):
         import requests
         def evaluator(smiles):
-            url = "http://172.26.26.16:4300"
+            url = "http://127.0.0.1:4300"
             response = requests.post(url + "/" + self.name, json=smiles)
             # Check the response
             if response.status_code == 200:
