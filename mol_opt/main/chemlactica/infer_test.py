@@ -10,7 +10,7 @@ def random_text(length):
 
 
 if __name__ == "__main__":
-    gen_batch_size = 200
+    gen_batch_size = 1000
     device = "cuda:0"
     checkpoint_path = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/9954e52e400b43d18d3a40f6/checkpoint-20480"
     tokenizer_path = "/auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLacticaTokenizer66"
@@ -26,11 +26,12 @@ if __name__ == "__main__":
     if type(model) == OPTForCausalLM:
         del data["token_type_ids"]
     for key, value in data.items():
-        data[key] = value[:, :1200]
+        data[key] = value[:, :200]
     print(data.input_ids.shape)
     outputs = model.generate(
         **data,
         do_sample=True,
-        max_new_tokens=100
+        max_new_tokens=150,
     )
     print(outputs)
+    print(torch.cuda.max_memory_allocated() / 10**9)

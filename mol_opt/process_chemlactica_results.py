@@ -17,9 +17,9 @@ def process_tune_result(dir, hparams_to_log):
     for k, v in hparams_to_log.items():
         if '+' in k:
             a, b = k.split('+')
-            config_repr += f"{v}-{hparams[a][b]}-"
+            config_repr += f"{v}={hparams[a][b]}, "
         else:
-            config_repr += f"{v}-{hparams[k]}-"
+            config_repr += f"{v}={hparams[k]}, "
 
     result_files = list(Path(dir).glob("*.yaml"))
     result_files.remove(Path(os.path.join(dir, "hparams.yaml")))
@@ -60,11 +60,13 @@ def process_tune_results(root_dir):
     hparams_to_log = {
         "num_mols": "C",
         "num_similars": "S",
-        "rej_sample_config+max_learning_rate": "lr"
+        "rej_sample_config+max_learning_rate": "lr",
+        "rej_sample_config+train_tol_level": "tol_level"
     }
     result_pairs = []
     output_lines = []
-    all_dirs = Path(root_dir).iterdir()
+    all_dirs = list(Path(root_dir).iterdir())
+    progress_bar = tqdm(total=len(all_dirs))
     with multiprocessing.Pool(processes=8) as pol:
         for res in pol.map(partial(process_tune_result, hparams_to_log=hparams_to_log), all_dirs):
             if res:
@@ -72,14 +74,16 @@ def process_tune_results(root_dir):
                 auc_sum = 0
                 avg_sum = 0
                 line = config_repr + ": "
+                num_runs = len(result_pairs)
                 for task_name, mean, std, avg_mean, avg_std in result_pairs:
-                    line += f"{task_name}: AUC-{mean:.3f} \pm {std:.3f}, AVG-{avg_mean:.3f} \pm {avg_std:.3f}, "
+                    line += f"{task_name}: AUC-{mean:.3f} $\pm$ {std:.3f}, AVG-{avg_mean:.3f} $\pm$ {avg_std:.3f}, "
                     auc_sum += mean
                     avg_sum += avg_mean
                 
                 line += f"sum: AUC-{auc_sum:.3f}, AVG-{avg_sum:.3f}"
                 output_lines.append(line)
                 print("constructed for", config_repr)
+            progress_bar.update(1)
 
     output_lines.sort()
     with open(f"{root_dir}/tune-results.log", "w") as _file:
@@ -123,7 +127,7 @@ def process_results(dir):
     result_files.remove(Path(os.path.join(dir, "hparams.yaml")))
     result_files_with_names = {}
     for file in result_files:
-        task_name = file.stem[:-3].removeprefix('results_chemlactica_')
+        task_name = "_".join(file.stem.split("_")[:-1]).removeprefix('results_chemlactica_')
         if not result_files_with_names.get(task_name):
             result_files_with_names[task_name] = []
         result_files_with_names[task_name].append(file)
