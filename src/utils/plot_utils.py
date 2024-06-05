@@ -5,17 +5,18 @@ import numpy as np
 
 PUBCHEM_STATS_PATH = "/auto/home/menuab/code/ChemLacticaTestSuite/src/stats_data/pubchem_stats.pkl"
 
-def get_scatter_title(config_name,test_name,model_checkpoint_path,rmse,mape,rmse_c,mape_c,correlation,correlation_c,n_invalid,n_total,n_unique=None,n_in_pubchem=None,sm=""):
+def get_scatter_title(config_name,test_name, distribution,model_checkpoint_path,rmse,mape,rmse_c,mape_c,correlation,correlation_c,n_invalid,n_total,n_unique=None,n_in_pubchem=None,sm=""):
 
-    title = f'{config_name} generation of {test_name} with {model_checkpoint_path.split("/")[-4]}-'\
-            f'{model_checkpoint_path.split("/")[-3][:4]}-{model_checkpoint_path.split("/")[-2][11:]}\n'\
+    title = f'{model_checkpoint_path.split("/")[-4]}-{model_checkpoint_path.split("/")[-3][:4]}-{model_checkpoint_path.split("/")[-2][11:]} '\
+            f'{test_name.upper()} conditional {distribution} {config_name} sampling\n'\
             f'rmse {rmse:.3f} mape {mape:.3f} rmse_c {rmse_c:.3f} mape_c {mape_c:.3f}\n'\
             f'corr: {correlation:.3f} corr_c: {correlation_c:.3f} corr_s: {correlation*(1-(n_invalid/n_total)):.3f}\n'\
-            f'N invalid: {n_invalid}, N total: {n_total}'
+            f'{n_invalid}/{n_total} invalid SMILES'
 
-    for info in [n_unique,n_in_pubchem]: # If we include this information, include it in the title
-        if info is not None:
-            title += f", {info=}"
+    if n_unique:
+        title += f" n_unique: {n_unique}"
+    if n_in_pubchem:
+        title += f" n_in_pubchem: {n_in_pubchem}"
     title+=sm
 
     return title
@@ -46,7 +47,7 @@ def calculate_metrics(target,generated):
     correlation, pvalue = spearmanr(target, generated)
     return rmse, mape, correlation
 
-def paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,nones,min_,max_,diffs):
+def paint_plot(title,test_name,stats,target_clean,generated_clean,nones,min_,max_,diffs, stats_width=10):
     fig, ax1 = plt.subplots()
     fig.set_figheight(6)
     fig.set_figwidth(8)
@@ -56,10 +57,13 @@ def paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,no
 
     ax1.scatter(target_clean, generated_clean, c='b')
     ax1.vlines(nones, ymin=min_, ymax=max_, color='r', alpha=0.3)
+    dist = max_ - min_
+    margin = 0.05
+    ax1.set_xlim([min_- margin*dist, max_ + margin*dist])
     ax1.plot([min_, max_], [min_, max_], color='grey', linestyle='--', linewidth=2)
     ax1.plot(target_clean, np.convolve(np.pad(diffs, (2, 2), mode='edge'), np.ones(5)/5, mode='valid'), color='m', alpha=0.5)
-    ax1.set_xlabel(f'target {test_name}')
-    ax1.set_ylabel(f'generated {test_name}')
+    ax1.set_xlabel(f'Target {test_name.upper()}')
+    ax1.set_ylabel(f'Generated {test_name.upper()}')
     ax1.grid(True)
     plt.title(title)
     plt.tight_layout()
