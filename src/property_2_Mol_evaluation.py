@@ -27,7 +27,7 @@ from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
 # from contrastive_decoding.generator import generate as generate_CD
 from contrastive_decoding.contrastive_decoding import contrastive_generate as generate_CD
-from utils.plot_utils import clean_outputs, calculate_metrics, get_scatter_title,get_scatter_plot_bounds, paint_plot
+from utils.plot_utils import clean_outputs, calculate_metrics, get_scatter_title,get_scatter_plot_bounds, paint_plot, PUBCHEM_STATS_PATH
 # from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
 # from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
 # from assert_tokenizer import assert_tokenizer
@@ -116,7 +116,7 @@ class Property2Mol:
         
     @staticmethod
     def get_pubchem_stats():
-        pubchem_stats_file = open("/auto/home/menuab/code/ChemLacticaTestSuite/src/stats_data/pubchem_stats.pkl", 'rb')
+        pubchem_stats_file = open(PUBCHEM_STATS_PATH, 'rb')
         pubchem_stats = pickle.load(pubchem_stats_file)
         pubchem_stats_file.close()
         return pubchem_stats

@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
 import numpy as np
 
+PUBCHEM_STATS_PATH = "/auto/home/menuab/code/ChemLacticaTestSuite/src/stats_data/pubchem_stats.pkl"
+
 def get_scatter_title(config_name,test_name,model_checkpoint_path,rmse,mape,rmse_c,mape_c,correlation,correlation_c,n_invalid,n_total,n_unique=None,n_in_pubchem=None,sm=""):
 
     title = f'{config_name} generation of {test_name} with {model_checkpoint_path.split("/")[-4]}-'\
@@ -66,7 +68,13 @@ def paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,no
 
 
 
-def make_plot(test_name, stats, property_range, targets, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c):
+def make_plot(test_name, stats, property_range, targets, target_clean, generated_clean, nones, correlation, rmse, mape, correlation_c, rmse_c, mape_c,config_name,model_checkpoint_path,n_invalid,n_total):
+    # sort all values by the target sorted indices to not have issues with convolution
+    sorted_indices = np.argsort(target_clean)
+    diffs = diffs[sorted_indices]
+    target_clean = np.array(target_clean)[sorted_indices]
+    generated_clean = np.array(generated_clean)[sorted_indices]
+
     max_, min_, max_g = get_scatter_plot_bounds(targets, generated_clean)
     diffs = np.abs(np.array(target_clean) - np.array(generated_clean))
     title = get_scatter_title(
@@ -83,7 +91,8 @@ def make_plot(test_name, stats, property_range, targets, target_clean, generated
             n_total)
 
     stats_width = (property_range[1] - property_range[0]) / 100
-    paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,nones,min_,max_,diffs)
+    fig = paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,nones,min_,max_,diffs)
+    return fig
 
 def full_workflow(test_name,stats,targets,generated,calculated_properties):
     property_range = [0, 1]
