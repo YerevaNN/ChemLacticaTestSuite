@@ -2,9 +2,10 @@ import os
 
 LOGIT_CONFIGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),"utils", "logit_configs")
 gemma_logit_config_path = os.path.join(LOGIT_CONFIGS_PATH, "gemma_cot.yaml")
-galactica_logit_config_path = os.path.join(LOGIT_CONFIGS_PATH, "gemma_cot.yaml")
+galactica_logit_config_path = os.path.join(LOGIT_CONFIGS_PATH, "gal_cot.yaml")
 
 model_125m_122k_9954 = "/auto/home/menuab/code/checkpoints/9954e52e400b43d18d3a40f6/125m_122k_9954"
+model_125m_12k_9954 = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/9954e52e400b43d18d3a40f6/checkpoint-12288"
 model_125m_20k_9954 = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/9954e52e400b43d18d3a40f6/checkpoint-20480"
 model_125m_118k_26d3 = "/auto/home/menuab/code/checkpoints/26d322857a184fcbafda5d4a/125m_118k_26d3/"
 model_125m_4k_b8cb = "/auto/home/menuab/code/checkpoints/b8cb3a81b61e40aa919e06bc/125m_4k_b8cb/"
@@ -43,6 +44,21 @@ model_2b_7k_d46c = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/d46cd1cb55284
 model_2b_9b_d46c = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/d46cd1cb552847719af4e128/checkpoint-9000"
 model_2b_10k_d46c = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/d46cd1cb552847719af4e128/checkpoint-10500"
 model_2b_12k_d46c = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/d46cd1cb552847719af4e128/checkpoint-12000"
+
+model_2b_2k_23f7 = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/23f7ee79bab74b319447ad28/checkpoint-2000"
+model_2b_2k_2995 = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/2995fb06c3404625a1e9fbec/checkpoint-2000"
+model_2b_2k_4fa8 = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/4fa8acfeb35e4b71a41cfe93/checkpoint-2000"
+
+model_125m_20k_13fa = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/13fa27da6d174d53adfe4c2f/checkpoint-20000"
+model_2b_8k_452a = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/452a723110524d27a5dfc438/checkpoint-8000"
+
+model_2b_11k_d6e6 = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/d6e6a76e91814ad68d5fa264/checkpoint-11000"
+model_2b_2k_699e = "/nfs/dgx/raid/chem/checkpoints/google/gemma-2b/699e8c6078bb4461a73b39de/checkpoint-2000"
+
+model_125m_18k_1f28 = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/1f289ff103034364bd27e1c3/checkpoint-18000/"
+
+model_2b_12k_0717 = "/nfs/dgx/raid/chem/checkpoints/h100/google/gemma-2b/0717d445bcf44e31b2887892/checkpoint-12000"
+model_2b_18k_0717 = "/nfs/dgx/raid/chem/checkpoints/h100/google/gemma-2b/0717d445bcf44e31b2887892/checkpoint-18000"
 
 gemma_original_tokenizer_path = "google/gemma-2b"
 gemma_custom_tokenizer_path = "/auto/home/menuab/code/ChemLactica/chemlactica/tokenizer/GemmaTokenizer"
