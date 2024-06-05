@@ -80,6 +80,7 @@ class Property2Mol:
         self.property_range=property_range
         self.generation_config=generation_config
         self.generation_decoding_config=generation_config["config"]
+        self.generation_decoding_config["eos_token_id"] = 8 if "2b" in model_checkpoint_path else 20
         self.generation_config_name=generation_config["name"]
         self.regexp=regexp
         self.model_checkpoint_path = model_checkpoint_path + '/' if model_checkpoint_path[-1] != '/' else model_checkpoint_path
@@ -107,12 +108,19 @@ class Property2Mol:
             self.start_aim_tracking(description)
         else:
             self.eval_hash = 'none'
-        self.start_log_file()
+        self.start_log_file(description)
         # assert_model_tokenizer()
         self.pubchem_stats = self.get_pubchem_stats()
         if self.target_dist == "prior":
             self.prior_dist = self.get_prior_dist_samples()        
         self.check_for_novelty = check_for_novelty
+        self.tic = {
+            "QED": .01,
+            "SAS": .1,
+            "TPSA": 1,
+            "WEIGHT": 12,
+            "CLOGP": .25,
+        }
         
     @staticmethod
     def get_pubchem_stats():
@@ -143,11 +151,19 @@ class Property2Mol:
             pass
         self.aim_run['hparams'] = evaluation_config
     
-    def start_log_file(self):
-        model_name = self.model_checkpoint_path.split("/")[-2]
+    def start_log_file(self, description):
+        model_name = self.model_checkpoint_path.split("/")[-4]
+        model_hash = self.model_checkpoint_path.split("/")[-3][:4]
+        model_checkpoint = self.model_checkpoint_path.split("/")[-2][11:]
         self.results_path = os.path.join( os.path.join(result_path, "property_2_Mol/"), \
-                                         f"{datetime.now().strftime('%Y-%m-%d-%H:%M')}-{model_name}"\
-                                         f"-{self.generation_config_name}-{self.eval_hash}/")
+                                         f"{datetime.now().strftime('%Y-%m-%d-%H:%M')}"\
+                                         f"-{model_name}-{model_hash}-{model_checkpoint}"\
+                                         f"-{self.generation_config_name}-{self.eval_hash}")
+        if description:
+            description += "/"
+            self.results_path += "-" + description
+        else:
+            self.results_path += "/"
         print(f'results_path = {self.results_path}\n')
         if not os.path.exists(self.results_path):
             os.makedirs(self.results_path)
@@ -178,7 +194,7 @@ class Property2Mol:
                 use_flash_attn=True,
                 torch_dtype=getattr(torch, self.torch_dtype)
                 )
-        elif "9954" in self.model_checkpoint_path:
+        elif "facebook" in self.model_checkpoint_path:
             class LinearFloat32(torch.nn.Linear):
                 def forward(self, _input) -> torch.Tensor:
                     return super().forward(_input).to(torch.float32)
@@ -195,7 +211,7 @@ class Property2Mol:
                 self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype), attn_implementation="flash_attention_2"
             )
         elif "2b" in self.model_checkpoint_path:
-            model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path)
+            model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=torch.float16)
         model.eval()
         model.to(self.device)
         # print(f'model loaded with embedding size of : {model.model.decoder.embed_tokens.num_embeddings}, model dtype: {model.dtype}')
@@ -204,6 +220,7 @@ class Property2Mol:
 
     def load_tokenizer(self):
         tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_path)
+        tokenizer.add_bos_token = False
         print(f"tokenizer loaded with size of {len(tokenizer)}")
 
         return tokenizer
@@ -422,7 +439,7 @@ class Property2Mol:
             in_pubchem = check_in_pubchem(uniques)
             n_in_pubchem = sum(in_pubchem.values())
         else:
-            n_in_pubchem = 0
+            n_in_pubchem = -1
         n_total_gens = len(self.inputs) * self.generation_decoding_config['num_return_sequences'] \
             if self.generation_decoding_config['do_sample'] == True else len(self.inputs)
         return errors, n_invalid_generations, n_uniques, n_in_pubchem, n_total_gens
@@ -444,7 +461,7 @@ class Property2Mol:
             for r in raw_output:
                 self.log_file.write(f'raw_output: {r}\n')
             self.log_file.write('-----------\n')
-            for o, cp, e, per, l, nl in zip(output, c_prop, err, perplexity, length, n_logs):
+            for o, cp, e, per, l, nl in zip_longest(output, c_prop, err, perplexity, length, n_logs):
                 self.log_file.write(f'captured_output: {o}\n')
                 self.log_file.write(f'generated_property: {cp} diff: {e}, '\
                                     f'perplexity: {per}, normalized logs sum: {nl} '\
@@ -459,14 +476,16 @@ class Property2Mol:
         # else:
         #     sm = ""
         sm = ""
-        title = get_scatter_title(self.generation_config_name,test_name,self.model_checkpoint_path,rmse,mape,rmse_c,mape_c,correlation,correlation_c,self.n_invalid_generations,self.n_total_gens,self.n_unique,self.n_in_pubchem,sm)
+        title = get_scatter_title(self.generation_config_name,test_name, self.target_dist,self.model_checkpoint_path,rmse,mape,rmse_c,mape_c,correlation,correlation_c,self.n_invalid_generations,self.n_total_gens,self.n_unique,self.n_in_pubchem,sm)
         stats = self.pubchem_stats[test_name.upper()]
         property_range = self.property_range[test_name]["range"]
-        stats_width = (property_range[1] - property_range[0]) / 100
-
-        fig = paint_plot(title,test_name,stats,stats_width,target_clean,generated_clean,nones,min_,max_,diffs)
+        # stats_width = (property_range[1] - property_range[0]) / 10
+        # stats_width *= 10 if test_name.lower() == "CLOGP" else stats_width
+        stats_width = self.tic[test_name.upper()]
+        fig = paint_plot(title,test_name,stats,target_clean,generated_clean,nones,min_,max_,diffs,stats_width)
         print("saving to", self.results_path + test_name + '.png')
         fig.savefig(self.results_path + test_name + '.png', dpi=300, format="png")
+        # fig.savefig(self.results_path + test_name + '.pdf', bbox_inches='tight', format="pdf")
         fig.clf()
         plt.close()
         
