@@ -1,15 +1,33 @@
-greedy_generation_config : 
+gal_greedy_generation_config : 
     name: "greedy"
     multiple_rounds_generation: false
     config: 
         eos_token_id: 20
-        max_new_tokens: 300
+        max_new_tokens: 2000    
+        suppress_tokens: [2, 50002, 50035, 50003, 50036, 50000, 50033]
+        repetition_penalty: 1.01
         do_sample: false
         num_return_sequences: 1
         num_beams: 1
         return_dict_in_generate: true
         output_scores: true
-        renormalize_logits: false
+        renormalize_logits: true
+
+gem_greedy_generation_config : 
+    name: "greedy"
+    multiple_rounds_generation: false
+    config: 
+        eos_token_id: 8
+        max_new_tokens: 2000    
+        suppress_tokens: [2, 10, 44, 11, 45, 12, 46, 13, 47]
+        repetition_penalty: 1.01
+        do_sample: false
+        num_return_sequences: 1
+        num_beams: 1
+        return_dict_in_generate: true
+        output_scores: true
+        renormalize_logits: true
+
 
 # greedy_beam_generation_config : {
 #     "name": "greedy_beam=12",
