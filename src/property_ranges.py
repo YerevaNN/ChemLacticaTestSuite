@@ -26,22 +26,22 @@ test_suite = {
 }
 
 mock_test_suite = {
-    "qed": {
-        "input_properties": ["qed"],
-        "target_properties": ["qed"]
+    "sas": {
+        "input_properties": ["sas"],
+        "target_properties": ["sas"]
     }
 }
 
 property_range = {
     "sas": {
-        "range": (1.1, 10),
+        "range": (1.0, 10.0),
         "step":  0.1,
         "mean": 2.94,
         "std": 0.82,
         "smiles": ""
     },
     "qed": {
-        "range": (0.01, 1),
+        "range": (0.0, 0.95),
         "step":  0.01,
         "mean": 0.60,
         "std": 0.22,
@@ -54,22 +54,22 @@ property_range = {
         "mean": 0.734 # TODO need to update
     },
     "weight": {
-        "range": (100.1, 1000.1),
+        "range": (100.0, 1000.0),
         "step":  1,
         "mean": 366,
         "std": 166,
         "smiles": ""
     },
     "clogp": {
-        "range": (1.1, 10),
+        "range": (1.0, 10),
         "step":  0.1,
         "mean": 3.49,
         "std": 1.53,
         "smiles": ""
     },
     "tpsa": {
-        "range": (0, 100.5),
-        "step":  0.5,
+        "range": (0, 100.0),
+        "step":  1,
         "mean": 57.42,
         "std": 23.24,
         "smiles": ""
