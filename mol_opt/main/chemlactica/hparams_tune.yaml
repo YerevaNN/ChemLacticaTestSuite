@@ -8,7 +8,6 @@ parameters:
 
   num_mols: [0, 1, 2]
   num_similars: [0, 1, 2]
-  pool_size: [0, 2, 4, 6, 10]
 
   rej_sample_config:
     train_tol_level: [1, 3, 5, 7]
