@@ -1,0 +1,39 @@
+checkpoint_path: /home/admin/checkpoints/facebook/galactica-1.3b/6d68b252d53647a99cf2fa8b/last
+device: cuda:0
+eos_token: </s>
+generation_batch_size: 100
+generation_config:
+  do_sample: true
+  eos_token_id: 20
+  max_new_tokens: 100
+  repetition_penalty: 1.0
+generation_temperature:
+- 1.0
+- 1.5
+num_gens_per_iter: 200
+num_mols: 1
+num_processes: 8
+num_similars: 1
+pool_size: 50
+rej_sample_config:
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  checkpoints_dir: ./
+  dataloader_num_workers: 1
+  global_gradient_norm: 1.0
+  gradient_accumulation_steps: 8
+  max_learning_rate: 1.0e-05
+  max_seq_length: 2048
+  num_train_epochs: 5
+  packing: false
+  train_batch_size: 2
+  train_condition: tolerance
+  warmup_steps: 0
+  weight_decay: 0.1
+sim_range:
+- 0.8
+- 0.9
+strategy:
+- rej-sample-v2
+tokenizer_path: /home/admin/tigran/ChemLactica/chemlactica/tokenizer/ChemLacticaTokenizer66
+validation_perc: 0.2

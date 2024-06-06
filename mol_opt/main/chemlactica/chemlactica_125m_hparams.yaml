@@ -26,6 +26,7 @@ rej_sample_config:
   train_tol_level: 7
   checkpoints_dir: checkpoints
   max_learning_rate: 0.0001
+  lr_end: 0
   train_batch_size: 2
   gradient_accumulation_steps: 8
   weight_decay: 0.1

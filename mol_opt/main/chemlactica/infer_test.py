@@ -10,13 +10,13 @@ def random_text(length):
 
 
 if __name__ == "__main__":
-    gen_batch_size = 200
-    device = "cuda:0"
-    # checkpoint_path = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/9954e52e400b43d18d3a40f6/checkpoint-20480"
-    # tokenizer_path = "/auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLacticaTokenizer66"
-    checkpoint_path = "/nfs/dgx/raid/chem/checkpoints/h100/facebook/galactica-1.3b/6d68b252d53647a99cf2fa8b/checkpoint-19000"
-    tokenizer_path = "/auto/home/tigranfahradyan/ChemLactica/ChemLactica/chemlactica/tokenizer/ChemLacticaTokenizer66"
-    model = AutoModelForCausalLM.from_pretrained(checkpoint_path, torch_dtype=torch.bfloat16).to(device)
+    gen_batch_size = 800
+    device = "cuda:1"
+    checkpoint_path = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/9954e52e400b43d18d3a40f6/checkpoint-20480"
+    tokenizer_path = "/auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLacticaTokenizer66"
+    # checkpoint_path = "/nfs/dgx/raid/chem/checkpoints/h100/facebook/galactica-1.3b/6d68b252d53647a99cf2fa8b/checkpoint-19000"
+    # tokenizer_path = "/auto/home/tigranfahradyan/ChemLactica/ChemLactica/chemlactica/tokenizer/ChemLacticaTokenizer66"
+    model = AutoModelForCausalLM.from_pretrained(checkpoint_path).to(device)
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, padding_side="left")
     # print(tokenizer)
 
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     if type(model) == OPTForCausalLM:
         del data["token_type_ids"]
     for key, value in data.items():
-        data[key] = value[:, :150]
+        data[key] = value[:, :110]
     print(data.input_ids.shape)
     outputs = model.generate(
         **data,
