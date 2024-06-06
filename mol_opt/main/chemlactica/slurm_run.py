@@ -89,8 +89,8 @@ if __name__ == "__main__":
 
     config_file_path = "main/chemlactica/chemlactica_125m_hparams.yaml"
     # config_file_path = "main/chemlactica/chemlactica_1.3b_hparams.yaml"
-    # hparam_configs = create_hparam_configs(config_file_path)
-    infer_config = [yaml.safe_load(open(config_file_path))]
+    hparam_configs = create_hparam_configs(config_file_path)
+    # infer_config = [yaml.safe_load(open(config_file_path))]
     model_name = "-".join(config_file_path.split("/")[-1].split("_")[:2])
 
     executor = submitit.AutoExecutor(folder="/auto/home/tigranfahradyan/slurm_jobs/PMO/job_%j")
@@ -101,9 +101,9 @@ if __name__ == "__main__":
     )
     jobs = []
     with executor.batch():
-        for config in infer_config:
+        for config in hparam_configs:
             formatted_date_time = datetime.datetime.now().strftime("%Y-%m-%d")
-            base = f"main/chemlactica/results/{formatted_date_time}"
+            base = f"main/chemlactica/results/{formatted_date_time}-tune"
             os.makedirs(base, exist_ok=True)
             v = 0
             name = model_name + "-" + "+".join(config["strategy"])
