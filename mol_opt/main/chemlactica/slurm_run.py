@@ -96,7 +96,8 @@ if __name__ == "__main__":
     executor = submitit.AutoExecutor(folder="/auto/home/tigranfahradyan/slurm_jobs/PMO/job_%j")
     executor.update_parameters(
         name="chemlactica-pmo", timeout_min=int(n_runs * 3 * 60),
-        gpus_per_node=1, nodes=1, mem_gb=50, cpus_per_task=8,
+        gpus_per_node=1,
+        nodes=1, mem_gb=50, cpus_per_task=1,
         slurm_array_parallelism=10
     )
     jobs = []
