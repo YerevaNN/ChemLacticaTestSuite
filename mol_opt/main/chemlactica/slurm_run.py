@@ -124,5 +124,5 @@ if __name__ == "__main__":
                 ])
                 print(' '.join(function.command))
                 # subprocess.run(function.command)
-                job = executor.submit(function)
-                jobs.append(job)
+                # job = executor.submit(function)
+                # jobs.append(job)

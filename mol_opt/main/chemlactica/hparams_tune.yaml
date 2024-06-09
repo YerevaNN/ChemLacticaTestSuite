@@ -6,9 +6,9 @@ metric:
 parameters:
   strategy: [[rej-sample-v2]]
 
-  pool_size: [2, 10, 30, 50]
+  pool_size: [10, 30, 50, 100]
   # num_mols: [0, 1]
-  num_similars: [1, 2, 5]
+  num_similars: [0, 1, 2, 5]
 
   rej_sample_config:
     train_tol_level: [3, 5, 7]
