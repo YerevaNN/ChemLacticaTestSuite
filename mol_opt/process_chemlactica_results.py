@@ -58,11 +58,11 @@ def process_tune_result(dir, hparams_to_log):
 
 def process_tune_results(root_dir):
     hparams_to_log = {
-        "num_mols": "C",
+        # "num_mols": "C",
         "num_similars": "S",
-        "pool_size": "P"
-        # "rej_sample_config+max_learning_rate": "lr",
-        # "rej_sample_config+train_tol_level": "tol_level"
+        "pool_size": "P",
+        "rej_sample_config+max_learning_rate": "lr",
+        "rej_sample_config+train_tol_level": "tol_level"
     }
     result_pairs = []
     output_lines = []
