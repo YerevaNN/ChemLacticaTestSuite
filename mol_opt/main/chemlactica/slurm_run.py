@@ -39,29 +39,29 @@ def create_hparam_configs(config_file_path):
 
 def get_all_tasks():
     return [
-        "albuterol_similarity",
-        "amlodipine_mpo",
-        "celecoxib_rediscovery",
-        "deco_hop",
+        # "albuterol_similarity",
+        # "amlodipine_mpo",
+        # "celecoxib_rediscovery",
+        # "deco_hop",
         "drd2",
-        "fexofenadine_mpo",
+        # "fexofenadine_mpo",
         "gsk3b",
-        "isomers_c7h8n2o2",
-        "isomers_c9h10n2o2pf2cl",
+        # "isomers_c7h8n2o2",
+        # "isomers_c9h10n2o2pf2cl",
         "jnk3",
-        "median1",
-        "median2",
-        "mestranol_similarity",
-        "osimertinib_mpo",
-        "perindopril_mpo",
-        "qed",
-        "ranolazine_mpo",
-        "scaffold_hop",
-        "sitagliptin_mpo",
-        "thiothixene_rediscovery",
-        "troglitazone_rediscovery",
-        "valsartan_smarts",
-        "zaleplon_mpo"
+        # "median1",
+        # "median2",
+        # "mestranol_similarity",
+        # "osimertinib_mpo",
+        # "perindopril_mpo",
+        # "qed",
+        # "ranolazine_mpo",
+        # "scaffold_hop",
+        # "sitagliptin_mpo",
+        # "thiothixene_rediscovery",
+        # "troglitazone_rediscovery",
+        # "valsartan_smarts",
+        # "zaleplon_mpo"
     ]
 
 
@@ -82,22 +82,22 @@ def get_hparam_tunning_tasks():
 
 
 if __name__ == "__main__":
-    task_names = get_hparam_tunning_tasks()
+    # task_names = get_hparam_tunning_tasks()
     # task_names = get_ablation_tasks()
-    # task_names = get_all_tasks()
-    n_runs = 3
+    task_names = get_all_tasks()
+    n_runs = 5
 
-    # config_file_path = "main/chemlactica/chemlactica_125m_hparams.yaml"
-    config_file_path = "main/chemlactica/chemlactica_1.3b_hparams.yaml"
+    config_file_path = "main/chemlactica/chemlactica_125m_hparams.yaml"
+    # config_file_path = "main/chemlactica/chemlactica_1.3b_hparams.yaml"
     # hparam_configs = create_hparam_configs(config_file_path)
     infer_config = [yaml.safe_load(open(config_file_path))]
     model_name = "-".join(config_file_path.split("/")[-1].split("_")[:2])
 
     executor = submitit.AutoExecutor(folder="/auto/home/tigranfahradyan/slurm_jobs/PMO/job_%j")
     executor.update_parameters(
-        name="chemlactica-pmo", timeout_min=int(n_runs * 3 * 60),
+        name="chemlactica-pmo", timeout_min=int(n_runs * 60),
         gpus_per_node=1,
-        nodes=1, mem_gb=30, cpus_per_task=4,
+        nodes=1, mem_gb=30, cpus_per_task=2,
         slurm_array_parallelism=10
     )
     jobs = []
@@ -124,5 +124,5 @@ if __name__ == "__main__":
                 ])
                 print(' '.join(function.command))
                 # subprocess.run(function.command)
-                # job = executor.submit(function)
-                # jobs.append(job)
+                job = executor.submit(function)
+                jobs.append(job)

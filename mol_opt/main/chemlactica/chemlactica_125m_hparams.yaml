@@ -2,10 +2,10 @@
 # checkpoint_path: /nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/9954e52e400b43d18d3a40f6/checkpoint-12288
 checkpoint_path: /nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/1f289ff103034364bd27e1c3/checkpoint-18000
 tokenizer_path: /auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLacticaTokenizer66
-pool_size: 50
+pool_size: 10
 validation_perc: 0.2
 num_mols: 0
-num_similars: 1
+num_similars: 5
 num_gens_per_iter: 200
 device: cuda:0
 sim_range: [0.8, 0.9]
@@ -25,7 +25,7 @@ strategy: [rej-sample-v2]
 rej_sample_config:
   train_tol_level: 5
   checkpoints_dir: checkpoints
-  max_learning_rate: 0.0001
+  max_learning_rate: 0.00001
   lr_end: 0
   train_batch_size: 2
   gradient_accumulation_steps: 8
