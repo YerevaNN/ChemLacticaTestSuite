@@ -3,7 +3,7 @@ tokenizer_path: /auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLactica
 pool_size: 50
 validation_perc: 0.2
 num_mols: 0
-num_similars: 1
+num_similars: 2
 num_gens_per_iter: 200
 device: cuda:0
 sim_range: [0.8, 0.9]
@@ -18,7 +18,7 @@ generation_config:
   do_sample: true
   eos_token_id: 20
 
-strategy: [rej-sample-v2]
+strategy: [default]
 
 rej_sample_config:
   train_tol_level: 5

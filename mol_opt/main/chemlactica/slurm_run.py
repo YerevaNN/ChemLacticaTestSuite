@@ -87,24 +87,24 @@ if __name__ == "__main__":
     # task_names = get_all_tasks()
     n_runs = 3
 
-    config_file_path = "main/chemlactica/chemlactica_125m_hparams.yaml"
-    # config_file_path = "main/chemlactica/chemlactica_1.3b_hparams.yaml"
-    hparam_configs = create_hparam_configs(config_file_path)
-    # infer_config = [yaml.safe_load(open(config_file_path))]
+    # config_file_path = "main/chemlactica/chemlactica_125m_hparams.yaml"
+    config_file_path = "main/chemlactica/chemlactica_1.3b_hparams.yaml"
+    # hparam_configs = create_hparam_configs(config_file_path)
+    infer_config = [yaml.safe_load(open(config_file_path))]
     model_name = "-".join(config_file_path.split("/")[-1].split("_")[:2])
 
     executor = submitit.AutoExecutor(folder="/auto/home/tigranfahradyan/slurm_jobs/PMO/job_%j")
     executor.update_parameters(
         name="chemlactica-pmo", timeout_min=int(n_runs * 3 * 60),
         gpus_per_node=1,
-        nodes=1, mem_gb=50, cpus_per_task=1,
+        nodes=1, mem_gb=30, cpus_per_task=4,
         slurm_array_parallelism=10
     )
     jobs = []
     with executor.batch():
-        for config in hparam_configs:
+        for config in infer_config:
             formatted_date_time = datetime.datetime.now().strftime("%Y-%m-%d")
-            base = f"main/chemlactica/results/{formatted_date_time}-tune"
+            base = f"main/chemlactica/results/{formatted_date_time}"
             os.makedirs(base, exist_ok=True)
             v = 0
             name = model_name + "-" + "+".join(config["strategy"])
