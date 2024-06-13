@@ -6,10 +6,10 @@ metric:
 parameters:
   strategy: [[rej-sample-v2]]
 
-  pool_size: [10, 30, 50, 100]
+  pool_size: [10, 30, 50]
   # num_mols: [0, 1]
   num_similars: [1, 2, 5]
 
   rej_sample_config:
-    train_tol_level: [5]
+    train_tol_level: [3, 5, 7]
     max_learning_rate: [0.0001, 0.00001]
