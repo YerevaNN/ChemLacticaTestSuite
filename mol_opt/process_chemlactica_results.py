@@ -145,7 +145,7 @@ def process_results(dir):
     auc_sum = 0
     avg_sum = 0
     for task_name, mean, std, avg_mean, avg_std in result_pairs:
-        print(f"{task_name} - AUC {mean:.3f} \pm {std:.3f}, AVG {avg_mean:.3f} \pm {avg_std:.3f}")
+        print(f"{task_name} - AUC {mean:.3f} $\pm$ {std:.3f}, AVG {avg_mean:.3f} $\pm$ {avg_std:.3f}")
         auc_sum += mean
         avg_sum += avg_mean
     
