@@ -1,6 +1,6 @@
 checkpoint_path: /nfs/dgx/raid/chem/checkpoints/h100/facebook/galactica-1.3b/6d68b252d53647a99cf2fa8b/checkpoint-19000
 tokenizer_path: /auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLacticaTokenizer66
-pool_size: 30
+pool_size: 10
 validation_perc: 0.2
 num_mols: 0
 num_similars: 2
@@ -8,7 +8,7 @@ num_gens_per_iter: 200
 device: cuda:0
 sim_range: [0.4, 0.9]
 num_processes: 8
-generation_batch_size: 200
+generation_batch_size: 120
 eos_token: "</s>"
 generation_temperature: [1.0, 1.5]
 

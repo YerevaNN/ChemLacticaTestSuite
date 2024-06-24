@@ -81,7 +81,7 @@ def process_tune_results(root_dir):
                     auc_sum += mean
                     avg_sum += avg_mean
                 
-                line += f"sum: AUC-{auc_sum:.3f}, AVG-{avg_sum:.3f}"
+                line += f"sum: AUC-{auc_sum:.3f}, AVG-{avg_sum:.3f}, AUC+AVG-{auc_sum+avg_sum:.3f}"
                 output_lines.append(line)
                 print("constructed for", config_repr)
             progress_bar.update(1)

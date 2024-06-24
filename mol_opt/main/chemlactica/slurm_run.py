@@ -39,29 +39,29 @@ def create_hparam_configs(config_file_path):
 
 def get_all_tasks():
     return [
-        "albuterol_similarity",
-        "amlodipine_mpo",
-        "celecoxib_rediscovery",
-        "deco_hop",
+        # "albuterol_similarity",
+        # "amlodipine_mpo",
+        # "celecoxib_rediscovery",
+        # "deco_hop",
         "drd2",
-        "fexofenadine_mpo",
+        # "fexofenadine_mpo",
         "gsk3b",
-        "isomers_c7h8n2o2",
-        "isomers_c9h10n2o2pf2cl",
+        # "isomers_c7h8n2o2",
+        # "isomers_c9h10n2o2pf2cl",
         "jnk3",
-        "median1",
-        "median2",
-        "mestranol_similarity",
-        "osimertinib_mpo",
-        "perindopril_mpo",
-        "qed",
-        "ranolazine_mpo",
-        "scaffold_hop",
-        "sitagliptin_mpo",
-        "thiothixene_rediscovery",
-        "troglitazone_rediscovery",
-        "valsartan_smarts",
-        "zaleplon_mpo"
+        # "median1",
+        # "median2",
+        # "mestranol_similarity",
+        # "osimertinib_mpo",
+        # "perindopril_mpo",
+        # "qed",
+        # "ranolazine_mpo",
+        # "scaffold_hop",
+        # "sitagliptin_mpo",
+        # "thiothixene_rediscovery",
+        # "troglitazone_rediscovery",
+        # "valsartan_smarts",
+        # "zaleplon_mpo"
     ]
 
 
@@ -111,6 +111,7 @@ if __name__ == "__main__":
             while os.path.exists(os.path.join(base, f"{name}-{v}")):
                 v += 1
             output_dir = os.path.join(base, f"{name}-{v}")
+            # output_dir = "/auto/home/tigranfahradyan/ChemLacticaTestSuite/mol_opt/main/chemlactica/results/2024-06-20/chemlactica-125m-rej-sample-v2-1"
             os.makedirs(output_dir, exist_ok=True)
             yaml.safe_dump(config, open(os.path.join(output_dir, "hparams.yaml"), "w"))
             for task_name in task_names:

@@ -1,6 +1,9 @@
 from transformers import OPTForCausalLM, AutoModelForCausalLM, AutoTokenizer
 import torch
 import random
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 
 def random_text(length):
