@@ -144,12 +144,18 @@ def process_results(dir):
     result_pairs.sort(key=lambda x:x[0])
     auc_sum = 0
     avg_sum = 0
-    for task_name, mean, std, avg_mean, avg_std in result_pairs:
-        print(f"{task_name} - AUC {mean:.3f} $\pm$ {std:.3f}, AVG {avg_mean:.3f} $\pm$ {avg_std:.3f}")
-        auc_sum += mean
-        avg_sum += avg_mean
-    
-    print(f"AUC {auc_sum:.3f}, AVG {avg_sum:.3f}")
+    with open(os.path.join(dir, "results.txt"), "w") as _file:
+        for task_name, mean, std, avg_mean, avg_std in result_pairs:
+            line = f"{task_name} - AUC {mean:.3f} $\pm$ {std:.3f}, AVG {avg_mean:.3f} $\pm$ {avg_std:.3f}"
+            print(line)
+            _file.write(line + "\n")
+            auc_sum += mean
+            avg_sum += avg_mean
+        
+        line = f"AUC {auc_sum:.3f}, AVG {avg_sum:.3f}"
+        print(line)
+        _file.write(line + "\n")
+
 
 
 if __name__ == "__main__":
