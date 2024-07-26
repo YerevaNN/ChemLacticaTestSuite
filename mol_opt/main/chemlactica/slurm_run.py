@@ -94,7 +94,7 @@ if __name__ == "__main__":
     infer_config = [yaml.safe_load(open(config_file_path))]
     model_name = "-".join(config_file_path.split("/")[-1].split("_")[:2])
 
-    executor = submitit.AutoExecutor(folder="/auto/home/tigranfahradyan/slurm_jobs/PMO/job_%j")
+    executor = submitit.AutoExecutor(folder="slurm_jobs/PMO/job_%j")
     executor.update_parameters(
         name="chemlactica-pmo", timeout_min=int(n_runs * 2 * 60),
         gpus_per_node=1,
@@ -114,7 +114,6 @@ if __name__ == "__main__":
             while os.path.exists(os.path.join(base, f"{name}-{v}")):
                 v += 1
             output_dir = os.path.join(base, f"{name}-{v}")
-            # output_dir = "/auto/home/tigranfahradyan/ChemLacticaTestSuite/mol_opt/main/chemlactica/results/2024-06-20/chemlactica-125m-rej-sample-v2-1"
             os.makedirs(output_dir, exist_ok=True)
             yaml.safe_dump(config, open(os.path.join(output_dir, "hparams.yaml"), "w"))
             for task_name in task_names:
