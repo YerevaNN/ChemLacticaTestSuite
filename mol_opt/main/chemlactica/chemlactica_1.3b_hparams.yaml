@@ -21,7 +21,7 @@ generation_config:
 strategy: [rej-sample-v2]
 
 rej_sample_config:
-  train_tol_level: 3
+  train_tol_level: 5
   checkpoints_dir: checkpoints
   max_learning_rate: 0.0001
   lr_end: 0

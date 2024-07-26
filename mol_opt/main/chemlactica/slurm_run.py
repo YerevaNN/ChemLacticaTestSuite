@@ -67,10 +67,10 @@ def get_all_tasks():
 
 def get_ablation_tasks():
     return [
-        "jnk3",
-        "median1",
+        # "jnk3",
+        # "median1",
         "sitagliptin_mpo",
-        "scaffold_hop"
+        # "scaffold_hop"
     ]
 
 
@@ -82,14 +82,15 @@ def get_hparam_tunning_tasks():
 
 
 if __name__ == "__main__":
-    task_names = get_hparam_tunning_tasks()
+    # task_names = get_hparam_tunning_tasks()
     # task_names = get_ablation_tasks()
-    # task_names = get_all_tasks()
-    n_runs = 3
+    task_names = get_all_tasks()
+    n_runs = 5
 
-    # config_file_path = "main/chemlactica/chemlactica_125m_hparams.yaml"
-    config_file_path = "main/chemlactica/chemlactica_1.3b_hparams.yaml"
-    hparam_configs = create_hparam_configs(config_file_path)
+    config_file_path = "main/chemlactica/chemlactica_125m_hparams.yaml"
+    # config_file_path = "main/chemlactica/chemlactica_1.3b_hparams.yaml"
+    # config_file_path = "main/chemlactica/chemma_2b_hparams.yaml"
+    # hparam_configs = create_hparam_configs(config_file_path)
     infer_config = [yaml.safe_load(open(config_file_path))]
     model_name = "-".join(config_file_path.split("/")[-1].split("_")[:2])
 
@@ -100,6 +101,8 @@ if __name__ == "__main__":
         nodes=1, mem_gb=30, cpus_per_task=2,
         slurm_array_parallelism=10
     )
+    # print(len(hparam_configs))
+    
     jobs = []
     with executor.batch():
         for config in infer_config:

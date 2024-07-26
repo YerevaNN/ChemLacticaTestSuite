@@ -2,8 +2,7 @@ main/smiles_lstm_hc/pretrained_model/model_final_0.473.pt
 main/molpal/libraries/Enamine50k.h5
 main/dog_gen/scripts/dog_gen/chkpts/doggen_weights.pth.pick
 main/gflownet/data/docked_mols.h5
-main/chemlactica/result_vision_H100
-main/chemlactica/results
+main/chemlactica/results_archive
 runs/*
 
 # Byte-compiled / optimized / DLL files

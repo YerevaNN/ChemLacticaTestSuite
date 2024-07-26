@@ -53,7 +53,7 @@ def process_tune_result(dir, hparams_to_log):
     result_pairs.sort(key=lambda x:x[0])
     if len(result_pairs) != 0:
         return config_repr, result_pairs
-    return None
+    return config_repr, None
 
 
 def process_tune_results(root_dir):
@@ -72,16 +72,17 @@ def process_tune_results(root_dir):
         for res in pol.map(partial(process_tune_result, hparams_to_log=hparams_to_log), all_dirs):
             if res:
                 config_repr, result_pairs = res
-                auc_sum = 0
-                avg_sum = 0
                 line = config_repr + ": "
-                num_runs = len(result_pairs)
-                for task_name, mean, std, avg_mean, avg_std in result_pairs:
-                    line += f"{task_name}: AUC-{mean:.3f} $\pm$ {std:.3f}, AVG-{avg_mean:.3f} $\pm$ {avg_std:.3f}, "
-                    auc_sum += mean
-                    avg_sum += avg_mean
-                
-                line += f"sum: AUC-{auc_sum:.3f}, AVG-{avg_sum:.3f}, AUC+AVG-{auc_sum+avg_sum:.3f}"
+                if result_pairs:
+                    auc_sum = 0
+                    avg_sum = 0
+                    num_runs = len(result_pairs)
+                    for task_name, mean, std, avg_mean, avg_std in result_pairs:
+                        line += f"{task_name}: AUC-{mean:.3f} $\pm$ {std:.3f}, AVG-{avg_mean:.3f} $\pm$ {avg_std:.3f}, "
+                        auc_sum += mean
+                        avg_sum += avg_mean
+                    
+                    line += f"sum: AUC-{auc_sum:.3f}, AVG-{avg_sum:.3f}, AUC+AVG-{auc_sum+avg_sum:.3f}"
                 output_lines.append(line)
                 print("constructed for", config_repr)
             progress_bar.update(1)
@@ -115,11 +116,10 @@ def inner_proc(e):
             avg_top10 = np.mean(sorted(scores, reverse=True)[:10])
             avg_top10s.append(avg_top10)
             auc_top10s.append(auc_top10)
-            diversity_scores.append
         except Exception as e:
             print(e)
     if len(auc_top10s) != 0:
-        return (task_name, np.mean(auc_top10s), np.std(auc_top10s), np.mean(avg_top10s), np.std(avg_top10s))
+        return (task_name, auc_top10s, avg_top10s)
     return None
 
 
@@ -144,18 +144,36 @@ def process_results(dir):
     result_pairs.sort(key=lambda x:x[0])
     auc_sum = 0
     avg_sum = 0
+    num_seeds = None
     with open(os.path.join(dir, "results.txt"), "w") as _file:
-        for task_name, mean, std, avg_mean, avg_std in result_pairs:
-            line = f"{task_name} - AUC {mean:.3f} $\pm$ {std:.3f}, AVG {avg_mean:.3f} $\pm$ {avg_std:.3f}"
+        per_seed_auc_top10s, per_seed_avg_top10s = [], []
+        for task_name, auc_top10s, avg_top10s in result_pairs:
+            line = f"{task_name} - AUC {np.mean(auc_top10s):.3f} $\pm$ {np.std(auc_top10s):.3f}, AVG {np.mean(avg_top10s):.3f} $\pm$ {np.std(avg_top10s):.3f}"
             print(line)
             _file.write(line + "\n")
-            auc_sum += mean
-            avg_sum += avg_mean
+            if not num_seeds:
+                num_seeds = len(auc_top10s)
+            else:
+                diff = num_seeds - len(auc_top10s)
+                if diff > 0:
+                    print(f"WARNING: Adding mean scores for {task_name} task, because of inconsistency.")
+                    auc_top10s.extend([np.mean(auc_top10s)] * diff)
+                    avg_top10s.extend([np.mean(avg_top10s)] * diff)
+                # print(diff, len(auc_top10s))
+                assert len(auc_top10s) == num_seeds
+            per_seed_auc_top10s.append(auc_top10s)
+            per_seed_avg_top10s.append(avg_top10s)
+            auc_sum += np.mean(auc_top10s)
+            avg_sum += np.mean(avg_top10s)
         
-        line = f"AUC {auc_sum:.3f}, AVG {avg_sum:.3f}"
+        per_seed_auc_top10s, per_seed_avg_top10s = np.array(per_seed_auc_top10s), np.array(per_seed_avg_top10s)
+        auc_sum = per_seed_auc_top10s.mean(axis=1).sum()
+        avg_sum = per_seed_avg_top10s.mean(axis=1).sum()
+        auc_sum_std = per_seed_auc_top10s.sum(axis=0).std()
+        avg_sum_std = per_seed_avg_top10s.sum(axis=0).std()
+        line = f"AUC {auc_sum:.3f} $\pm$ {auc_sum_std:.3f}, AVG {avg_sum:.3f} $\pm$ {avg_sum_std:.3f}"
         print(line)
         _file.write(line + "\n")
-
 
 
 if __name__ == "__main__":

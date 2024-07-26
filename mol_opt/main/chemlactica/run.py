@@ -11,24 +11,13 @@ import sys
 from copy import deepcopy
 import numpy as np
 from rdkit.Chem.QED import qed
+from rdkit.Chem import rdMolDescriptors, Descriptors
 
 # sys.path.append("../ChemLactica/ChemLactica/chemlactica")
 from chemlactica.mol_opt.optimization import optimize
-from chemlactica.mol_opt.utils import MoleculeEntry, generate_random_number
+from chemlactica.mol_opt.utils import MoleculeEntry, generate_random_number, tanimoto_dist_func, canonicalize
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
-
-
-# def create_optimization_prompts(num_prompts, molecules_bank: MoleculeEntry, max_similars_in_prompt: int, sim_range):
-#     prompts = []
-#     for i in range(num_prompts):
-#         similars_in_prompt = molecules_bank.random_subset(max_similars_in_prompt)
-#         prompt = "</s>"
-#         for mol in similars_in_prompt:
-#             prompt += f"[SIMILAR]{mol.smiles} {generate_random_number(sim_range[0], sim_range[1]):.2f}[/SIMILAR]"
-#         prompt += "[START_SMILES]"
-#         prompts.append(prompt)
-#     return prompts
 
 
 api_evaluated_oracle_names = ["gsk3b", "jnk3", "drd2"]
@@ -58,32 +47,75 @@ class APIOracle(tdc.Oracle):
         return self.evaluator_func(*args, **kwargs)
 
 
-# def create_molecule_entry(output_text):
-#     start_smiles_tag, end_smiles_tag = "[START_SMILES]", "[END_SMILES]"
-#     start_ind = output_text.find(start_smiles_tag)
-#     end_ind = output_text.find(end_smiles_tag)
-#     if start_ind == -1 or end_ind == -1:
-#         return None
+def construct_median1_additional_prop(config):
 
-#     generated_smiles = output_text[start_ind+len(start_smiles_tag):end_ind]
-#     try:
-#         return MoleculeEntry(
-#             smiles=generated_smiles,
-#             score=None
-#         )
-#     except:
-#         return None
+    camphor_molecule = MoleculeEntry("CC1(C)C2CCC1(C)C(=O)C2")
+    menthol_molecule = MoleculeEntry("CC(C)C1CCC(C)CC1O")
 
-
-def construct_additional_properties(config):
+    p = 1 - tanimoto_dist_func(camphor_molecule.fingerprint, menthol_molecule.fingerprint)
+    print("median1, the value of p is ", p)
     
-    additional_properties = {
-        "qed" : {
-            "start_tag": "[QED]",
-            "end_tag": "[/QED]",
-            "infer_value": lambda entry: f"{generate_random_number(config['qed_range'][0], config['qed_range'][1]):.2f}",
-            "calculate_value": lambda entry: f"{qed(entry.mol):.2f}"
-        }
+    additional_properties = {}
+    additional_properties["sim_camphor"] = {
+        "start_tag": "[SIMILAR]",
+        "end_tag": "[/SIMILAR]",
+        "infer_value": lambda entry: f"{camphor_molecule.smiles} {1 - p / 2:.2f}",
+        "calculate_value": lambda entry: f"{camphor_molecule.smiles} {tanimoto_dist_func(camphor_molecule.fingerprint, entry.fingerprint):.2f}"
+    }
+
+    additional_properties["sim_menthol"] = {
+        "start_tag": "[SIMILAR]",
+        "end_tag": "[/SIMILAR]",
+        "infer_value": lambda entry: f"{menthol_molecule.smiles} {1 - p / 2:.2f}",
+        "calculate_value": lambda entry: f"{menthol_molecule.smiles} {tanimoto_dist_func(menthol_molecule.fingerprint, entry.fingerprint):.2f}"
+    }
+
+    return additional_properties
+
+
+def construct_sitagliptin_mpo_additional_prop(config):
+
+    sitagliptin_molecule = MoleculeEntry("Fc1cc(c(F)cc1F)CC(N)CC(=O)N3Cc2nnc(n2CC3)C(F)(F)F")
+    
+    additional_properties = {}
+    additional_properties["sim_sitagliptin"] = {
+        "start_tag": "[SIMILAR]",
+        "end_tag": "[/SIMILAR]",
+        "infer_value": lambda entry: f"{sitagliptin_molecule.smiles} 0.99",
+        "calculate_value": lambda entry: f"{sitagliptin_molecule.smiles} {tanimoto_dist_func(sitagliptin_molecule.fingerprint, entry.fingerprint):.2f}"
+    }
+    additional_properties["clogp"] = {
+        "start_tag": "[CLOGP]",
+        "end_tag": "[/CLOGP]",
+        "infer_value": lambda entry: f"2.02",
+        "calculate_value": lambda entry: f"{Descriptors.MolLogP(entry.mol):.2f}"
+    }
+    additional_properties["tpsa"] = {
+        "start_tag": "[TPSA]",
+        "end_tag": "[/TPSA]",
+        "infer_value": lambda entry: f"77.04",
+        "calculate_value": lambda entry: f"{rdMolDescriptors.CalcTPSA(entry.mol):.2f}"
+    }
+    # additional_properties["formula"] = {
+    #     "start_tag": "[FORMULA]",
+    #     "end_tag": "[/FORMULA]",
+    #     "infer_value": lambda entry: f"C16H15F6N5O",
+    #     "calculate_value": lambda entry: rdMolDescriptors.CalcMolFormula(entry.mol)
+    # }
+
+    return additional_properties
+
+
+def construct_scaffold_hop_additional_prop(config):
+
+    pharmacophor_molecule = MoleculeEntry("CCCOc1cc2ncnc(Nc3ccc4ncsc4c3)c2cc1S(=O)(=O)C(C)(C)C")
+    
+    additional_properties = {}
+    additional_properties["sim_pharmacophor"] = {
+        "start_tag": "[SIMILAR]",
+        "end_tag": "[/SIMILAR]",
+        "infer_value": lambda entry: f"{pharmacophor_molecule.smiles} 0.80",
+        "calculate_value": lambda entry: f"{pharmacophor_molecule.smiles} {tanimoto_dist_func(pharmacophor_molecule.fingerprint, entry.fingerprint):.2f}"
     }
 
     return additional_properties
@@ -98,13 +130,15 @@ class ChemLactica_Optimizer(BaseOptimizer):
     def _optimize(self, oracle, config):
         self.oracle.assign_evaluator(oracle)
 
-        # additional_properties = construct_additional_properties(config)
+        # additional_properties = construct_sitagliptin_mpo_additional_prop(config)
+        # additional_properties = construct_median1_additional_prop(config)
 
-        model = AutoModelForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
+        model = AutoModelForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.float32).to(config["device"])
         tokenizer = AutoTokenizer.from_pretrained(config["tokenizer_path"], padding_side="left")
         config["log_dir"] = os.path.join(self.oracle.args.output_dir, 'results_' + self.oracle.task_label + '.log')
         config["max_possible_oracle_score"] = 1.0
         optimize(
             model=model, tokenizer=tokenizer,
-            oracle=self.oracle, config=config
+            oracle=self.oracle, config=config,
+            # additional_properties=additional_properties
         )
