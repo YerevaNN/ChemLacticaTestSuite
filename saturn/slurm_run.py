@@ -46,18 +46,17 @@ if __name__ == "__main__":
             formatted_date_time = datetime.datetime.now().strftime("%Y-%m-%d")
             base = f"saturn/results/{formatted_date_time}"
             os.makedirs(base, exist_ok=True)
+            name = f"{model_name}"
+            v = 0
+            while os.path.exists(os.path.join(base, f"{name}-{v}")):
+                v += 1
+            output_dir = os.path.join(base, f"{name}-v{v}")
+            os.makedirs(output_dir, exist_ok=True)
 
             for seed in all_seeds:
-                v = 0
-                name = f"{model_name}+target={config['target']}+seed={seed}"
-                while os.path.exists(os.path.join(base, f"{name}-{v}")):
-                    v += 1
-                output_dir = os.path.join(base, f"{name}-v{v}")
-
-                os.makedirs(output_dir, exist_ok=True)
                 config_with_seed = copy.deepcopy(config)
                 config_with_seed["seed"] = seed
-                hparams_path = os.path.join(output_dir, "hparams.yaml")
+                hparams_path = os.path.join(output_dir, f"hparams-{config["target"]}-seed{seed}.yaml")
                 yaml.safe_dump(config_with_seed, open(hparams_path, "w"))
                  
                 function = submitit.helpers.CommandFunction([
