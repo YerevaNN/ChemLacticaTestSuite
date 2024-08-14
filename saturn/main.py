@@ -50,5 +50,6 @@ if __name__ == "__main__":
 
     optimize(
         model, tokenizer,
-        oracle, config
+        oracle, config,
+        validate_smiles=lambda x: "." not in x,
     )
