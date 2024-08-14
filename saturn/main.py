@@ -1,15 +1,27 @@
 import os
 import yaml
 import torch
+import random
 import argparse
+import numpy as np
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from chemlactica.mol_opt.optimization import optimize
 from chemlactica.mol_opt.utils import set_seed
 
-# from saturn.utils.utils import set_seed_everywhere
 from oracle import SaturnDockingOracle
+
+def set_seed_everywhere(seed: int, device: str):
+    """Set the seed for reproducibility."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if device == "cuda":
+        torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -30,10 +42,10 @@ if __name__ == "__main__":
 
     seeds = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
     for i in range(args.n_runs):
-        # set_seed_everywhere(seeds[i])
+        set_seed_everywhere(seeds[i], config["device"])
         set_seed(seeds[i])
 
-        oracle = SaturnDockingOracle(1000, config["target"], takes_entry=True)
+        oracle = SaturnDockingOracle(3000, config["target"], takes_entry=True)
 
         config["log_dir"] = os.path.join(args.output_dir, f"results_saturn+weight+num_run_{i}.log")
         config["max_possible_oracle_score"] = oracle.max_possible_oracle_score

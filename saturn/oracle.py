@@ -1,10 +1,11 @@
 import numpy as np
 from typing import List, Union
-from rdkit.Chem import MolFromSmiles
+from rdkit.Chem import QED
 
 from chemlactica.mol_opt.utils import MoleculeEntry
 
 from saturn.oracles.docking.geam_oracle import GEAMOracle
+from saturn.oracles.synthesizability.sascorer import calculateScore
 from saturn.oracles.dataclass import OracleComponentParameters
 
 
@@ -18,6 +19,7 @@ class SaturnDockingOracle:
 
         # the buffer to keep track of all unique molecules generated
         self.mol_buffer = {}
+        self.mol_component_scores_buffer = {}
 
         # the maximum possible oracle score or an upper bound
         self.max_possible_oracle_score = 1.0
@@ -25,6 +27,7 @@ class SaturnDockingOracle:
         # if True the __call__ function takes list of MoleculeEntry objects
         # if False (or unspecified) the __call__ function takes list of SMILES strings
         self.takes_entry = takes_entry
+        self.reports_component_scores = True
 
         params = OracleComponentParameters(
             name='geam',
@@ -38,7 +41,7 @@ class SaturnDockingOracle:
                     "high": 350,
                     "k": 0.15
                 }
-                }
+            }
         )
         self._saturn_oracle = GEAMOracle(params)
 
@@ -49,31 +52,46 @@ class SaturnDockingOracle:
         if not self.takes_entry:
             molecules = [MoleculeEntry(smiles) for smiles in molecules]
 
+        # In case there is a . (dot) sign in SMILES string, it implies
+        # that 2 or more molecules are present in the SMILES string, which does not work for this docking oracle
+        # multi_molecules = [mol for mol in molecules if '.' in mol.smiles]
+        # dummy_scores = [[0, {}]] * len(multi_molecules)
+        # molecules = [mol for mol in molecules if '.' not in mol.smiles]
 
         new_molecules = []
-        oracle_scores = []
-        for mol in molecules:
-            # if len(self.mol_buffer) % self.freq_log == 0:
-            #     self.log_intermediate()
+        full_scores = []
 
+        for mol in molecules:
             if self.mol_buffer.get(mol.smiles):
-                oracle_scores.append(sum(self.mol_buffer[mol.smiles][0]))
+                full_scores.append([self.mol_buffer[mol.smiles][0], self.mol_component_scores_buffer[mol.smiles]])
                 continue
 
             new_molecules.append(mol)
 
-        rdkit_mods = [mol.mol for mol in new_molecules]
-        new_oracle_scores, *_ = self._saturn_oracle(rdkit_mods)
-        oracle_scores.extend(new_oracle_scores)
+        if len(new_molecules) > 0:
+            rdkit_mols = [mol.mol for mol in new_molecules]
+            raw_vina_scores, *_, aggregated_scores = self._saturn_oracle(rdkit_mols)
+            # Reverse the scores, as our optimization algorithm is a maximization algorithm
+            raw_vina_scores = [-score for score in raw_vina_scores]
+            raw_sa_scores = [calculateScore(mol) for mol in rdkit_mols]
+            raw_qed_scores = [QED.qed(mol) for mol in rdkit_mols]
 
-        for score, mol in zip(new_oracle_scores, new_molecules):
-            self.mol_buffer[mol.smiles] = [score, len(self.mol_buffer) + 1]
-            if len(self.mol_buffer) % self.freq_log == 0:
-                self.log_intermediate()
+            new_scores = [[
+                agg,
+                {"vina": vina, "qed": qed, "sa": sa}
+            ] for agg, vina, qed, sa in zip(aggregated_scores, raw_vina_scores, raw_qed_scores, raw_sa_scores)]
+            full_scores.extend(new_scores)
 
-        # get the oracle scores
-        # oracle_scores = self._saturn_oracle(rdkit_modls) 
-        return oracle_scores
+            for score, mol in zip(new_scores, new_molecules):
+                agg, components = score
+                self.mol_buffer[mol.smiles] = [agg, len(self.mol_buffer) + 1]
+                self.mol_component_scores_buffer[mol.smiles] = components
+
+                if len(self.mol_buffer) % self.freq_log == 0:
+                    self.log_intermediate()
+
+        # return dummy_scores + full_scores
+        return full_scores
     
     def log_intermediate(self):
         scores = [v[0] for v in self.mol_buffer.values()][-self.max_oracle_calls:]
