@@ -72,7 +72,6 @@ class SaturnDockingOracle:
             rdkit_mols = [mol.mol for mol in new_molecules]
             raw_vina_scores, *_, aggregated_scores = self._saturn_oracle(rdkit_mols)
             # Reverse the scores, as our optimization algorithm is a maximization algorithm
-            raw_vina_scores = [-score for score in raw_vina_scores]
             raw_sa_scores = [calculateScore(mol) for mol in rdkit_mols]
             raw_qed_scores = [QED.qed(mol) for mol in rdkit_mols]
 
