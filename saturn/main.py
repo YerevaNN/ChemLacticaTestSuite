@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     oracle = SaturnDockingOracle(3000, config["target"], takes_entry=True)
 
-    config["log_dir"] = os.path.join(args.output_dir, f"results_saturn+{config["target"]}+seed_{seed}.log")
+    config["log_dir"] = os.path.join(args.output_dir, f"results_saturn+{config['target']}+seed_{seed}.log")
     config["max_possible_oracle_score"] = oracle.max_possible_oracle_score
 
     optimize(
