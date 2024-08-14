@@ -3,6 +3,7 @@ tokenizer_path: yerevann/chemlactica-125m
 
 # Oracle params:
 target: parp1
+seed: 0
 # End of Oracle params
 
 pool_size: 10

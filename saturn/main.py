@@ -27,7 +27,6 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_dir", type=str, required=True)
     parser.add_argument("--config_default", type=str, required=True)
-    parser.add_argument("--n_runs", type=int, required=False, default=1)
     args = parser.parse_args()
     return args
 
@@ -40,17 +39,16 @@ if __name__ == "__main__":
     model = AutoModelForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
     tokenizer = AutoTokenizer.from_pretrained(config["tokenizer_path"], padding_side="left")
 
-    seeds = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
-    for i in range(args.n_runs):
-        set_seed_everywhere(seeds[i], config["device"])
-        set_seed(seeds[i])
+    seed = config["seed"]
+    set_seed_everywhere(seed, config["device"])
+    set_seed(seed)
 
-        oracle = SaturnDockingOracle(3000, config["target"], takes_entry=True)
+    oracle = SaturnDockingOracle(3000, config["target"], takes_entry=True)
 
-        config["log_dir"] = os.path.join(args.output_dir, f"results_saturn+weight+num_run_{i}.log")
-        config["max_possible_oracle_score"] = oracle.max_possible_oracle_score
+    config["log_dir"] = os.path.join(args.output_dir, f"results_saturn+{config["target"]}+seed_{seed}.log")
+    config["max_possible_oracle_score"] = oracle.max_possible_oracle_score
 
-        optimize(
-            model, tokenizer,
-            oracle, config
-        )
+    optimize(
+        model, tokenizer,
+        oracle, config
+    )
