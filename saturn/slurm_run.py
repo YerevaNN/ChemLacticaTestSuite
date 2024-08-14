@@ -44,7 +44,7 @@ if __name__ == "__main__":
     with executor.batch():
         for config in configs_per_target:
             formatted_date_time = datetime.datetime.now().strftime("%Y-%m-%d")
-            base = f"saturn/results/{formatted_date_time}"
+            base = f"results/{formatted_date_time}"
             os.makedirs(base, exist_ok=True)
             name = f"{model_name}"
             v = 0
@@ -56,7 +56,7 @@ if __name__ == "__main__":
             for seed in all_seeds:
                 config_with_seed = copy.deepcopy(config)
                 config_with_seed["seed"] = seed
-                hparams_path = os.path.join(output_dir, f"hparams-{config["target"]}-seed{seed}.yaml")
+                hparams_path = os.path.join(output_dir, f"hparams-{config['target']}-seed{seed}.yaml")
                 yaml.safe_dump(config_with_seed, open(hparams_path, "w"))
                  
                 function = submitit.helpers.CommandFunction([

@@ -32,6 +32,8 @@ def parse_arguments():
 
 
 if __name__ == "__main__":
+    os.environ["TOKENIZERS_PARALLELISM"] = "true"
+
     args = parse_arguments()
     with open(args.config_default, 'r') as f:
         config = yaml.safe_load(f)
