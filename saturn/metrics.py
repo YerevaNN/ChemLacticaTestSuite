@@ -23,7 +23,7 @@ def calculate_hit_ratio(df: pd.DataFrame, target: str, strict: bool = False, nov
     qed_threshold = 0.7 if strict else 0.5
     sa_threshold = 3 if strict else 5
     
-    filtered = df[df['vina'] > -median_docking_score] 
+    filtered = df[df['vina'] < median_docking_score] 
     filtered = filtered[filtered['qed'] > qed_threshold]
     filtered = filtered[filtered['sa'] < sa_threshold]
 
