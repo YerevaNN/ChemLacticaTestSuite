@@ -33,13 +33,12 @@ def calculate_hit_ratio(df: pd.DataFrame, target: str, strict: bool = False, nov
 
     return len(filtered) / len(df)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--target', type=str, help='The target protein that was used to dock against durint optimization.')
-    parser.add_argument('--log_file', type=str, help='Path to the log file containing the optimization run logs.')
-    args = parser.parse_args()
 
-    with open(args.log_file, 'r') as f:
+def calculate_metrics_from_log_file(log_file: str):
+    file_name = log_file.split("/")[-1]
+    target = file_name.split("+")[1]
+
+    with open(log_file, 'r') as f:
         lines = f.readlines()
         data = []
         for line in lines:
@@ -60,9 +59,31 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(data)
     
-    pprint.pprint({
-        "Hit Ratio": calculate_hit_ratio(df, args.target),
-        "Strict Hit Ratio": calculate_hit_ratio(df, args.target, strict=True),
-        "Novel Hit Ratio": calculate_hit_ratio(df, args.target, novel=True),
-        "Strict Novel Hit Ratio": calculate_hit_ratio(df, args.target, strict=True, novel=True)
-    })
+    return {
+        "Hit Ratio": calculate_hit_ratio(df, target),
+        "Strict Hit Ratio": calculate_hit_ratio(df, target, strict=True),
+        "Novel Hit Ratio": calculate_hit_ratio(df, target, novel=True),
+        "Strict Novel Hit Ratio": calculate_hit_ratio(df, target, strict=True, novel=True)
+    } 
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--target', type=str, help="The target protein to calculate the metrics for.")
+    parser.add_argument('--logs_dir', type=str, help='Path to the log file containing the optimization run logs.')
+    args = parser.parse_args()
+
+    # List all files in the logs directory that contain the target protein name in their file name
+    import os
+    metrics_df = []
+
+    paths = [p for p in os.listdir(args.logs_dir) if args.target in p and p.endswith(".log")]
+
+    for log_file in paths:
+        metrics_df.append(calculate_metrics_from_log_file(os.path.join(args.logs_dir, log_file)))
+
+    metrics_df = pd.DataFrame(metrics_df) * 100
+    print(f"Metrics for target protein {args.target}\n")
+    print(metrics_df.describe().round(3))
+
+

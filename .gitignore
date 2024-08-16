@@ -8,3 +8,4 @@ __pycache__
 utils/contrastive_decoding/contrastive_decodable_transformers/build
 output
 tmp
+slurm_jobs

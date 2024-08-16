@@ -1,5 +1,5 @@
-checkpoint_path: yerevann/chemlactica-125m
-tokenizer_path: yerevann/chemlactica-125m
+checkpoint_path: yerevann/chemlactica-1.3b
+tokenizer_path: yerevann/chemlactica-1.3b
 
 # Oracle params:
 target: parp1

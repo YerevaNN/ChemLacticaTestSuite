@@ -21,7 +21,7 @@ def get_all_seeds():
 if __name__ == "__main__":
     target_proteins = get_all_targets()
     all_seeds = get_all_seeds()
-    model_name = "chemlactica-125m"
+    model_name = "chemlactica_1.3b"
 
     config_file_path = "default_params.yaml"
     default_config = yaml.safe_load(open(config_file_path))
