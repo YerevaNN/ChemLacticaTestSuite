@@ -153,12 +153,16 @@ def process_results(dir):
             _file.write(line + "\n")
             if not num_seeds:
                 num_seeds = len(auc_top10s)
+                print("number of seeds: ", num_seeds)
             else:
                 diff = num_seeds - len(auc_top10s)
                 if diff > 0:
                     print(f"WARNING: Adding mean scores for {task_name} task, because of inconsistency.")
                     auc_top10s.extend([np.mean(auc_top10s)] * diff)
                     avg_top10s.extend([np.mean(avg_top10s)] * diff)
+                else:
+                    auc_top10s = auc_top10s[:num_seeds]
+                    avg_top10s = avg_top10s[:num_seeds]
                 # print(diff, len(auc_top10s))
                 assert len(auc_top10s) == num_seeds
             per_seed_auc_top10s.append(auc_top10s)
