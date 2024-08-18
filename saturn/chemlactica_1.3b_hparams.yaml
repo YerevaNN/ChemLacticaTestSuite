@@ -1,5 +1,5 @@
-checkpoint_path: /nfs/dgx/raid/chem/checkpoints/h100/facebook/galactica-1.3b/6d68b252d53647a99cf2fa8b/checkpoint-19000
-tokenizer_path: /auto/home/tigranfahradyan/RetMol/RetMol/chemlactica/ChemLacticaTokenizer66
+checkpoint_path: yerevann/chemlactica-1.3b
+tokenizer_path: yerevann/chemlactica-1.3b
 pool_size: 10
 validation_perc: 0.2
 num_mols: 0

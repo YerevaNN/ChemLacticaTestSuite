@@ -1,5 +1,5 @@
-checkpoint_path: /nfs/dgx/raid/chem/checkpoints/h100/google/gemma-2b/0717d445bcf44e31b2887892/checkpoint-18000
-tokenizer_path: /auto/home/menuab/code/ChemLactica/chemlactica/tokenizer/GemmaTokenizer
+checkpoint_path: yerevann/chemma-2b
+tokenizer_path: yerevann/chemma-2b
 pool_size: 10
 validation_perc: 0.2
 num_mols: 0
