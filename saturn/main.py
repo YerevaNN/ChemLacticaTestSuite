@@ -44,6 +44,8 @@ if __name__ == "__main__":
 
     with open(args.config_default, 'r') as f:
         config = yaml.safe_load(f)
+        
+    oracle_kwargs = {"target": config["target"]} if not is_illustrative else {}
 
     model = AutoModelForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
     tokenizer = AutoTokenizer.from_pretrained(config["tokenizer_path"], padding_side="left")
@@ -52,7 +54,7 @@ if __name__ == "__main__":
     set_seed_everywhere(seed, config["device"])
     set_seed(seed)
 
-    oracle = oracle_class(budget, config["target"], takes_entry=True)
+    oracle = oracle_class(budget, takes_entry=True, **oracle_kwargs)
 
     config["log_dir"] = os.path.join(args.output_dir, f"results_saturn+{config['target']}+seed_{seed}.log")
     config["max_possible_oracle_score"] = oracle.max_possible_oracle_score
