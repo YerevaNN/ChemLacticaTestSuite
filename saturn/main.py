@@ -4,6 +4,7 @@ import torch
 import random
 import argparse
 import numpy as np
+from typing import Optional
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -28,6 +29,8 @@ def parse_arguments():
     parser.add_argument("--output_dir", type=str, required=True)
     parser.add_argument("--config_default", type=str, required=True)
     parser.add_argument("--illustrative", type=bool, default=False)
+    parser.add_argument("--seed", type=int, required=True)
+    parser.add_argument("--target", type=Optional[str], default=None)
     args = parser.parse_args()
     return args
 
@@ -45,18 +48,19 @@ if __name__ == "__main__":
     with open(args.config_default, 'r') as f:
         config = yaml.safe_load(f)
         
-    oracle_kwargs = {"target": config["target"]} if not is_illustrative else {}
+    oracle_kwargs = {"target": args.target} if not is_illustrative else {}
+    run_name_prefix = "illustrative" if is_illustrative else f"saturn+{args.target}"
 
     model = AutoModelForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
     tokenizer = AutoTokenizer.from_pretrained(config["tokenizer_path"], padding_side="left")
 
-    seed = config["seed"]
+    seed = args.seed
     set_seed_everywhere(seed, config["device"])
     set_seed(seed)
 
     oracle = oracle_class(budget, takes_entry=True, **oracle_kwargs)
 
-    config["log_dir"] = os.path.join(args.output_dir, f"results_saturn+{config['target']}+seed_{seed}.log")
+    config["log_dir"] = os.path.join(args.output_dir, f"results_{run_name_prefix}+seed_{seed}.log")
     config["max_possible_oracle_score"] = oracle.max_possible_oracle_score
 
     optimize(
