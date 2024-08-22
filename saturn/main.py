@@ -10,7 +10,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from chemlactica.mol_opt.optimization import optimize
 from chemlactica.mol_opt.utils import set_seed
 
-from oracle import SaturnDockingOracle
+from oracle import SaturnDockingOracle, IllustrativeExperimentOracle
 
 def set_seed_everywhere(seed: int, device: str):
     """Set the seed for reproducibility."""
@@ -27,6 +27,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_dir", type=str, required=True)
     parser.add_argument("--config_default", type=str, required=True)
+    parser.add_argument("--illustrative", type=bool, default=False)
     args = parser.parse_args()
     return args
 
@@ -35,6 +36,12 @@ if __name__ == "__main__":
     os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
     args = parse_arguments()
+    is_illustrative = args.illustrative
+
+    budget = 1000 if is_illustrative else 3000
+    smiles_validator = (lambda x: True) if is_illustrative else (lambda x: "." not in x)
+    oracle_class = IllustrativeExperimentOracle if is_illustrative else SaturnDockingOracle
+
     with open(args.config_default, 'r') as f:
         config = yaml.safe_load(f)
 
@@ -45,7 +52,7 @@ if __name__ == "__main__":
     set_seed_everywhere(seed, config["device"])
     set_seed(seed)
 
-    oracle = SaturnDockingOracle(3000, config["target"], takes_entry=True)
+    oracle = oracle_class(budget, config["target"], takes_entry=True)
 
     config["log_dir"] = os.path.join(args.output_dir, f"results_saturn+{config['target']}+seed_{seed}.log")
     config["max_possible_oracle_score"] = oracle.max_possible_oracle_score
@@ -53,5 +60,5 @@ if __name__ == "__main__":
     optimize(
         model, tokenizer,
         oracle, config,
-        validate_smiles=lambda x: "." not in x,
+        validate_smiles=smiles_validator,
     )
