@@ -30,7 +30,7 @@ def parse_arguments():
     parser.add_argument("--config_default", type=str, required=True)
     parser.add_argument("--illustrative", type=bool, default=False)
     parser.add_argument("--seed", type=int, required=True)
-    parser.add_argument("--target", type=Optional[str], default=None)
+    parser.add_argument("--target", type=str, required=True)
     args = parser.parse_args()
     return args
 

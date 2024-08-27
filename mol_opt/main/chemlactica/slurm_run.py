@@ -82,9 +82,9 @@ def get_hparam_tunning_tasks():
 
 
 if __name__ == "__main__":
-    # task_names = get_hparam_tunning_tasks()
+    task_names = get_hparam_tunning_tasks()
     # task_names = get_ablation_tasks()
-    task_names = get_all_tasks()
+    # task_names = get_all_tasks()
     n_runs = 5
 
     config_file_path = "main/chemlactica/chemlactica_125m_hparams.yaml"

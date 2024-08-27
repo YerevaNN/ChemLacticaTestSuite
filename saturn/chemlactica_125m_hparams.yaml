@@ -3,14 +3,14 @@ tokenizer_path: yerevann/chemlactica-125m
 pool_size: 10
 validation_perc: 0.2
 num_mols: 0
-num_similars: 5
-num_gens_per_iter: 200
+num_similars: 2
+num_gens_per_iter: 100
 device: cuda:0
-sim_range: [0.4, 0.9]
+sim_range: [0.6, 0.9]
 num_processes: 8
 generation_batch_size: 256
 eos_token: "</s>"
-generation_temperature: [1.0, 1.5]
+generation_temperature: [1.0, 1.0]
 
 generation_config:
   repetition_penalty: 1.0
@@ -21,7 +21,7 @@ generation_config:
 strategy: [rej-sample-v2]
 
 rej_sample_config:
-  train_tol_level: 3
+  train_tol_level: 5
   checkpoints_dir: checkpoints
   max_learning_rate: 0.0001
   lr_end: 0
