@@ -21,7 +21,8 @@ def get_all_seeds():
 if __name__ == "__main__":
     target_proteins = get_all_targets()
     all_seeds = get_all_seeds()
-    model_name = "chemlactica_1.3b"
+    # model_name = "chemlactica_1.3b"
+    model_name = "chemlactica_125m"
 
     config_file_path = f"{model_name}_hparams.yaml"
     default_config = yaml.safe_load(open(config_file_path))
@@ -37,18 +38,21 @@ if __name__ == "__main__":
         name="chemlactica-against-saturn", timeout_min=int(len(target_proteins) * len(all_seeds) * 30),
         gpus_per_node=1,
         nodes=1, mem_gb=30, cpus_per_task=60,
-        slurm_array_parallelism=4
+        slurm_array_parallelism=4,
+        additional_parameters={
+            "partition": "a100"
+        }
     )
     
     jobs = []
     with executor.batch():
-        for config in configs_per_target:
+        for config in configs_per_target[:1]:
             formatted_date_time = datetime.datetime.now().strftime("%Y-%m-%d")
             base = f"results/{formatted_date_time}"
             os.makedirs(base, exist_ok=True)
             name = f"{model_name}"
             v = 0
-            while os.path.exists(os.path.join(base, f"{name}-{v}")):
+            while os.path.exists(os.path.join(base, f"{name}-v{v}")):
                 v += 1
             output_dir = os.path.join(base, f"{name}-v{v}")
             os.makedirs(output_dir, exist_ok=True)
@@ -67,5 +71,5 @@ if __name__ == "__main__":
                     '--target', config['target'],
                 ])
                 print(' '.join(function.command))
-                job = executor.submit(function)
-                jobs.append(job)
+                # job = executor.submit(function)
+                # jobs.append(job)
