@@ -21,7 +21,7 @@ def get_all_seeds():
 if __name__ == "__main__":
     target_proteins = get_all_targets()
     all_seeds = get_all_seeds()
-    model_name = "chemma_2b"
+    model_name = "chemlactica_1.3b"
 
     config_file_path = f"{model_name}_hparams.yaml"
     default_config = yaml.safe_load(open(config_file_path))
@@ -36,8 +36,8 @@ if __name__ == "__main__":
     executor.update_parameters(
         name="chemlactica-against-saturn", timeout_min=int(len(target_proteins) * len(all_seeds) * 30),
         gpus_per_node=1,
-        nodes=1, mem_gb=30, cpus_per_task=125,
-        slurm_array_parallelism=10
+        nodes=1, mem_gb=30, cpus_per_task=60,
+        slurm_array_parallelism=4
     )
     
     jobs = []
