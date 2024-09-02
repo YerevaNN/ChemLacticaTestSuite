@@ -32,11 +32,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     metric_names = [
-        "gen_yield_7",
-        "gen_yield_8",
-        "oracle_burden_1",
-        "oracle_burden_10",
-        "oracle_burden_100"
+        "gen_yield_0.7",
+        "gen_yield_0.8",
+        "oracle_burden_0.8_1",
+        "oracle_burden_0.8_10",
+        "oracle_burden_0.8_100",
+        "oracle_burden_0.7_1",
+        "oracle_burden_0.7_10",
+        "oracle_burden_0.7_100"
     ]
 
     if args.type == "tune":
@@ -82,11 +85,14 @@ if __name__ == "__main__":
                         metrics[n].append(None)
                     continue
                 scores = np.array(scores[:args.max_oracle_calls])
-                metrics["gen_yield_7"].append(calc_generative_yield(scores, 0.7))
-                metrics["gen_yield_8"].append(calc_generative_yield(scores, 0.8))
-                metrics["oracle_burden_1"].append(calc_oracle_burden(scores, 0.8, 1))
-                metrics["oracle_burden_10"].append(calc_oracle_burden(scores, 0.8, 10))
-                metrics["oracle_burden_100"].append(calc_oracle_burden(scores, 0.8, 100))
+                metrics["gen_yield_0.7"].append(calc_generative_yield(scores, 0.7))
+                metrics["gen_yield_0.8"].append(calc_generative_yield(scores, 0.8))
+                metrics["oracle_burden_0.8_1"].append(calc_oracle_burden(scores, 0.8, 1))
+                metrics["oracle_burden_0.8_10"].append(calc_oracle_burden(scores, 0.8, 10))
+                metrics["oracle_burden_0.8_100"].append(calc_oracle_burden(scores, 0.8, 100))
+                metrics["oracle_burden_0.7_1"].append(calc_oracle_burden(scores, 0.7, 1))
+                metrics["oracle_burden_0.7_10"].append(calc_oracle_burden(scores, 0.7, 10))
+                metrics["oracle_burden_0.7_100"].append(calc_oracle_burden(scores, 0.7, 100))
 
             mean_std_metrics = []
             for key in metric_names:
