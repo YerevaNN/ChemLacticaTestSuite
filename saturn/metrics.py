@@ -84,6 +84,6 @@ if __name__ == "__main__":
 
     metrics_df = pd.DataFrame(metrics_df) * 100
     print(f"Metrics for target protein {args.target}\n")
-    print(metrics_df.describe().round(3))
+    print(metrics_df.describe().round(2))
 
 
