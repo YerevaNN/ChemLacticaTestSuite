@@ -98,4 +98,4 @@ if __name__ == "__main__":
     print(f"Metrics for target protein {args.target}\n")
     print(f"Hit Ratio: {metrics_df['Hit Ratio'].mean().round(3)} ± {metrics_df['Hit Ratio'].std().round(3)}")
     print(f"Strict Hit Ratio: {metrics_df['Strict Hit Ratio'].mean().round(3)} ± {metrics_df['Strict Hit Ratio'].std().round(3)}")
-    # print(metrics_df.describe().round(3))
+    # print(metrics_df.describe().round(2))
