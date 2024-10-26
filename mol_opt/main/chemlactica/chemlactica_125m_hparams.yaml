@@ -8,7 +8,7 @@ num_gens_per_iter: 200
 device: cuda:0
 sim_range: [0.4, 0.9]
 num_processes: 8
-generation_batch_size: 128
+generation_batch_size: 512
 eos_token: "</s>"
 generation_temperature: [1.0, 1.5]
 

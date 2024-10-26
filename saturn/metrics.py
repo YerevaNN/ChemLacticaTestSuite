@@ -6,7 +6,7 @@ import pandas as pd
 # The numbers are taken from https://github.com/SeulLee05/MOOD/blob/main/evaluate.py used by MOOD https://arxiv.org/pdf/2206.07632
 # which is referenced in the SATURN paper
 MEDIAN_DOCKING_SCORES_PER_TARGET = {
-    "fa7": 8.5,
+    "fa7": 8.5, # < 8.5
     "parp1": 10.0,
     "5ht1b": 8.7845,
     "jak2": 9.1,
@@ -20,10 +20,10 @@ def calculate_hit_ratio(df: pd.DataFrame, target: str, strict: bool = False, nov
     except KeyError as e:
         raise ValueError(f"Target protein {target} is not supported.") from e
     
-    qed_threshold = 0.7 if strict else 0.5
-    sa_threshold = 3 if strict else 5
+    qed_threshold = 0.7 if strict else 0.5 # qed > 0.7
+    sa_threshold = 3 if strict else 5 # sas < 3
     
-    filtered = df[df['vina'] < median_docking_score] 
+    filtered = df[df['vina'] < median_docking_score]
     filtered = filtered[filtered['qed'] > qed_threshold]
     filtered = filtered[filtered['sa'] < sa_threshold]
 
@@ -47,7 +47,8 @@ def calculate_metrics_from_log_file(log_file: str):
                 row = {}
                 for part in parts:
                     part = part.strip()
-                    col, value = part.split(":") 
+                    col, value = part[:part.find(":")], part[part.find(":") + 1:]
+                    # col, value = part.split(":")
                     value = value.strip()
                     try:
                         value = float(value)
@@ -57,6 +58,11 @@ def calculate_metrics_from_log_file(log_file: str):
                     row[col.strip()] = value
                 data.append(row)
 
+    # assert len(data) >= 3000
+    if len(data) < 3000:
+        print(f"WARNING {log_file} has {len(data)} entries.")
+        return None
+    data = data[:3000]
     df = pd.DataFrame(data)
     
     return {
@@ -78,12 +84,18 @@ if __name__ == "__main__":
     metrics_df = []
 
     paths = [p for p in os.listdir(args.logs_dir) if args.target in p and p.endswith(".log")]
+    print(len(paths))
+    if len(paths) != 10:
+        print(f"WARNING the number of log files is {len(paths)}")
+    # assert len(paths) == 10
 
     for log_file in paths:
-        metrics_df.append(calculate_metrics_from_log_file(os.path.join(args.logs_dir, log_file)))
+        metrics = calculate_metrics_from_log_file(os.path.join(args.logs_dir, log_file))
+        if metrics:
+            metrics_df.append(metrics)
 
     metrics_df = pd.DataFrame(metrics_df) * 100
     print(f"Metrics for target protein {args.target}\n")
-    print(metrics_df.describe().round(3))
-
-
+    print(f"Hit Ratio: {metrics_df['Hit Ratio'].mean().round(3)} ± {metrics_df['Hit Ratio'].std().round(3)}")
+    print(f"Strict Hit Ratio: {metrics_df['Strict Hit Ratio'].mean().round(3)} ± {metrics_df['Strict Hit Ratio'].std().round(3)}")
+    # print(metrics_df.describe().round(3))

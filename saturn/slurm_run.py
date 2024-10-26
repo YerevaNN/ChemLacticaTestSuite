@@ -21,55 +21,50 @@ def get_all_seeds():
 if __name__ == "__main__":
     target_proteins = get_all_targets()
     all_seeds = get_all_seeds()
+    model_name = "chemma_2b"
     # model_name = "chemlactica_1.3b"
-    model_name = "chemlactica_125m"
+    # model_name = "chemlactica_125m"
 
     config_file_path = f"{model_name}_hparams.yaml"
-    default_config = yaml.safe_load(open(config_file_path))
+    default_config = [yaml.safe_load(open(config_file_path, "r"))]
 
-    configs_per_target = []
-    for target in target_proteins:
-        config = copy.deepcopy(default_config)
-        config["target"] = target
-        configs_per_target.append(config)
-
-    executor = submitit.AutoExecutor(folder="slurm_jobs/saturn/job_%j")
+    executor = submitit.AutoExecutor(folder="~/slurm_jobs/saturn/job_%j")
     executor.update_parameters(
-        name="chemlactica-against-saturn", timeout_min=int(len(target_proteins) * len(all_seeds) * 30),
+        name="chemlactica-saturn", timeout_min=5 * 60,
         gpus_per_node=1,
-        nodes=1, mem_gb=30, cpus_per_task=60,
-        slurm_array_parallelism=4,
+        nodes=1, mem_gb=80, cpus_per_task=4,
+        slurm_array_parallelism=16,
         additional_parameters={
-            "partition": "a100"
+            "partition": "h100",
+            # "gres": "shard:39"
         }
     )
-    
+
     jobs = []
     with executor.batch():
-        for config in configs_per_target[:1]:
+        for config in default_config:
             formatted_date_time = datetime.datetime.now().strftime("%Y-%m-%d")
-            base = f"results/{formatted_date_time}"
+            base = os.path.join("results", formatted_date_time)
             os.makedirs(base, exist_ok=True)
             name = f"{model_name}"
             v = 0
-            while os.path.exists(os.path.join(base, f"{name}-v{v}")):
+            while os.path.exists(os.path.join(base, f"{name}-{v}")):
                 v += 1
-            output_dir = os.path.join(base, f"{name}-v{v}")
+            output_dir = os.path.join(base, f"{name}-{v}")
             os.makedirs(output_dir, exist_ok=True)
 
-            for seed in all_seeds:
-                config_with_seed = copy.deepcopy(config)
-                config_with_seed["seed"] = seed
-                hparams_path = os.path.join(output_dir, f"hparams-{config['target']}-seed{seed}.yaml")
-                yaml.safe_dump(config_with_seed, open(hparams_path, "w"))
-                 
-                function = submitit.helpers.CommandFunction([
-                    'python3', 'main.py',
-                    '--config_default', hparams_path,
-                    '--output_dir', output_dir,
-                    '--seed', str(seed),
-                    '--target', config['target'],
-                ])
-                print(' '.join(function.command))
-                # job = executor.submit(function)
-                # jobs.append(job)
+            hparams_path = os.path.join(output_dir, f"hparams.yaml")
+            yaml.safe_dump(config, open(hparams_path, "w"))
+            for target in target_proteins:
+                for seed in all_seeds:
+                    function = submitit.helpers.CommandFunction([
+                        'python3', 'main.py',
+                        '--config_default', hparams_path,
+                        '--output_dir', output_dir,
+                        '--seed', str(seed),
+                        '--target', target,
+                        '--budget', str(3000)
+                    ])
+                    print(' '.join(function.command))
+                    job = executor.submit(function)
+                    jobs.append(job)

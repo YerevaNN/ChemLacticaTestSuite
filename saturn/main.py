@@ -31,27 +31,29 @@ def parse_arguments():
     parser.add_argument("--illustrative", type=bool, default=False)
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--target", type=str, required=True)
+    parser.add_argument("--budget", type=int, required=True)
     args = parser.parse_args()
     return args
 
 
 if __name__ == "__main__":
+    print("gpu avail", torch.cuda.is_available())
     os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
     args = parse_arguments()
     is_illustrative = args.illustrative
 
-    budget = 1000 if is_illustrative else 3000
+    budget = args.budget
     smiles_validator = (lambda x: True) if is_illustrative else (lambda x: "." not in x)
     oracle_class = IllustrativeExperimentOracle if is_illustrative else SaturnDockingOracle
 
     with open(args.config_default, 'r') as f:
         config = yaml.safe_load(f)
-        
+    
     oracle_kwargs = {"target": args.target} if not is_illustrative else {}
     run_name_prefix = "illustrative" if is_illustrative else f"saturn+{args.target}"
 
-    model = AutoModelForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.bfloat16).to(config["device"])
+    model = AutoModelForCausalLM.from_pretrained(config["checkpoint_path"], torch_dtype=torch.float32).to(config["device"])
     tokenizer = AutoTokenizer.from_pretrained(config["tokenizer_path"], padding_side="left")
 
     seed = args.seed

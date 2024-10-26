@@ -1,6 +1,7 @@
 import numpy as np
 from typing import List, Union
 from rdkit.Chem import QED
+import requests
 
 from chemlactica.mol_opt.utils import MoleculeEntry
 
@@ -30,18 +31,19 @@ class SaturnDockingOracle:
         # if False (or unspecified) the __call__ function takes list of SMILES strings
         self.takes_entry = takes_entry
         self.reports_component_scores = True
+        self.target = target
 
-        params = OracleComponentParameters(
-            name="geam",
-            specific_parameters={
-                "target": target,
-            },
-            reward_shaping_function_parameters={
-                "transformation_function": "sigmoid",
-                "parameters": {"low": 75, "high": 350, "k": 0.15},
-            },
-        )
-        self._saturn_oracle = GEAMOracle(params)
+        # params = OracleComponentParameters(
+        #     name="geam",
+        #     specific_parameters={
+        #         "target": target,
+        #     },
+        #     reward_shaping_function_parameters={
+        #         "transformation_function": "sigmoid",
+        #         "parameters": {"low": 75, "high": 350, "k": 0.15},
+        #     },
+        # )
+        # self._saturn_oracle = GEAMOracle(params)
 
     def __call__(self, molecules: List[Union[str, MoleculeEntry]]) -> List[float]:
         """
@@ -72,8 +74,13 @@ class SaturnDockingOracle:
             new_molecules.append(mol)
 
         if len(new_molecules) > 0:
+            mol_smiles = [mol.smiles for mol in new_molecules]
             rdkit_mols = [mol.mol for mol in new_molecules]
-            raw_vina_scores, *_, aggregated_scores = self._saturn_oracle(rdkit_mols)
+            url = "http://172.26.26.101:5300"
+            response = requests.post(url + "/" + self.target, json=mol_smiles).json()
+            raw_vina_scores = response["vina_scores"]
+            aggregated_scores = response["aggregated_scores"]
+            # raw_vina_scores, *_, aggregated_scores = self._saturn_oracle(rdkit_mols)
             # Reverse the scores, as our optimization algorithm is a maximization algorithm
             raw_sa_scores = [calculateScore(mol) for mol in rdkit_mols]
             raw_qed_scores = [QED.qed(mol) for mol in rdkit_mols]

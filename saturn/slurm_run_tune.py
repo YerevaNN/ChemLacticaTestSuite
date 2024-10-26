@@ -33,21 +33,24 @@ def create_hparam_configs(config_file_path):
 
 
 if __name__ == "__main__":
-    # seeds = [0, 1, 2]
-    seeds = [3, 4]
+    seeds = [0, 1, 2, 3]
+    # seeds = [3, 4]
 
-    config_file_path = "./chemlactica_125m_hparams.yaml"
-    # config_file_path = "./chemlactica_1.3b_hparams.yaml"
-    # config_file_path = "./chemma_2b_hparams.yaml"
+    # config_file_path = "chemlactica_125m_hparams.yaml"
+    config_file_path = "chemlactica_1.3b_hparams.yaml"
+    # config_file_path = "chemma_2b_hparams.yaml"
     hparam_configs = create_hparam_configs(config_file_path)
     model_name = "-".join(config_file_path.split("/")[-1].split("_")[:2])
 
-    executor = submitit.AutoExecutor(folder="slurm_jobs/saturn-tune/job_%j")
+    executor = submitit.AutoExecutor(folder="~/slurm_jobs/saturn/tune/job_%j")
     executor.update_parameters(
         name="chemlactica-saturn-tune", timeout_min=15,
         gpus_per_node=1,
         nodes=1, mem_gb=30, cpus_per_task=1,
-        slurm_array_parallelism=10
+        slurm_array_parallelism=20,
+        additional_parameters={
+            "partition": "all"
+        }
     )
     print(len(hparam_configs))
     
@@ -55,7 +58,7 @@ if __name__ == "__main__":
     with executor.batch():
         for i, config in enumerate(hparam_configs):
             formatted_date_time = datetime.datetime.now().strftime("%Y-%m-%d")
-            base = f"results/{formatted_date_time}"
+            base = f"results/{formatted_date_time}-{model_name}-tune"
             os.makedirs(base, exist_ok=True)
             v = 0
             name = model_name + "-" + "+".join(config["strategy"])
@@ -70,7 +73,9 @@ if __name__ == "__main__":
                     '--config_default', os.path.join(output_dir, "hparams.yaml"),
                     '--output_dir', output_dir,
                     '--seed', str(seed),
-                    "--illustrative", "True"
+                    "--illustrative", "True",
+                    '--target', 'illustrative',
+                    '--budget', '3000'
                 ])
                 print(' '.join(function.command))
                 job = executor.submit(function)

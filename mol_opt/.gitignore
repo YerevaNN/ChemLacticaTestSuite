@@ -3,8 +3,8 @@ main/molpal/libraries/Enamine50k.h5
 main/dog_gen/scripts/dog_gen/chkpts/doggen_weights.pth.pick
 main/gflownet/data/docked_mols.h5
 main/chemlactica/results_archive
-mol_opt/main/chemlactica/figs
-mol_opt/main/chemlactica/img
+main/chemlactica/figs
+main/chemlactica/img
 runs/*
 
 # Byte-compiled / optimized / DLL files
