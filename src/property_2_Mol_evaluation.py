@@ -390,7 +390,7 @@ class Property2Mol:
                             if self.include_start_smiles:
                                 captured_text = re.match(self.regexp, text).group()
                             else:
-                                captured_text = text[text.find("[SMILES]")+len("[SMILES]"):text.find("[/SMILES]")]
+                                captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
                             if captured_text not in self.molecules_set:
                                 self.molecules_set.add(captured_text)
                         except:
