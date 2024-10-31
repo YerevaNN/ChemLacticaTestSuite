@@ -174,9 +174,7 @@ class Property2Mol:
         self.log_file.write(f'evaluation config: \n{json.dumps(evaluation_config, indent=4)}\n')
 
     def load_model(self):
-        if "1.3b" in self.model_checkpoint_path:
-            model = OPTForCausalLM.from_pretrained(self.model_checkpoint_path)
-        elif "contrastive" in self.generation_config_name:
+        if "contrastive" in self.generation_config_name:
             # model = load_CD_expert_model.from_pretrained(self.generation_config["expert_model"])
             # self.student_model = load_CD_student_model.from_pretrained(self.generation_config["student_model"])
             model = CustomOPTForCausalLM.from_pretrained(self.generation_config["expert_model"],
@@ -194,24 +192,28 @@ class Property2Mol:
                 use_flash_attn=True,
                 torch_dtype=getattr(torch, self.torch_dtype)
                 )
-        elif "facebook" in self.model_checkpoint_path:
-            class LinearFloat32(torch.nn.Linear):
-                def forward(self, _input) -> torch.Tensor:
-                    return super().forward(_input).to(torch.float32)
-            def cast_lm_head_to_fp32_init(func):
-                def inner_func(self, config, *args, **kwargs):
-                    func(self, config, *args, **kwargs)
-                    self.lm_head = LinearFloat32(
-                        config.word_embed_proj_dim, config.vocab_size, bias=False
-                    )
+        # elif "facebook" in self.model_checkpoint_path:
+        #     class LinearFloat32(torch.nn.Linear):
+        #         def forward(self, _input) -> torch.Tensor:
+        #             return super().forward(_input).to(torch.float32)
+        #     def cast_lm_head_to_fp32_init(func):
+        #         def inner_func(self, config, *args, **kwargs):
+        #             func(self, config, *args, **kwargs)
+        #             self.lm_head = LinearFloat32(
+        #                 config.word_embed_proj_dim, config.vocab_size, bias=False
+        #             )
 
-                return inner_func
-            OPTForCausalLM.__init__ = cast_lm_head_to_fp32_init(OPTForCausalLM.__init__)
-            model = OPTForCausalLM.from_pretrained(
-                self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype), attn_implementation="flash_attention_2"
-            )
+        #         return inner_func
+        #     OPTForCausalLM.__init__ = cast_lm_head_to_fp32_init(OPTForCausalLM.__init__)
+        #     model = OPTForCausalLM.from_pretrained(
+        #         self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype), attn_implementation="flash_attention_2"
+        #     )
         elif "2b" in self.model_checkpoint_path:
-            model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=torch.float16)
+            model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype))
+        elif "125m" in self.model_checkpoint_path or "1.3b": 
+            model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype))
+        else:
+            model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype))
         model.eval()
         model.to(self.device)
         # print(f'model loaded with embedding size of : {model.model.decoder.embed_tokens.num_embeddings}, model dtype: {model.dtype}')
@@ -292,7 +294,7 @@ class Property2Mol:
         return property_fns
 
     def generate_outputs(self):
-        input_ids = [self.tokenizer(input, return_tensors="pt").to(self.device).input_ids for input in self.inputs]
+        input_ids = [self.tokenizer(input, return_tensors="pt", add_special_tokens=False).to(self.device).input_ids for input in self.inputs]
         outputs, raw_outputs, perplexities_list, token_lengths, norm_logs_list, self.molecules_set = [], [], [], [], [], set()
         for input_id in input_ids:
             context_length = input_id.shape[1]
@@ -388,7 +390,7 @@ class Property2Mol:
                             if self.include_start_smiles:
                                 captured_text = re.match(self.regexp, text).group()
                             else:
-                                captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
+                                captured_text = text[text.find("[SMILES]")+len("[SMILES]"):text.find("[/SMILES]")]
                             if captured_text not in self.molecules_set:
                                 self.molecules_set.add(captured_text)
                         except:
