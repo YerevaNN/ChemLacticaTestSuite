@@ -19,27 +19,12 @@ import matplotlib.pyplot as plt
 from aim import Run, Image
 import torch
 from torch import bfloat16, float32
-from transformers import AutoTokenizer, AutoModelForCausalLM, OPTForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 from utils import mol_util,logits_utils
-from custom_modeling_opt import CustomOPTForCausalLM
 from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
-# from contrastive_decoding.generator import generate as generate_CD
-from contrastive_decoding.contrastive_decoding import contrastive_generate as generate_CD
 from utils.plot_utils import clean_outputs, calculate_metrics, get_scatter_title,get_scatter_plot_bounds, paint_plot, PUBCHEM_STATS_PATH
-# from contrastive_decoding.generator import OPTForCausalLM as load_CD_expert_model
-# from contrastive_decodable_transformers import AutoModelForCausalLM as load_CD_student_model
-# from assert_tokenizer import assert_tokenizer
-
-parser = argparse.ArgumentParser(description='ChemLactica test evaluation')
-
-parser.add_argument('--result-path', type=str,
-                    default="/auto/home/menuab/code/ChemLacticaTestSuite/results/")
-
-
-args = parser.parse_args()
-result_path = args.result_path
 
 seed_value = 42
 np.random.seed(seed_value)
@@ -74,6 +59,7 @@ class Property2Mol:
             plot,
             description,
             logits_processors_configs,
+            result_path="../results/",
             ) -> None:
         
         self.test_suite=test_suite
@@ -108,7 +94,7 @@ class Property2Mol:
             self.start_aim_tracking(description)
         else:
             self.eval_hash = 'none'
-        self.start_log_file(description)
+        self.start_log_file(description, result_path)
         # assert_model_tokenizer()
         self.pubchem_stats = self.get_pubchem_stats()
         if self.target_dist == "prior":
@@ -140,7 +126,7 @@ class Property2Mol:
         self.aim_run = Run(experiment=description) if self.track else None
         self.eval_hash = self.aim_run.hash if self.aim_run else 'none'
         try:
-            training_args = vars(torch.load(self.model_checkpoint_path + '/training_args.bin'))
+            training_args = vars(torch.load(self.model_checkpoint_path + '/training_args.bin', weights_only=False))
             evaluation_config['learning_rate'] = training_args['learning_rate']
             evaluation_config['output_dir'] = training_args['output_dir']
             evaluation_config['per_device_train_batch_size'] = training_args['per_device_train_batch_size']
@@ -151,7 +137,7 @@ class Property2Mol:
             pass
         self.aim_run['hparams'] = evaluation_config
     
-    def start_log_file(self, description):
+    def start_log_file(self, description, result_path):
         model_name = self.model_checkpoint_path.split("/")[-4]
         model_hash = self.model_checkpoint_path.split("/")[-3][:4]
         model_checkpoint = self.model_checkpoint_path.split("/")[-2][11:]
@@ -174,50 +160,9 @@ class Property2Mol:
         self.log_file.write(f'evaluation config: \n{json.dumps(evaluation_config, indent=4)}\n')
 
     def load_model(self):
-        if "contrastive" in self.generation_config_name:
-            # model = load_CD_expert_model.from_pretrained(self.generation_config["expert_model"])
-            # self.student_model = load_CD_student_model.from_pretrained(self.generation_config["student_model"])
-            model = CustomOPTForCausalLM.from_pretrained(self.generation_config["expert_model"],
-                                                         use_flash_attn=True,
-                                                         torch_dtype=torch.bfloat16)
-            self.student_model = CustomOPTForCausalLM.from_pretrained(self.generation_config["student_model"],
-                                                                use_flash_attn=True,
-                                                                torch_dtype=torch.bfloat16)
-            self.student_model.eval()
-            self.student_model.to(self.device)
-            print(f'student model loaded with embedding size of: {self.student_model.model.decoder.embed_tokens.num_embeddings}, model dtype: {self.student_model.dtype}')
-        elif "26d3" in self.model_checkpoint_path:
-            model = CustomOPTForCausalLM.from_pretrained(
-                self.model_checkpoint_path,
-                use_flash_attn=True,
-                torch_dtype=getattr(torch, self.torch_dtype)
-                )
-        # elif "facebook" in self.model_checkpoint_path:
-        #     class LinearFloat32(torch.nn.Linear):
-        #         def forward(self, _input) -> torch.Tensor:
-        #             return super().forward(_input).to(torch.float32)
-        #     def cast_lm_head_to_fp32_init(func):
-        #         def inner_func(self, config, *args, **kwargs):
-        #             func(self, config, *args, **kwargs)
-        #             self.lm_head = LinearFloat32(
-        #                 config.word_embed_proj_dim, config.vocab_size, bias=False
-        #             )
-
-        #         return inner_func
-        #     OPTForCausalLM.__init__ = cast_lm_head_to_fp32_init(OPTForCausalLM.__init__)
-        #     model = OPTForCausalLM.from_pretrained(
-        #         self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype), attn_implementation="flash_attention_2"
-        #     )
-        elif "2b" in self.model_checkpoint_path:
-            model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype))
-        elif "125m" in self.model_checkpoint_path or "1.3b": 
-            model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype))
-        else:
-            model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype))
-        model.eval()
+        model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype))
         model.to(self.device)
-        # print(f'model loaded with embedding size of : {model.model.decoder.embed_tokens.num_embeddings}, model dtype: {model.dtype}')
-
+        model.eval()
         return model
 
     def load_tokenizer(self):
@@ -299,105 +244,45 @@ class Property2Mol:
         for input_id in input_ids:
             context_length = input_id.shape[1]
             perplexities, texts, lengths, norm_log, out = [], [], [], [], []
-            range_ = self.generation_config["total_gen_range"] if self.generation_config["multiple_rounds_generation"] == True else 1
-            for _ in range(range_):
-                if "contrastive" in self.generation_config_name:
-                    output = generate_CD(
-                        input_ids=input_id,
-                        expert_lm=self.model,
-                        student_lm=self.student_model,
-                        **self.generation_decoding_config
-                    )
-                    # beams = output.get("beam_indices", torch.zeros_like(output.sequences))
-                    # beams[:, -context_length:] = -1
-                    # beam_indices = torch.arange(output.scores[0].shape[0]).view(-1, 1).to(self.device)
-                    # beam_indices = beam_indices.expand(-1, len(output.scores))
-                    scores = self.model.compute_transition_scores(
-                            sequences=output.sequences,
-                            scores=output.scores,
-                        ).cpu().detach()
-                else:
-                    output = self.model.generate(
-                        input_ids=input_id,
-                        logits_processor = self.logits_processors,
-                        **self.generation_decoding_config   
-                    )
-                    # beams = output.get("beam_indices", None)
-                    # scores = self.model.compute_transition_scores(
-                    #             sequences=output.sequences,
-                    #             scores=output.scores,
-                    #             beam_indices=beams,
-                    #             normalize_logits=True
-                    #         ).cpu().detach()
-                    if self.generation_decoding_config["num_beams"] > 1 and self.generation_decoding_config["num_beam_groups"] == 1:
-                        scores = self.model.compute_transition_scores(
-                                sequences=output.sequences,
-                                scores=output.scores,
-                                beam_indices=output.beam_indices,
-                                normalize_logits=True
-                            ).cpu().detach()
-                    else:
-                        scores = self.model.compute_transition_scores(
-                                sequences=output.sequences,
-                                scores=output.scores,
-                                normalize_logits=True
-                            ).cpu().detach()
-                end_smiles = np.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
-                end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
-                perplexities_ = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
-                                for index in end_smiles_indices]
-                norm_logs = [round(scores[index[0], :index[1] - context_length + 1].sum().item(), 4) 
+            output = self.model.generate(
+                input_ids=input_id,
+                logits_processor = self.logits_processors,
+                **self.generation_decoding_config   
+            )
+
+            scores = self.model.compute_transition_scores(
+                    sequences=output.sequences,
+                    scores=output.scores,
+                    normalize_logits=True
+                ).cpu().detach()
+            
+            end_smiles = np.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
+            end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
+            perplexities_ = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
                             for index in end_smiles_indices]
-                if self.generation_decoding_config["do_sample"] == True:
-                    sorted_outputs = sorted(zip(perplexities_,
-                                                norm_logs,
-                                                output.sequences[end_smiles_indices[:, 0]],
-                                                end_smiles_indices[:, 1] - context_length + 1),
-                                                key=lambda x: x[0])[:self.top_N]
-                    
-                    for perplexity, n_log, output, len_ in sorted_outputs:
-                        norm_log.append(n_log)
-                        texts.append(self.tokenizer.decode(output[context_length:]))
-                        perplexities.append(perplexity)
-                        lengths.append(len_)
-                elif self.generation_decoding_config["do_sample"] == False and self.generation_decoding_config["num_beams"] > 1:
-                    for seq, seq_score, per, n_log in zip_longest(output.sequences, output.sequences_scores, perplexities_, norm_logs):
-                        decoded = self.tokenizer.decode(seq)
-                        try:
-                            captured_text = decoded[decoded.find("[START_SMILES]")+len("[START_SMILES]"):decoded.find("[END_SMILES]")]
-                            if mol_util.is_valid_smiles(captured_text):
-                                texts = [self.tokenizer.decode(seq)]
-                                lengths = [len(seq)]
-                                norm_log = [n_log]
-                                perplexities = [per]
-                                break
-                        except:
-                            continue
-                    if texts == []:
-                        text =['']
-                        lengths = [0]
-                        norm_log = [0]
-                        perplexities = [0]
-                else:
-                    perplexities = perplexities_
-                    lengths = [output.sequences.shape[-1] - context_length]
-                    texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
-                    norm_log = [norm_logs]
-                out = []
-                for text in texts:
-                    if text.find("[END_SMILES]") != -1:
-                        try:
-                            if self.include_start_smiles:
-                                captured_text = re.match(self.regexp, text).group()
-                            else:
-                                captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
-                            if captured_text not in self.molecules_set:
-                                self.molecules_set.add(captured_text)
-                        except:
-                            captured_text = ''
-                    else:
+            norm_logs = [round(scores[index[0], :index[1] - context_length + 1].sum().item(), 4) 
+                        for index in end_smiles_indices]
+            
+            perplexities = perplexities_
+            lengths = [output.sequences.shape[-1] - context_length]
+            texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
+            norm_log = [norm_logs]
+                
+            out = []
+            for text in texts:
+                if text.find("[END_SMILES]") != -1:
+                    try:
+                        if self.include_start_smiles:
+                            captured_text = re.match(self.regexp, text).group()
+                        else:
+                            captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
+                        if captured_text not in self.molecules_set:
+                            self.molecules_set.add(captured_text)
+                    except:
                         captured_text = ''
-                    out.append(captured_text)
+                else:
+                    captured_text = ''
+                out.append(captured_text)
             outputs.append(out)
             raw_outputs.append(texts)
             perplexities_list.append(perplexities)
@@ -410,17 +295,13 @@ class Property2Mol:
 
         # TODO: drop the hard coded index and adjust for multiple targets
         calculated_properties = [property_fns[0](out) for out in self.outputs]
-
-
         return calculated_properties
+    
     def calculate_similarity(self, property_fns):
 
         # TODO: drop the hard coded index and adjust for multiple targets
-
         calculated_properties = [property_fns[0](out, inp) for out, inp in zip_longest(self.outputs, self.inp_smiles)]
-
         return calculated_properties
-
 
     def get_stats(self):
         errors = []
@@ -639,14 +520,10 @@ class Property2Mol:
                 self.track_stats(test_name)
             print(f"finished evaluating test for {test_name}")
             print(f"{len(self.inputs)} samples evaluated in {int(time.time()-time_start)} seconds")
-            # else:
-            #     continue
-
 
 if __name__ == "__main__":
     
     for evaluation_config in evaluation_configs:
-        # print(evaluation_configs)
         print(f"evaluating model: {evaluation_config['model_checkpoint_path'].split('/')[-2]} "\
             f"with {evaluation_config['generation_config']['name']} config")
         property_2_Mol = Property2Mol(**evaluation_config)
