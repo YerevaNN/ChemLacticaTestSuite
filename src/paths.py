@@ -60,9 +60,18 @@ model_125m_18k_1f28 = "/nfs/dgx/raid/chem/checkpoints/facebook/galactica-125m/1f
 model_2b_12k_0717 = "/nfs/dgx/raid/chem/checkpoints/h100/google/gemma-2b/0717d445bcf44e31b2887892/checkpoint-12000"
 model_2b_18k_0717 = "/nfs/dgx/raid/chem/checkpoints/h100/google/gemma-2b/0717d445bcf44e31b2887892/checkpoint-18000"
 
+model_1b_19k_6d68 = "/nfs/dgx/raid/chem/checkpoints/h100/facebook/galactica-1.3b/6d68b252d53647a99cf2fa8b/checkpoint-19000"
+
+model_125m_18k_c4d8 = "/nfs/dgx/raid/chem/titan_outputs/hf/yerevann/chemlactica-125m/"
+model_125m_80k_0bb9 = "/nfs/dgx/raid/chem/random_init_exp/checkpoints/facebook/galactica-125m/0bb9077eb9824a30a082f020/checkpoint-80000"
+model_125m_45k_0bb9 = "/nfs/dgx/raid/chem/random_init_exp/checkpoints/facebook/galactica-125m/0bb9077eb9824a30a082f020/checkpoint-45000"
+
+model_1b_20k_safe_273f = "/nfs/h100/raid/chem/checkpoints/hf/yerevann/Llama-3.2-1B/273fe38764a44b0db611e262/step-20000"
+model_1b_20k_8a28 = "/nfs/h100/raid/chem/checkpoints/hf/yerevann/Llama-3.2-1B/8a28eb82260140b097b34e1c/step-20000"
+
 gemma_original_tokenizer_path = "google/gemma-2b"
 gemma_custom_tokenizer_path = "/auto/home/menuab/code/ChemLactica/chemlactica/tokenizer/GemmaTokenizer"
 galactica_tokenizer_path =         "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/galactica-125m/"
 chemlactica_tokenizer_50028_path = "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50028"
 chemlactica_tokenizer_50066_path = "/auto/home/menuab/code/ChemLacticaTestSuite/src/tokenizer/ChemLacticaTokenizer_50066"
-
+llama_tokenizer_path = "/nfs/h100/raid/chem/checkpoints/tokenizers/Llama-3.2-chem-1B-v1"
