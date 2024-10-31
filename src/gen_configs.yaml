@@ -1,4 +1,4 @@
-gal_greedy_generation_config : 
+chemlactica_greedy_generation_config : 
     name: "greedy"
     multiple_rounds_generation: false
     config: 
@@ -13,7 +13,7 @@ gal_greedy_generation_config :
         output_scores: true
         renormalize_logits: true
 
-gem_greedy_generation_config : 
+chemma_greedy_generation_config : 
     name: "greedy"
     multiple_rounds_generation: false
     config: 
