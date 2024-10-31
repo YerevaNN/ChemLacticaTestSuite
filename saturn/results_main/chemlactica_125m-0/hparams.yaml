@@ -1,0 +1,39 @@
+checkpoint_path: yerevann/chemlactica-125m
+device: cuda:0
+eos_token: </s>
+generation_batch_size: 512
+generation_config:
+  do_sample: true
+  eos_token_id: 20
+  max_new_tokens: 100
+  repetition_penalty: 1.0
+generation_temperature:
+- 1.3
+- 1.0
+num_gens_per_iter: 100
+num_mols: 0
+num_similars: 2
+pool_size: 30
+rej_sample_config:
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  checkpoints_dir: checkpoints
+  dataloader_num_workers: 1
+  global_gradient_norm: 1.0
+  gradient_accumulation_steps: 8
+  lr_end: 0
+  max_learning_rate: 0.0001
+  max_seq_length: 2048
+  num_train_epochs: 5
+  packing: false
+  train_batch_size: 2
+  train_tol_level: 2
+  warmup_steps: 10
+  weight_decay: 0.1
+sim_range:
+- 0.4
+- 0.9
+strategy:
+- rej-sample-v2
+tokenizer_path: yerevann/chemlactica-125m
+validation_perc: 0.2
