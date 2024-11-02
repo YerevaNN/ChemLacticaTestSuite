@@ -59,7 +59,7 @@ safe_greedy_generation_config :
     mol_token: "[SAFE]"
     end_mol_token: "[/SAFE]"
     config:
-        eos_token_id: 128257
+        eos_token_id: 128259
         max_new_tokens: 2000    
         suppress_tokens: [34277, 128260, 128261, 128262, 128263, 128264, 128265, 128266, 128267, 128000, 128001]
         repetition_penalty: 1.01
