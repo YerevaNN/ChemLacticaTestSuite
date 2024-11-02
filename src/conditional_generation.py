@@ -22,7 +22,7 @@ from torch import bfloat16, float32
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 from utils import mol_util,logits_utils
-from property_2_Mol_config import evaluation_configs
+# from property_2_Mol_config import evaluation_configs
 from pubchem_checker.check_in_pubchem import check_in_pubchem
 from utils.plot_utils import clean_outputs, calculate_metrics, get_scatter_title,get_scatter_plot_bounds, paint_plot, PUBCHEM_STATS_PATH
 
@@ -43,32 +43,29 @@ class Property2Mol:
             test_suite,
             property_range,
             generation_config,
-            regexp,
             model_checkpoint_path,
             tokenizer_path,
             std_var,
             torch_dtype,
             device,
-            top_N,
             target_dist,
-            n_per_vs_rmse,
-            include_eos,
             include_start_smiles,
             check_for_novelty,
             track,
             plot,
             description,
             logits_processors_configs,
-            result_path="../results/",
+            log_file,
+            result_path,
+            n_per_vs_rmse=4,
+            include_eos=True,
             ) -> None:
         
         self.test_suite=test_suite
         self.property_range=property_range
         self.generation_config=generation_config
         self.generation_decoding_config=generation_config["config"]
-        self.generation_decoding_config["eos_token_id"] = 8 if "2b" in model_checkpoint_path else 20
         self.generation_config_name=generation_config["name"]
-        self.regexp=regexp
         self.model_checkpoint_path = model_checkpoint_path + '/' if model_checkpoint_path[-1] != '/' else model_checkpoint_path
         self.tokenizer_path=tokenizer_path
         self.torch_dtype=torch_dtype
@@ -77,12 +74,11 @@ class Property2Mol:
         self.plot = plot
         self.logits_processors = LogitsProcessorList(logits_utils.instantiate_processors([logits_utils.LogitsProcessorConfig(**logits_processors_config) for logits_processors_config in logits_processors_configs])) if logits_processors_configs else None
         
-        self.smiles_prefix = "[START_SMILES]"
-        self.eos_string = "</s>" if "2b" not in self.model_checkpoint_path else "<bos>"
+        self.smiles_prefix = generation_config["mol_token"]
+        self.smiles_sufix = generation_config["end_mol_token"]
+        self.eos_string = generation_config["separator_token"]
         self.include_eos = include_eos
         self.include_start_smiles = include_start_smiles
-        self.top_N = generation_config.get("top_N", 0)
-        # self.top_N = top_N
         self.target_dist = target_dist
         self.std_var = std_var
         self.n_per_vs_rmse = n_per_vs_rmse
@@ -94,8 +90,8 @@ class Property2Mol:
             self.start_aim_tracking(description)
         else:
             self.eval_hash = 'none'
-        self.start_log_file(description, result_path)
-        # assert_model_tokenizer()
+        self.results_path = result_path
+        self.log_file = log_file
         self.pubchem_stats = self.get_pubchem_stats()
         if self.target_dist == "prior":
             self.prior_dist = self.get_prior_dist_samples()        
@@ -137,27 +133,27 @@ class Property2Mol:
             pass
         self.aim_run['hparams'] = evaluation_config
     
-    def start_log_file(self, description, result_path):
-        model_name = self.model_checkpoint_path.split("/")[-4]
-        model_hash = self.model_checkpoint_path.split("/")[-3][:4]
-        model_checkpoint = self.model_checkpoint_path.split("/")[-2][11:]
-        self.results_path = os.path.join( os.path.join(result_path, "property_2_Mol/"), \
-                                         f"{datetime.now().strftime('%Y-%m-%d-%H:%M')}"\
-                                         f"-{model_name}-{model_hash}-{model_checkpoint}"\
-                                         f"-{self.generation_config_name}-{self.eval_hash}")
-        if description:
-            description += "/"
-            self.results_path += "-" + description
-        else:
-            self.results_path += "/"
-        print(f'results_path = {self.results_path}\n')
-        if not os.path.exists(self.results_path):
-            os.makedirs(self.results_path)
-        self.log_file = open(self.results_path + 'full_log.txt', 'w+')
+    # def start_log_file(self, description, result_path):
+    #     model_name = self.model_checkpoint_path.split("/")[-4]
+    #     model_hash = self.model_checkpoint_path.split("/")[-3][:4]
+    #     model_checkpoint = self.model_checkpoint_path.split("/")[-2][11:]
+    #     self.results_path = os.path.join( os.path.join(result_path, "property_2_Mol/"), \
+    #                                      f"{datetime.now().strftime('%Y-%m-%d-%H:%M')}"\
+    #                                      f"-{model_name}-{model_hash}-{model_checkpoint}"\
+    #                                      f"-{self.generation_config_name}-{self.eval_hash}")
+    #     if description:
+    #         description += "/"
+    #         self.results_path += "-" + description
+    #     else:
+    #         self.results_path += "/"
+    #     print(f'results_path = {self.results_path}\n')
+    #     if not os.path.exists(self.results_path):
+    #         os.makedirs(self.results_path)
+    #     self.log_file = open(self.results_path + 'full_log.txt', 'w+')
         
-        self.log_file.write(f'results of property to molecule test performed at '\
-                            f'{datetime.now().strftime("&Y-%m-%d, %H:%M")}\n')
-        self.log_file.write(f'evaluation config: \n{json.dumps(evaluation_config, indent=4)}\n')
+    #     self.log_file.write(f'results of property to molecule test performed at '\
+    #                         f'{datetime.now().strftime("&Y-%m-%d, %H:%M")}\n')
+    #     self.log_file.write(f'evaluation config: \n{json.dumps(evaluation_config, indent=4)}\n')
 
     def load_model(self):
         model = AutoModelForCausalLM.from_pretrained(self.model_checkpoint_path, torch_dtype=getattr(torch, self.torch_dtype))
@@ -172,29 +168,13 @@ class Property2Mol:
 
         return tokenizer
 
-    def get_inputs(self, properties):
-        # inputs_ = []
-        # for property in properties:
-        #     property_range = self.property_range[property]["range"]
-        #     property_step = self.property_range[property]["step"]
-        #     self.property_smiles = self.property_range[property]["smiles"]
-        #     inputs_.append(np.round(np.arange(property_range[0],
-        #                                       property_range[1] + property_step,
-        #                                       property_step), 3))
-        
+    def get_inputs(self, properties):        
         inputs = []
-        # decim = len(str(property_step).split('.')[-1])
         decim = 2
-        # print(property_range, decim)
         for value in self.targets:
-            if len(self.tokenizer) == 50028:
-                input = f'[{properties[0].upper()} {value[0]:.{decim}f}]'
-            else:
-                # input = f'[{property.upper()}]{value:.{decim}f}[/{property.upper()}]{self.smiles_prefix}'
-                input = f'[{properties[0].upper()}]{value[0]:.{decim}f}[/{properties[0].upper()}]'
+            input = f'[{properties[0].upper()}]{value[0]:.{decim}f}[/{properties[0].upper()}]'
             if self.include_eos:
                 input = self.eos_string + input
-            # input = input + ']'
             if self.include_start_smiles:
                 input = input + self.smiles_prefix
             inputs.append(input)
@@ -216,18 +196,6 @@ class Property2Mol:
                 # self.std_var = -1 * self.std_var if property.lower() == "qed" else self.std_var
                 delta = self.std_var * self.property_range[property]["std"]
                 targets = sorted([[round(min(max(t + delta, property_range[0]), property_range[1]), 2)] for t in self.prior_dist[property.upper()]], key=lambda x:x[0])
-                # n_samples = int((property_range[1] + property_step - property_range[0]) / property_step)
-                # noise =  np.random.uniform(-0.0045, 0.0045, n_samples) * property_range[1]
-                # values_range = np.linspace(property_range[0], property_range[1], 100)
-                # frequency_data = self.pubchem_stats[property.upper()]
-                # frequency_data /= frequency_data.sum()
-                # targets = np.random.choice(values_range, size=n_samples, p=frequency_data) + noise
-                # if property.lower() == "weight":
-                #     targets = np.around(targets) + 0.1
-                # elif property.lower() == "sas" or property.lower() == "clogp":
-                #     targets = np.around(targets, 1)
-                # targets = np.around(np.clip(targets, property_range[0], property_range[1]), 2)
-                # targets = sorted([[round(t, 2)] for t in targets])
         # targets_ = np.meshgrid(targets_) TODO:develop later for multiple targets
 
         return targets
@@ -255,8 +223,7 @@ class Property2Mol:
                     scores=output.scores,
                     normalize_logits=True
                 ).cpu().detach()
-            
-            end_smiles = np.nonzero(output.sequences==20).cpu().numpy() # 20 for END_SMILES token
+            end_smiles = np.nonzero(output.sequences==self.tokenizer.encode(self.smiles_sufix)[0]).cpu().numpy() # 20 for END_SMILES token
             end_smiles_indices = end_smiles[np.unique(end_smiles[:, 0], return_index=True)[1]]
             perplexities_ = [round(np.exp(-scores[index[0], :index[1] - context_length + 1].mean().item()), 4)
                             for index in end_smiles_indices]
@@ -265,17 +232,13 @@ class Property2Mol:
             
             perplexities = perplexities_
             lengths = [output.sequences.shape[-1] - context_length]
-            texts = [self.tokenizer.decode(out[context_length:]) for out in output.sequences]
+            texts = [self.tokenizer.decode(out[context_length-1:]) for out in output.sequences]
             norm_log = [norm_logs]
-                
             out = []
             for text in texts:
-                if text.find("[END_SMILES]") != -1:
+                if text.find(self.smiles_sufix) != -1:
                     try:
-                        if self.include_start_smiles:
-                            captured_text = re.match(self.regexp, text).group()
-                        else:
-                            captured_text = text[text.find("[START_SMILES]")+len("[START_SMILES]"):text.find("[END_SMILES]")]
+                        captured_text = text[text.find(self.smiles_prefix)+len(self.smiles_prefix):text.find(self.smiles_sufix)]
                         if captured_text not in self.molecules_set:
                             self.molecules_set.add(captured_text)
                     except:
@@ -477,7 +440,8 @@ class Property2Mol:
                 )
             self.aim_run.track(aim_image, name=path.split('/')[-1], context={'subset': test_name})
 
-    def run_property_2_Mol_test(self):    
+    def run_property_2_Mol_test(self):   
+        results = {} 
         for test_name, sample in tqdm(list(self.test_suite.items())):
             time_start = time.time()
             input_properties = sample["input_properties"]
@@ -498,7 +462,7 @@ class Property2Mol:
                 rmse, mape, correlation = calculate_metrics(target_clean, generated_clean)
                 rmse_c, mape_c, correlation_c = calculate_metrics(self.targets,corrected_calculated)
             else:
-                rmse = mape = rmse_c = mape_c = 0
+                rmse = mape = rmse_c = mape_c = correlation = correlation_c = 0
 
             self.rmse = rmse
             self.mape = mape
@@ -506,7 +470,9 @@ class Property2Mol:
             self.mape_c = mape_c
             self.correlation = correlation
             self.correlation_c = correlation_c
-
+            res = {"rmse": rmse, "rmse_c": rmse_c, "mape": mape, "mape_c": mape_c, 
+                   "correlation": correlation, "correlation": correlation_c, "invalids": self.n_invalid_generations}
+            results[test_name] = res
             self.write_to_file(test_name)
             if self.plot:
                 self.generate_plot(test_name, target_clean, generated_clean, nones, self.correlation, self.rmse, self.mape, \
@@ -520,22 +486,23 @@ class Property2Mol:
                 self.track_stats(test_name)
             print(f"finished evaluating test for {test_name}")
             print(f"{len(self.inputs)} samples evaluated in {int(time.time()-time_start)} seconds")
+        return results
 
-if __name__ == "__main__":
-    
-    for evaluation_config in evaluation_configs:
-        print(f"evaluating model: {evaluation_config['model_checkpoint_path'].split('/')[-2]} "\
-            f"with {evaluation_config['generation_config']['name']} config")
-        property_2_Mol = Property2Mol(**evaluation_config)
-        if len(evaluation_configs) == 1:
-            property_2_Mol.run_property_2_Mol_test()
-            property_2_Mol.log_file.close()
-            del property_2_Mol
-        else:
-            try:
-                property_2_Mol.run_property_2_Mol_test()
-                property_2_Mol.log_file.close()
-                del property_2_Mol
-            except BaseException as e:
-                print(str(e))
-                continue
+# if __name__ == "__main__":
+#     pass
+    # for evaluation_config in evaluation_configs:
+    #     print(f"evaluating model: {evaluation_config['model_checkpoint_path'].split('/')[-2]} "\
+    #         f"with {evaluation_config['generation_config']['name']} config")
+    #     property_2_Mol = Property2Mol(**evaluation_config)
+    #     if len(evaluation_configs) == 1:
+    #         property_2_Mol.run_property_2_Mol_test()
+    #         property_2_Mol.log_file.close()
+    #         del property_2_Mol
+    #     else:
+    #         try:
+    #             property_2_Mol.run_property_2_Mol_test()
+    #             property_2_Mol.log_file.close()
+    #             del property_2_Mol
+    #         except BaseException as e:
+    #             print(str(e))
+    #             continue
