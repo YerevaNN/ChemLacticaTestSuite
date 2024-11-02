@@ -10,6 +10,7 @@ import torch
 from paths import model_paths, tokenizer_paths
 from property_ranges import *
 from property_prediction import run_property_predictions
+from conditional_generation import Property2Mol
 
 with open('gen_configs.yaml', 'r') as file:
     generation_configs = yaml.full_load(file) 
@@ -54,7 +55,7 @@ def parse_args():
     parser.add_argument(
         "--dtype",
         type=str,
-        default="float16",
+        default="float32",
         choices=["float16", "float32", "bfloat16"],
         help="Data type for model computation"
     )
@@ -77,9 +78,9 @@ def parse_args():
         help="Enable PDF export of results"
     )
     parser.add_argument(
-        "--CoT",
+        "--no_CoT",
         action="store_true",
-        help="Enable Chain-of-Thought reasoning"
+        help="Disable Chain-of-Thought reasoning"
     )
     parser.add_argument(
         "--description",
@@ -87,12 +88,12 @@ def parse_args():
         help="Include detailed descriptions in output"
     )
     parser.add_argument(
-        "--plot",
-        action="store_true",
+        "--no_plot",
+        action="store_false",
         help="Generate plots for analysis results"
     )
     parser.add_argument(
-        "--tracking",
+        "--no_tracking",
         action="store_true",
         help="Enable experiment tracking"
     )
@@ -132,10 +133,11 @@ def start_log_file(model_path, description, result_path, generation_config):
 def main():
     args = parse_args()
     model_path = model_paths.get(args.model_path, args.model_path)
+    tokenizer_path = tokenizer_paths.get(args.tokenizer_path, args.tokenizer_path)
     generation_config = generation_configs[args.generation_config]
     results_path, log_file = start_log_file(model_path, args.description,  args.results_path, generation_config)
     pp_results, sim_pp_results, sim_cg_results = run_property_predictions(model_path, 
-                                                                          tokenizer_paths.get(args.tokenizer_path, args.tokenizer_path),
+                                                                          tokenizer_path,
                                                                           args.device, 
                                                                           args.properties_name, 
                                                                           generation_config,
@@ -143,10 +145,35 @@ def main():
                                                                           log_file,
                                                                           pdf_export=False)
     
-    log_file.write(f"property prediction results: \n{json.dumps(pp_results, indent=4)}\n")
-    log_file.write(f"property prediction results: \n{json.dumps(sim_pp_results, indent=4)}\n")
-    log_file.write(f"property prediction results: \n{json.dumps(sim_cg_results, indent=4)}\n")
+    evaluation_config = {
+        "test_suite":                test_suite,
+        "property_range":            property_range,
+        "generation_config":         generation_config,
+        "model_checkpoint_path":     model_path,
+        "tokenizer_path":            tokenizer_path,
+        "logits_processors_configs": None,
+        "std_var":                   0,
+        "torch_dtype":               args.dtype,
+        "device":                    args.device,
+        "target_dist":               args.target_dist,
+        "include_start_smiles":      args.no_CoT,
+        "check_for_novelty":         True,
+        "track":                     args.no_tracking,
+        "plot":                      args.no_plot,
+        "description":               args.description,
+        "log_file":                  log_file,
+        "result_path":               results_path,
+    }
+    conditional_generation = Property2Mol(**evaluation_config)
+    cg_results = conditional_generation.run_property_2_Mol_test()
+
+    results_file = open(results_path + 'final_results.txt', 'w+')
+    results_file.write(f"property prediction results: \n{json.dumps(pp_results, indent=4)}\n")
+    results_file.write(f"property prediction results: \n{json.dumps(sim_pp_results, indent=4)}\n")
+    results_file.write(f"property prediction results: \n{json.dumps(sim_cg_results, indent=4)}\n")
+    results_file.write(f"conditional generation results: \n{json.dumps(cg_results, indent=4)}\n")
     log_file.close()
+    results_file.close()
 
 if __name__ == "__main__":
     main()
