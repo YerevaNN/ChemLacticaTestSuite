@@ -12,13 +12,13 @@ with open('gen_configs.yaml', 'r') as file:
 top_N = 100
 n_per_vs_rmse = 4
 regexp = "^.*?(?=\\[END_SMILES])"
-# torch_dtype = "float32"
-torch_dtype = "bfloat16"
+torch_dtype = "float32"
+# torch_dtype = "bfloat16"
 device = "cuda:1"
 # device = "cuda:0"
 # device = 'cpu'
-# target_dist = "prior"
-target_dist = "uniform"
+target_dist = "prior"
+# target_dist = "uniform"
 std_var = 1
 gemma_logits_processors_configs = logits_utils.load_processor_config(gemma_logit_config_path)
 galactica_logits_processors_configs = logits_utils.load_processor_config(galactica_logit_config_path)
@@ -28,9 +28,9 @@ galactica_lp_configs = [asdict(obj) for obj in galactica_logits_processors_confi
 evaluation_config = {
     "test_suite":                test_suite,
     "property_range":            property_range,
-    "generation_config":         generation_configs["gem_greedy_generation_config"],
-    "model_checkpoint_path":     model_2b_18k_0717,
-    "tokenizer_path":            gemma_custom_tokenizer_path,
+    "generation_config":         generation_configs["chemlactica_greedy_generation_config"],
+    "model_checkpoint_path":     model_125m_18k_1f28,
+    "tokenizer_path":            chemlactica_tokenizer_50066_path,
     "logits_processors_configs": None,
     "std_var":                   0,
     "torch_dtype":               torch_dtype,
@@ -44,7 +44,7 @@ evaluation_config = {
     "check_for_novelty":         True,
     "track":                     True,
     "plot":                      True,
-    "description":               "CoT_sup_rep01_uniform",
+    "description":               "125m_restest",
 }
 
 evaluation_configs = [evaluation_config]
