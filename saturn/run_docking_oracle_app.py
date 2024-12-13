@@ -1,11 +1,13 @@
 from flask import Flask, request, jsonify
 from rdkit import Chem
+from rdkit.Chem import QED
 from functools import cache
 
 import sys
 sys.path.append('saturn')
 from saturn.oracles.docking.geam_oracle import GEAMOracle
 from saturn.oracles.dataclass import OracleComponentParameters
+from saturn.oracles.synthesizability.sascorer import calculateScore
 
 app = Flask(__name__)
 
@@ -48,7 +50,14 @@ def send_fa7():
     
     rdkit_mols = [Chem.MolFromSmiles(s) for s in data]
     raw_vina_scores, *_, aggregated_scores = get_docking_oracles()["fa7"](rdkit_mols)
-    return jsonify({'vina_scores': list(raw_vina_scores), "aggregated_scores": list(aggregated_scores)}), 200
+    sa_scores = [calculateScore(m) for m in rdkit_mols]
+    qed_scores = [QED.qed(m) for m in rdkit_mols]
+    return jsonify({
+        'vina_scores': list(raw_vina_scores),
+        "scores": list(aggregated_scores),
+        "sa_scores": sa_scores,
+        "qed_scores": qed_scores
+    }), 200
 
 
 @app.route('/parp1', methods=['POST'])
@@ -59,7 +68,14 @@ def send_parp1():
     
     rdkit_mols = [Chem.MolFromSmiles(s) for s in data]
     raw_vina_scores, *_, aggregated_scores = get_docking_oracles()["parp1"](rdkit_mols)
-    return jsonify({'vina_scores': list(raw_vina_scores), "aggregated_scores": list(aggregated_scores)}), 200
+    sa_scores = [calculateScore(m) for m in rdkit_mols]
+    qed_scores = [QED.qed(m) for m in rdkit_mols]
+    return jsonify({
+        'vina_scores': list(raw_vina_scores),
+        "scores": list(aggregated_scores),
+        "sa_scores": sa_scores,
+        "qed_scores": qed_scores
+    }), 200
 
 
 @app.route('/5ht1b', methods=['POST'])
@@ -70,7 +86,14 @@ def send_5ht1b():
     
     rdkit_mols = [Chem.MolFromSmiles(s) for s in data]
     raw_vina_scores, *_, aggregated_scores = get_docking_oracles()["5ht1b"](rdkit_mols)
-    return jsonify({'vina_scores': list(raw_vina_scores), "aggregated_scores": list(aggregated_scores)}), 200
+    sa_scores = [calculateScore(m) for m in rdkit_mols]
+    qed_scores = [QED.qed(m) for m in rdkit_mols]
+    return jsonify({
+        'vina_scores': list(raw_vina_scores),
+        "scores": list(aggregated_scores),
+        "sa_scores": sa_scores,
+        "qed_scores": qed_scores
+    }), 200
 
 
 @app.route('/jak2', methods=['POST'])
@@ -81,7 +104,14 @@ def send_jak2():
     
     rdkit_mols = [Chem.MolFromSmiles(s) for s in data]
     raw_vina_scores, *_, aggregated_scores = get_docking_oracles()["jak2"](rdkit_mols)
-    return jsonify({'vina_scores': list(raw_vina_scores), "aggregated_scores": list(aggregated_scores)}), 200
+    sa_scores = [calculateScore(m) for m in rdkit_mols]
+    qed_scores = [QED.qed(m) for m in rdkit_mols]
+    return jsonify({
+        'vina_scores': list(raw_vina_scores),
+        "scores": list(aggregated_scores),
+        "sa_scores": sa_scores,
+        "qed_scores": qed_scores
+    }), 200
 
 
 @app.route('/braf', methods=['POST'])
@@ -92,7 +122,14 @@ def send_braf():
     
     rdkit_mols = [Chem.MolFromSmiles(s) for s in data]
     raw_vina_scores, *_, aggregated_scores = get_docking_oracles()["braf"](rdkit_mols)
-    return jsonify({'vina_scores': list(raw_vina_scores), "aggregated_scores": list(aggregated_scores)}), 200
+    sa_scores = [calculateScore(m) for m in rdkit_mols]
+    qed_scores = [QED.qed(m) for m in rdkit_mols]
+    return jsonify({
+        'vina_scores': list(raw_vina_scores),
+        "scores": list(aggregated_scores),
+        "sa_scores": sa_scores,
+        "qed_scores": qed_scores
+    }), 200
 
 
 @app.route('/', methods=['GET'])
