@@ -169,8 +169,8 @@ def main():
 
     results_file = open(results_path + 'final_results.txt', 'w+')
     results_file.write(f"property prediction results: \n{json.dumps(pp_results, indent=4)}\n")
-    results_file.write(f"property prediction results: \n{json.dumps(sim_pp_results, indent=4)}\n")
-    results_file.write(f"property prediction results: \n{json.dumps(sim_cg_results, indent=4)}\n")
+    results_file.write(f"similarity prediction results: \n{json.dumps(sim_pp_results, indent=4)}\n")
+    results_file.write(f"similarity conditional generation results: \n{json.dumps(sim_cg_results, indent=4)}\n")
     results_file.write(f"conditional generation results: \n{json.dumps(cg_results, indent=4)}\n")
     log_file.close()
     results_file.close()

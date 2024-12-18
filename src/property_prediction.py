@@ -1,5 +1,5 @@
 import torch
-from transformers import OPTForCausalLM, AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 # from chemlactica.utils.utils import get_tokenizer
 from rdkit.Chem import Descriptors
 
