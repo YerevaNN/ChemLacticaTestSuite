@@ -1,7 +1,10 @@
-gal_greedy_generation_config : 
+chemlactica_greedy_generation_config : 
     name: "greedy"
     multiple_rounds_generation: false
-    config: 
+    separator_token: "</s>"
+    mol_token: "[START_SMILES]"
+    end_mol_token: "[END_SMILES]"
+    config:
         eos_token_id: 20
         max_new_tokens: 2000    
         suppress_tokens: [2, 50002, 50035, 50003, 50036, 50000, 50033]
@@ -13,10 +16,13 @@ gal_greedy_generation_config :
         output_scores: true
         renormalize_logits: true
 
-gem_greedy_generation_config : 
+chemma_greedy_generation_config : 
     name: "greedy"
     multiple_rounds_generation: false
-    config: 
+    separator_token: "<bos>"
+    mol_token: "[START_SMILES]"
+    end_mol_token: "[END_SMILES]"
+    config:
         eos_token_id: 8
         max_new_tokens: 2000    
         suppress_tokens: [2, 10, 44, 11, 45, 12, 46, 13, 47]
@@ -28,7 +34,41 @@ gem_greedy_generation_config :
         output_scores: true
         renormalize_logits: true
 
+llama_greedy_generation_config : 
+    name: "greedy"
+    multiple_rounds_generation: false
+    separator_token: "<|begin_of_text|>"
+    mol_token: "[SMILES]"
+    end_mol_token: "[/SMILES]"
+    config:
+        eos_token_id: 128257
+        max_new_tokens: 2000    
+        suppress_tokens: [34277, 128260, 128261, 128262, 128263, 128264, 128265, 128266, 128267, 128000, 128001]
+        repetition_penalty: 1.01
+        do_sample: false
+        num_return_sequences: 1
+        num_beams: 1
+        return_dict_in_generate: true
+        output_scores: true
+        renormalize_logits: true
 
+safe_greedy_generation_config : 
+    name: "greedy"
+    multiple_rounds_generation: false
+    separator_token: "<|begin_of_text|>"
+    mol_token: "[SAFE]"
+    end_mol_token: "[/SAFE]"
+    config:
+        eos_token_id: 128259
+        max_new_tokens: 2000    
+        suppress_tokens: [34277, 128260, 128261, 128262, 128263, 128264, 128265, 128266, 128267, 128000, 128001]
+        repetition_penalty: 1.01
+        do_sample: false
+        num_return_sequences: 1
+        num_beams: 1
+        return_dict_in_generate: true
+        output_scores: true
+        renormalize_logits: true
 # greedy_beam_generation_config : {
 #     "name": "greedy_beam=12",
 #     "multiple_rounds_generation": False,

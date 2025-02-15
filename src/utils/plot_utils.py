@@ -12,6 +12,9 @@ def get_scatter_title(config_name,test_name, distribution,model_checkpoint_path,
             f'rmse {rmse:.3f} mape {mape:.3f} rmse_c {rmse_c:.3f} mape_c {mape_c:.3f}\n'\
             f'corr: {correlation:.3f} corr_c: {correlation_c:.3f} corr_s: {correlation*(1-(n_invalid/n_total)):.3f}\n'\
             f'{n_invalid}/{n_total} invalid SMILES'
+    # title = f'{test_name.upper()} Conditional Generation (greedy sampling)\n'\
+    #         f'{n_invalid}/{n_total} invalid SMILES, {n_in_pubchem}/{n_total} from PubChem\n'\
+    #         f'rmse {rmse:.3f} rmse_c {rmse_c:.3f} mape {mape:.3f} corr: {correlation:.3f}'\
 
     if n_unique:
         title += f" n_unique: {n_unique}"
@@ -49,9 +52,12 @@ def calculate_metrics(target,generated):
 
 def paint_plot(title,test_name,stats,target_clean,generated_clean,nones,min_,max_,diffs, stats_width=10):
     fig, ax1 = plt.subplots()
-    fig.set_figheight(6)
-    fig.set_figwidth(8)
-    fig.set_linewidth(4)
+    # fig.set_figheight(6)
+    # fig.set_figwidth(8)
+    # fig.set_linewidth(4)
+    fig.set_figheight(4)
+    fig.set_figwidth(5)
+    fig.set_linewidth(2)
     ax2 = ax1.twinx()
     ax2.bar([interval.mid for interval in stats.index], stats, width=stats_width, alpha=0.3) 
 
